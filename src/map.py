@@ -23,8 +23,8 @@ TILE_IMAGES = {}
 def add_tile_image(tile, path):
     TILE_IMAGES[tile] = pygame.image.load(os.path.join("assets", "sprites", path))
 add_tile_image(TILE_TYPE.GRASS, "grass.png")
-add_tile_image(TILE_TYPE.SOIL, "grass.png")
-add_tile_image(TILE_TYPE.TILLED_SOIL, "grass.png")
+add_tile_image(TILE_TYPE.SOIL, "soil.png")
+add_tile_image(TILE_TYPE.TILLED_SOIL, "soil.png")
 
 class Map:
     def __init__(self):

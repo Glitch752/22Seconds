@@ -58,6 +58,7 @@ def main():
         if main_menu:
             draw_main_menu()
         else:
+            map.update(delta)
             map.draw(WIN, player)
             player.draw(WIN)
 

@@ -1,13 +1,13 @@
 import pygame
 from constants import TILE_SIZE, WIDTH, HEIGHT
 import random
-import time
 import os
+import math
 
 MAP_WIDTH = 50
 MAP_HEIGHT = 25
 
-MAP_UPDATE_RATE = 100
+MAP_UPDATE_RATE = 500
 RANDOM_TICK_PER_UPDATE_RATIO = 0.05
 last_update = 0
 
@@ -35,14 +35,16 @@ class Map:
                 self.tiles.append(random.randint(0, 1))
     
     def update(self, delta):
-        current_time = time.time()
-        if last_update - current_time < MAP_UPDATE_RATE:
+        global last_update
+        current_time = pygame.time.get_ticks()
+        if current_time - last_update < MAP_UPDATE_RATE:
             return
         last_update = current_time
 
-        random_ticks = MAP_WIDTH * MAP_HEIGHT * RANDOM_TICK_PER_UPDATE_RATIO
+        random_ticks = math.ceil(MAP_WIDTH * MAP_HEIGHT * RANDOM_TICK_PER_UPDATE_RATIO)
         for i in range(random_ticks):
-            tile = random.randint(0, len(self.tiles))
+            tile = random.randint(0, len(self.tiles) - 1)
+            
             tile_type = self.tiles[tile]
             if tile_type in RANDOM_TICK_TRANSITIONS:
                 self.tiles[tile] = RANDOM_TICK_TRANSITIONS[tile_type]

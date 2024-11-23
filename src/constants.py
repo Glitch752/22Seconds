@@ -5,7 +5,7 @@ import pygame
 
 GAMENAME = "Funny Farming Game"
 WIDTH, HEIGHT = 1280, 720
-TILE_SIZE = 64
+TILE_SIZE = 80
 
 def lerp(a, b, t):
     return a + (b - a) * t

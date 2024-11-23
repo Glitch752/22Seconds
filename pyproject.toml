@@ -1,0 +1,16 @@
+[project]
+name = "farminggame"
+version = "0.1.0"
+description = "Add your description here"
+authors = []
+dependencies = [
+    "pygame>=2.6.1",
+]
+readme = "README.md"
+requires-python = ">= 3.12"
+
+[tool.rye.scripts]
+"start" = { cmd="python ./src/main.py", desc="Run the game" }
+
+[tool.rye]
+managed = false

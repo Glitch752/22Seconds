@@ -1,4 +1,4 @@
-from graphics import WIN, BIG_FONT, SMALL_FONT, draw_all_deferred, draw_floating_hint_texts
+from graphics import WIN, GIANT_FONT, SMALL_FONT, draw_all_deferred, draw_floating_hint_texts
 import pygame
 import constants
 from constants import WIDTH, HEIGHT, TILE_SIZE, clamp
@@ -31,7 +31,7 @@ def draw_main_menu():
             if (x + y) % 2 == 0:
                 pygame.draw.rect(WIN, '#abef70', (x * TILE_SIZE - t, y * TILE_SIZE - t, TILE_SIZE, TILE_SIZE))
 
-    WIN.blit(t := BIG_FONT.render(constants.GAMENAME, True, 'black'), (WIDTH // 2 - t.get_width() // 2, HEIGHT * 0.25 - t.get_height() // 2))
+    WIN.blit(t := GIANT_FONT.render(constants.GAMENAME, True, 'black'), (WIDTH // 2 - t.get_width() // 2, HEIGHT * 0.25 - t.get_height() // 2))
     WIN.blit(t := SMALL_FONT.render("Press Enter to Play", True, 'black'), (WIDTH // 2 - t.get_width() // 2, HEIGHT * 0.75 - t.get_height() // 2))    
 
 NON_INTERACTABLE_SELECTION_COLOR = 'yellow'
@@ -57,7 +57,7 @@ def handle_inputs(mx, my):
             run = False
         elif event.type == pygame.KEYDOWN:
             if game_state == GameState.MainMenu and event.key == pygame.K_RETURN:
-                game_state = False
+                game_state = GameState.Playing
         elif event.type == pygame.MOUSEBUTTONDOWN:
             if event.button == 1 and game_state == GameState.Playing: # LMB
                 if not player.mouse_down(mx, my):

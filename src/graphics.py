@@ -5,7 +5,7 @@ pygame.init()
 
 from constants import WIDTH, HEIGHT, TILE_SIZE
 
-GIANT_FONT = pygame.font.SysFont("Consolas", 36)
+GIANT_FONT = pygame.font.SysFont("Consolas", 96)
 BIG_FONT = pygame.font.SysFont("Consolas", 36)
 FONT = pygame.font.SysFont("Consolas", 30)
 SMALL_FONT = pygame.font.SysFont("Consolas", 24)

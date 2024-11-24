@@ -99,9 +99,10 @@ class Player:
     def get_non_interactable_items(self):
         return [items for items in self.get_item_list() if not is_interactable(items[0])]
 
-    def draw(self, win):
+    def draw_player(self, win):
         pygame.draw.circle(win, 'violet', (WIDTH // 2, HEIGHT // 2), self.radius)
 
+    def draw_ui(self, win):
         for i, (item, amount) in enumerate(self.get_non_interactable_items()):
             render_item_slot(win, item, amount, False, i, 0, False, True)
         for i, (item, amount) in enumerate(self.get_interactable_items()):

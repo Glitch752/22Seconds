@@ -1,9 +1,11 @@
 from functools import cache
 import pygame, os
+pygame.mixer.pre_init(44100, -16, 2, 512)
 pygame.init()
 
 from constants import WIDTH, HEIGHT, TILE_SIZE
 
+GIANT_FONT = pygame.font.SysFont("Consolas", 96)
 BIG_FONT = pygame.font.SysFont("Consolas", 36)
 FONT = pygame.font.SysFont("Consolas", 30)
 SMALL_FONT = pygame.font.SysFont("Consolas", 24)
@@ -61,6 +63,9 @@ def normal_font_render(text, color='white'):
 @cache
 def big_font_render(text, color='white'):
     return BIG_FONT.render(text, True, color)
+@cache
+def giant_font_render(text, color='white'):
+    return GIANT_FONT.render(text, True, color)
 
 TOOLTIP_BACKGROUND_COLOR = (0, 0, 0)
 TOOLTIP_PADDING = 5
@@ -98,51 +103,3 @@ def draw_floating_hint_texts(win, player_pos):
             i -= 1
         floating_hint_text.draw(win, player_pos)
         i += 1
-
-menuGFX = pygame.image.load(os.path.join("assets", "sprites", "menu.png"))
-
-def draw_patchrect(screen, rect, graphic=menuGFX):
-    
-    pw = rect.w // 32
-    ph = rect.h // 32
-    
-    for x in range(pw):
-        for y in range(ph):
-            ox = -1
-            oy = -1
-
-            if y == 0:
-                if x == 0:
-                    ox = 0
-                    oy = 0
-                elif x == pw - 1:
-                    ox = 2
-                    oy = 0
-                else:
-                    ox = 1
-                    oy = 0
-            elif y == ph - 1:
-                if x == 0:
-                    ox = 0
-                    oy = 2
-                elif x == pw - 1:
-                    ox = 2
-                    oy = 2
-                else:
-                    ox = 1
-                    oy = 2
-            elif x == 0:
-                ox = 0
-                oy = 1
-            elif x == pw - 1:
-                ox = 2
-                oy = 1
-            else:
-                ox = 1
-                oy = 1
-
-            if ox != -1 and oy != -1:
-                screen.blit(pygame.transform.scale(
-                    graphic.subsurface((ox * 8, oy * 8, 8, 8)),
-                    (32, 32)),
-                    (rect.x + x * 32, rect.y + y * 32))

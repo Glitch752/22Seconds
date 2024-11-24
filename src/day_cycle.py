@@ -34,16 +34,16 @@ def update_day_cycle(delta):
             night_transition()
 
 def day_transition():
-    print("DAYSLIFU")
-
-def night_transition():
     from main import set_game_state, GameState, player
-    print("NIGHTSLIFU")
+    print("DAYSLIFU")
     set_game_state(GameState.InShop)
     player.sell_items()
     sounds = player.profit // 10 + 1
     for i in range(sounds):
         queued_sounds.append((pygame.time.get_ticks() + i * 100, cha_ching_sound))
+
+def night_transition():
+    print("NIGHTSLIFU")
 
 # TODO: wtf refactor this out of day_cycle lol
 def play_sounds():

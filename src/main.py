@@ -28,6 +28,12 @@ def buy_item(item):
         
         buy_item_sound.play()
 
+def try_to_win_lmao():
+    if player.currency >= 100:
+        pygame.quit()
+        print("You win!")
+        exit()
+
 class GameState:
     MainMenu = 0
     Playing = 1
@@ -45,7 +51,8 @@ shop_buttons = [
     Button(f"Buy Onion Seed - {item_prices[ITEM_TYPE.ONION_SEEDS]}c", WIDTH // 2, HEIGHT // 2 + 40, buy_item, (ITEM_TYPE.ONION_SEEDS,)),
     Button(f"Buy Wheat Seed - {item_prices[ITEM_TYPE.WHEAT_SEEDS]}c", WIDTH // 2, HEIGHT // 2 + 80, buy_item, (ITEM_TYPE.WHEAT_SEEDS,)),
     Button(f"Buy Wall - {item_prices[ITEM_TYPE.WALL]}c", WIDTH // 2, HEIGHT // 2 + 120, buy_item, (ITEM_TYPE.WALL,)),
-    Button(f"Exit Shop", WIDTH // 2, HEIGHT // 2 + 200, set_game_state, (GameState.Playing,)),
+    Button(f"Pay for your medical needs - 1,000c", WIDTH // 2, HEIGHT // 2 + 160, try_to_win_lmao, ()),
+    Button(f"Exit Shop", WIDTH // 2, HEIGHT // 2 + 240, set_game_state, (GameState.Playing,)),
 ]
 
 day_track = os.path.join("assets", "audio", "main_track.wav")

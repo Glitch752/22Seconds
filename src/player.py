@@ -1,7 +1,8 @@
 import pygame
 from constants import WIDTH, HEIGHT, TILE_SIZE
 from map import MAP_WIDTH, MAP_HEIGHT
-from items import ITEM_TYPE, render_item_slot, is_interactable, get_slot_bounds
+from items import ITEM_NAMES, ITEM_TYPE, render_item_slot, is_interactable, get_slot_bounds
+from graphics import add_floating_text_hint, FloatingHintText
 
 class Player:
     def __init__(self, x, y, r=16):
@@ -15,15 +16,33 @@ class Player:
         self.items[ITEM_TYPE.CARROT_SEEDS] = 5
         self.items[ITEM_TYPE.WHEAT] = 4
         self.selected_slot = 0
+        self.slot_selection_floating_text = None
     
     def update_slot_selection(self, dy):
-        self.selected_slot += dy
+        selected_slot = self.selected_slot + dy
 
         interactable_items = len(self.get_interactable_items())
-        self.selected_slot %= interactable_items
+        selected_slot %= interactable_items
 
-        if self.selected_slot < 0:
-            self.selected_slot += interactable_items
+        if selected_slot < 0:
+            selected_slot += interactable_items
+        
+        self.select_slot(selected_slot)
+    
+    def select_slot(self, slot):
+        if slot == self.selected_slot:
+            return
+        self.selected_slot = slot
+        
+        if self.slot_selection_floating_text != None:
+            self.slot_selection_floating_text.manually_finished = True
+        self.slot_selection_floating_text = FloatingHintText(
+            ITEM_NAMES[self.get_selected_item()[0]],
+            (WIDTH // 2, HEIGHT - 150),
+            "black",
+            -5, 1.5, 0.25, False
+        )
+        add_floating_text_hint(self.slot_selection_floating_text)
     
     def update(self, mx, my, delta):
         move = pygame.Vector2(mx, my)
@@ -60,7 +79,7 @@ class Player:
         for i in range(len(self.get_interactable_items())):
             if pygame.Rect(get_slot_bounds(i, 0, True, True)).collidepoint((x, y)):
                 # TODO show name of item when selecting slots (and also when scrolling)
-                self.selected_slot = i
+                self.select_slot(i)
                 return True
         
         return False

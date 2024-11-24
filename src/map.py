@@ -1,7 +1,7 @@
 import pygame
 from constants import TILE_SIZE, WIDTH, HEIGHT
-from graphics import WHITE_IMAGE
-from items import ITEM_TYPE
+from graphics import WHITE_IMAGE, add_floating_text_hint, FloatingHintText
+from items import ITEM_NAMES, ITEM_TYPE
 import random
 import os
 import math
@@ -85,11 +85,13 @@ class Map:
             if tile_type in RANDOM_TICK_TRANSITIONS:
                 self.tiles[tile] = RANDOM_TICK_TRANSITIONS[tile_type]
     
-    def tilled(self, tile_index):
+    def tilled(self, tile_index, tile_center_pos):
         self.tiles[tile_index] = TILE_TYPE.TILLED_SOIL
         # TODO: Tilling sound effect
-    def planted(self, tile_index, item):
+        add_floating_text_hint(FloatingHintText(f"Tilled soil!", tile_center_pos, "white"))
+    def planted(self, tile_index, tile_center_pos, item):
         self.tiles[tile_index] = SEED_ITEM_TO_TILE[item]
+        add_floating_text_hint(FloatingHintText(f"-1 {ITEM_NAMES[item]}", tile_center_pos, "orange"))
         return -1
         # TODO: Planting sound effect
     
@@ -103,14 +105,18 @@ class Map:
         if tile_index < 0 or tile_index >= len(self.tiles):
             return
 
+        tile_center_pos = (
+            tile_x * TILE_SIZE + TILE_SIZE // 2 + WIDTH // 2,
+            tile_y * TILE_SIZE + TILE_SIZE // 2 + HEIGHT // 2 - TILE_SIZE
+        )
         tile_type = self.tiles[tile_index]
         match item:
             case ITEM_TYPE.HOE:
-                return (lambda: self.tilled(tile_index)) if tile_type == TILE_TYPE.SOIL else None
+                return (lambda: self.tilled(tile_index, tile_center_pos)) if tile_type == TILE_TYPE.SOIL else None
             case ITEM_TYPE.CARROT_SEEDS | ITEM_TYPE.WHEAT_SEEDS | ITEM_TYPE.ONION_SEEDS:
                 if tile_type != TILE_TYPE.TILLED_SOIL:
                     return None
-                return (lambda: self.planted(tile_index, item)) if item in SEED_ITEM_TO_TILE else None
+                return (lambda: self.planted(tile_index, tile_center_pos, item)) if item in SEED_ITEM_TO_TILE else None
 
     def draw(self, win: pygame.Surface, player, outline_x, outline_y, outline_color):
         x_start = math.floor((player.pos.x - WIDTH / 2) / TILE_SIZE)
@@ -133,5 +139,4 @@ class Map:
         x = outline_x * TILE_SIZE - player.pos.x + WIDTH // 2
         y = outline_y * TILE_SIZE - player.pos.y + HEIGHT // 2
         win.blit(WHITE_IMAGE, (x, y))
-        # TODO: Different outline color when hovering over something interactable
         pygame.draw.rect(win, outline_color, (x, y, TILE_SIZE, TILE_SIZE), 1)

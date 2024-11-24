@@ -1,5 +1,5 @@
 import graphics
-from graphics import WIN, BIG_FONT, SMALL_FONT, draw_all_deferred
+from graphics import WIN, BIG_FONT, SMALL_FONT, draw_all_deferred, draw_floating_hint_texts
 import pygame
 import constants
 from constants import WIDTH, HEIGHT, TILE_SIZE, clamp
@@ -107,6 +107,7 @@ def main():
             map.draw(WIN, player, selected_cell_x, selected_cell_y, selection_color)
             player.draw(WIN)
 
+        draw_floating_hint_texts(WIN, player.pos)
         draw_all_deferred()
 
         pygame.display.flip()

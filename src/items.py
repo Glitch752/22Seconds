@@ -17,7 +17,7 @@ class ITEM_TYPE:
     WHEAT = 5
     ONION = 6
 
-SLOT_BACKGROUND = (48, 29, 29)
+SLOT_BACKGROUND = (48, 29, 29) # TODO: Refactor out of items since we use this for other UI
 SLOT_BACKGROUND_SELECTED = (88, 59, 59)
 
 ITEM_IMAGES = {}

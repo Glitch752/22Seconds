@@ -1,6 +1,7 @@
 import pygame
 import pygame.midi
-from constants import TILE_SIZE, WIDTH, HEIGHT, spawn_particles_in_square
+from constants import TILE_SIZE, WIDTH, HEIGHT
+from particle import spawn_particles_in_square
 from graphics import WHITE_IMAGE, add_floating_text_hint, FloatingHintText
 from items import ITEM_NAMES, ITEM_TYPE
 import random
@@ -11,8 +12,10 @@ MAP_WIDTH = 50
 MAP_HEIGHT = 30
 
 MAP_UPDATE_RATE = 600
+PARTICLE_SPAWN_RATE = 200
 RANDOM_TICK_PER_UPDATE_RATIO = 0.01
-last_update = 0
+last_map_update = 0
+last_particle_spawn = 0
 
 class TILE_TYPE:
     GRASS = 0
@@ -39,9 +42,9 @@ RANDOM_TICK_TRANSITIONS[TILE_TYPE.PLANTED_ONION_1] = TILE_TYPE.PLANTED_ONION_2
 TILE_IMAGES = {}
 def add_tile_image(tile, path):
     try:
-        original_image = pygame.image.load(os.path.join("assets", "tiles", path))
+        original_image = pygame.image.load(os.path.join("assets", "tiles", path)).convert()
     except Exception as e:
-        original_image = pygame.image.load(os.path.join("assets", "sprites", "unknown.png")) # TEMPORARY
+        original_image = pygame.image.load(os.path.join("assets", "sprites", "unknown.png")).convert() # TEMPORARY
     image = pygame.transform.scale(original_image, (TILE_SIZE, TILE_SIZE))
     TILE_IMAGES[tile] = image
 
@@ -63,6 +66,12 @@ SEED_ITEM_TO_TILE[ITEM_TYPE.CARROT_SEEDS] = TILE_TYPE.PLANTED_CARROT_0
 SEED_ITEM_TO_TILE[ITEM_TYPE.WHEAT_SEEDS] = TILE_TYPE.PLANTED_WHEAT_0
 SEED_ITEM_TO_TILE[ITEM_TYPE.ONION_SEEDS] = TILE_TYPE.PLANTED_ONION_0
 
+TILE_PARTICLES = {}
+TILE_PARTICLES[TILE_TYPE.PLANTED_CARROT_2] = "yellow"
+TILE_PARTICLES[TILE_TYPE.PLANTED_WHEAT_2] = "yellow"
+TILE_PARTICLES[TILE_TYPE.PLANTED_ONION_2] = "yellow"
+TILE_PARTICLES[TILE_TYPE.TILLED_SOIL] = "brown"
+
 tilling_sound = pygame.mixer.Sound(os.path.join("assets", "audio", "till.wav"))
 planting_sound = pygame.mixer.Sound(os.path.join("assets", "audio", "plant.wav"))
 
@@ -74,12 +83,12 @@ class Map:
                 # TODO: Better generation
                 self.tiles.append(TILE_TYPE.SOIL)
     
-    def update(self, delta, particles):
-        global last_update
+    def update(self):
+        global last_map_update
         current_time = pygame.time.get_ticks()
-        if current_time - last_update < MAP_UPDATE_RATE:
+        if current_time - last_map_update < MAP_UPDATE_RATE:
             return
-        last_update = current_time
+        last_map_update = current_time
 
         random_ticks = math.ceil(MAP_WIDTH * MAP_HEIGHT * RANDOM_TICK_PER_UPDATE_RATIO)
         for i in range(random_ticks):
@@ -90,7 +99,6 @@ class Map:
             tile_type = self.tiles[tile]
             if tile_type in RANDOM_TICK_TRANSITIONS:
                 self.tiles[tile] = RANDOM_TICK_TRANSITIONS[tile_type]
-                # particles += spawn_particles_in_square(tx * TILE_SIZE + TILE_SIZE // 2, ty * TILE_SIZE + TILE_SIZE // 2, 'orange', radius=10, num = 5)
     
     def tilled(self, tile_index, tile_center_pos):
         self.tiles[tile_index] = TILE_TYPE.TILLED_SOIL
@@ -127,6 +135,12 @@ class Map:
                 return (lambda: self.planted(tile_index, tile_center_pos, item)) if item in SEED_ITEM_TO_TILE else None
 
     def draw(self, win: pygame.Surface, player, outline_x, outline_y, outline_color):
+        global last_particle_spawn
+        current_time = pygame.time.get_ticks()
+        add_particles = current_time - last_particle_spawn > PARTICLE_SPAWN_RATE
+        if add_particles:
+            last_particle_spawn = current_time
+
         x_start = math.floor((player.pos.x - WIDTH / 2) / TILE_SIZE)
         x_end = math.ceil((player.pos.x + WIDTH / 2) / TILE_SIZE)
         y_start = math.floor((player.pos.y - HEIGHT / 2) / TILE_SIZE)
@@ -138,6 +152,8 @@ class Map:
                 y = tile_y * TILE_SIZE - player.pos.y + HEIGHT // 2
                 if tile_x >= 0 and tile_x < MAP_WIDTH and tile_y >= 0 and tile_y < MAP_HEIGHT:
                     tile_type = self.tiles[tile_x * MAP_HEIGHT + tile_y]
+                    if add_particles and tile_type in TILE_PARTICLES:
+                        spawn_particles_in_square(tile_x * TILE_SIZE + TILE_SIZE//2, tile_y * TILE_SIZE + TILE_SIZE//2, TILE_PARTICLES[tile_type], TILE_SIZE//2, 1)
                 else:
                     tile_type = TILE_TYPE.SOIL
                 blits.append([TILE_IMAGES[tile_type], (x, y)])

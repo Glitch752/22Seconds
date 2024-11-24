@@ -1,6 +1,7 @@
 import pygame
 from constants import *
 from graphics import *
+from items import ITEM_SLOT_BORDER_RADIUS, SLOT_BACKGROUND
 
 class DialogueManager:
     def __init__(self) -> None:
@@ -45,7 +46,12 @@ class DialogueManager:
 
     def draw(self, win):
         if len(self.lines):
-            draw_patchrect(win, pygame.Rect(WIDTH // 2 - 300, HEIGHT * 0.9 - 75, 600, 150))
+            pygame.draw.rect(
+                win,
+                SLOT_BACKGROUND,
+                pygame.Rect(WIDTH // 2 - 300, 20, 600, 120),
+                border_radius=ITEM_SLOT_BORDER_RADIUS
+            )
 
             y = HEIGHT * 0.9 - 70
 

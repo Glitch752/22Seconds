@@ -42,6 +42,7 @@ class Player:
         self.crazed = False
         self.crazed_speed_multiplier = 3
         self.crazed_timer = 0
+        self.slowdown_time = 0
         
         # Set after running out of an item so the player doesn't
         # accidentally start using the next item available.
@@ -117,6 +118,9 @@ class Player:
         else:
             self.crazed_timer += delta
     
+            if self.slowdown_time:
+                self.slowdown_time = max(0, self.slowdown_time - delta)
+
             if mx or my:
                 self.timer += delta
 
@@ -135,8 +139,11 @@ class Player:
                 move = move.normalize()
 
                 self.angle = 270 - math.degrees(a)
-
-            move *= self.speed * self.crazed_speed_multiplier * delta
+    
+            if self.slowdown_time:
+                move *= self.speed * 0.5 * self.crazed_speed_multiplier * delta
+            else:
+                move *= self.speed * self.crazed_speed_multiplier * delta
 
 
         # Scuffed collision
@@ -149,7 +156,7 @@ class Player:
 
             if self.crazed:
                 map.tiles[pos[0] * MAP_HEIGHT + pos[1]] = TILE_TYPE.DESTROYED_WALL
-                # TODO REFLECTION MATH
+                self.slowdown_time = 0.75
         
         old_pos = self.pos.copy()
         self.pos[1] += move[1]
@@ -158,8 +165,8 @@ class Player:
 
             if self.crazed:
                 map.tiles[pos[0] * MAP_HEIGHT + pos[1]] = TILE_TYPE.DESTROYED_WALL
-                # TODO REFLECTION MATH
-        
+                self.slowdown_time = 0.75
+
         if self.pos.x <= 0:
             self.pos.x = 0
         if self.pos.x >= MAP_WIDTH * TILE_SIZE:
@@ -169,6 +176,12 @@ class Player:
             self.pos.y = 0
         if self.pos.y >= MAP_HEIGHT * TILE_SIZE:
             self.pos.y = MAP_HEIGHT * TILE_SIZE
+
+        if self.crazed:
+            tile_x, tile_y = int(self.pos.x // TILE_SIZE), int(self.pos.y // TILE_SIZE)
+
+            if map.tiles[tile_x * MAP_HEIGHT + tile_y] in [TILE_TYPE.PLANTED_CARROT_0, TILE_TYPE.PLANTED_CARROT_1, TILE_TYPE.PLANTED_CARROT_2, TILE_TYPE.PLANTED_ONION_0, TILE_TYPE.PLANTED_ONION_1, TILE_TYPE.PLANTED_ONION_2, TILE_TYPE.PLANTED_WHEAT_0, TILE_TYPE.PLANTED_WHEAT_1, TILE_TYPE.PLANTED_WHEAT_2]:
+                map.tiles[tile_x * MAP_HEIGHT + tile_y] = TILE_TYPE.SOIL
 
         interactable_items = len(self.get_interactable_items())
         if self.selected_slot >= interactable_items:

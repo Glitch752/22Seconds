@@ -1,4 +1,4 @@
-import graphics
+import random
 from graphics import WIN, BIG_FONT, SMALL_FONT, draw_all_deferred, draw_floating_hint_texts
 import pygame
 import constants
@@ -8,10 +8,12 @@ from map import Map, MAP_WIDTH, MAP_HEIGHT, TILE_TYPE
 import math
 from dialogue import DialogueManager
 from day_cycle import draw_day_fading, update_day_cycle, get_brightness
+from particle import Particle
 
 player = Player(MAP_WIDTH * TILE_SIZE // 2, MAP_HEIGHT * TILE_SIZE // 2, TILE_SIZE // 2 - 10)
 map = Map()
 dialogue = DialogueManager()
+particles: list[Particle] = []
 
 def update_player_movement(delta):
     keys = pygame.key.get_pressed()
@@ -68,9 +70,8 @@ def handle_inputs(mx, my):
     else:
         selection_color = NOTHING_SELECTION_COLOR
 
-
 def main():
-    global run, main_menu, selected_cell_x, selected_cell_y, selection_color
+    global run, main_menu, selected_cell_x, selected_cell_y, selection_color, particles
     
     clock = pygame.time.Clock()
     delta = 0
@@ -110,6 +111,12 @@ def main():
 
         # GAMEPLAY
         if not main_menu:
+            for p in particles[::-1]:
+                p.update(delta)
+
+                if p.done:
+                    particles.remove(p)
+            
             update_player_movement(delta)
             dialogue.update(delta)
             update_day_cycle(delta)
@@ -121,13 +128,17 @@ def main():
         if main_menu:
             draw_main_menu()
         else:
-            map.update(delta)
+            map.update(delta, particles)
             map.draw(WIN, player, selected_cell_x, selected_cell_y, selection_color)
             player.draw_player(WIN)
+            
+            for p in particles:
+                p.draw(WIN, player.pos)
             
             draw_day_fading(WIN)
             
             player.draw_ui(WIN)
+            
             dialogue.draw(WIN)
             draw_floating_hint_texts(WIN, player.pos)
         

@@ -1,6 +1,6 @@
 import pygame
 import pygame.midi
-from constants import TILE_SIZE, WIDTH, HEIGHT
+from constants import TILE_SIZE, WIDTH, HEIGHT, spawn_particles_in_square
 from graphics import WHITE_IMAGE, add_floating_text_hint, FloatingHintText
 from items import ITEM_NAMES, ITEM_TYPE
 import random
@@ -74,7 +74,7 @@ class Map:
                 # TODO: Better generation
                 self.tiles.append(TILE_TYPE.SOIL)
     
-    def update(self, delta):
+    def update(self, delta, particles):
         global last_update
         current_time = pygame.time.get_ticks()
         if current_time - last_update < MAP_UPDATE_RATE:
@@ -85,9 +85,12 @@ class Map:
         for i in range(random_ticks):
             tile = random.randint(0, len(self.tiles) - 1)
             
+            tx, ty = tile % MAP_WIDTH, tile // MAP_WIDTH
+
             tile_type = self.tiles[tile]
             if tile_type in RANDOM_TICK_TRANSITIONS:
                 self.tiles[tile] = RANDOM_TICK_TRANSITIONS[tile_type]
+                # particles += spawn_particles_in_square(tx * TILE_SIZE + TILE_SIZE // 2, ty * TILE_SIZE + TILE_SIZE // 2, 'orange', radius=10, num = 5)
     
     def tilled(self, tile_index, tile_center_pos):
         self.tiles[tile_index] = TILE_TYPE.TILLED_SOIL

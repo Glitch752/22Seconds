@@ -13,6 +13,7 @@ class Player:
         self.speed = 300 # Pixels per second
 
         self.image = pygame.transform.scale(img := pygame.image.load(os.path.join("assets", "sprites", "player.png")), (img.get_width() * 4, img.get_height() * 4))
+        self.current_image = None
         self.frame = 0
         self.timer = 0
 
@@ -36,6 +37,8 @@ class Player:
 
         self.profit = 0
         self.currency = 0
+
+        self.crazed = False
     
     def sell_items(self):
         self.sold_items = {}
@@ -54,8 +57,6 @@ class Player:
         self.items[ITEM_TYPE.WHEAT] = 0
 
         self.currency += self.profit
-
-        self.current_image = None
     def get_sold(self, item_type):
         return self.sold_items[item_type] if item_type in self.sold_items else 0
 

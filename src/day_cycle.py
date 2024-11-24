@@ -32,9 +32,10 @@ def day_transition():
     print("DAYSLIFU")
 
 def night_transition():
-    from main import set_game_state, GameState
+    from main import set_game_state, GameState, player
     print("NIGHTSLIFU")
     set_game_state(GameState.InShop)
+    player.sell_items()
     
 
 def draw_day_fading(win: pygame.Surface):

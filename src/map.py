@@ -133,8 +133,9 @@ class Map:
             item_type = ITEM_TYPE.WHEAT
         else:
             i = 3
-        add_floating_text_hint(FloatingHintText(f"+1 {['Carrot', 'Onion', 'Wheat', 'ERROR'][i]}", tile_center_pos, "green"))
-        player.items[item_type] += 1
+        r = random.randint(1, 2)
+        add_floating_text_hint(FloatingHintText(f"+{r} {['Carrot', 'Onion', 'Wheat', 'ERROR'][i]}", tile_center_pos, "green"))
+        player.items[item_type] += r
     def planted(self, tile_index, tile_center_pos, item):
         self.tiles[tile_index] = SEED_ITEM_TO_TILE[item]
         planting_sound.play()

@@ -22,6 +22,8 @@ class DialogueManager:
         self.queue.append(lines)
     
     def on_confirm(self):
+        # TODO: If still speaking, finish the line instead of skipping it.
+        
         self.done = False
         self.current_char = 0
         self.current_line = 0
@@ -29,8 +31,11 @@ class DialogueManager:
         if len(self.queue):
             self.lines = self.queue.pop(0)
     
+    def is_active(self):
+        return len(self.lines) and not self.done
+    
     def update(self, delta):
-        if self.done or not len(self.lines):
+        if self.is_active():
             return
         
         self.timer += delta

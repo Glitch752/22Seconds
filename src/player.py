@@ -23,12 +23,8 @@ class Player:
         self.items[ITEM_TYPE.HOE] = 1
         self.items[ITEM_TYPE.AXE] = 1
         # TEMPORARY
-        self.items[ITEM_TYPE.ONION] = 17
-        self.items[ITEM_TYPE.WHEAT] = 4
-        self.items[ITEM_TYPE.CARROT] = 10
-        self.items[ITEM_TYPE.CARROT_SEEDS] = 24
-        self.items[ITEM_TYPE.ONION_SEEDS] = 10
-        self.items[ITEM_TYPE.WHEAT_SEEDS] = 11
+        self.items[ITEM_TYPE.CARROT] = 25
+        self.items[ITEM_TYPE.CARROT_SEEDS] = 30
         self.items[ITEM_TYPE.WALL] = 20
 
         self.sold_items = {}
@@ -55,13 +51,13 @@ class Player:
 
         # TODO: Wtf
         self.profit += item_prices[ITEM_TYPE.CARROT] * self.items[ITEM_TYPE.CARROT]
-        self.sold_items[ITEM_TYPE.CARROT] = self.items[ITEM_TYPE.CARROT]
+        self.sold_items[ITEM_TYPE.CARROT] = self.items[ITEM_TYPE.CARROT] if ITEM_TYPE.CARROT in self.items else 0
         self.items[ITEM_TYPE.CARROT] = 0
         self.profit += item_prices[ITEM_TYPE.ONION] * self.items[ITEM_TYPE.ONION]
-        self.sold_items[ITEM_TYPE.ONION] = self.items[ITEM_TYPE.ONION]
+        self.sold_items[ITEM_TYPE.ONION] = self.items[ITEM_TYPE.ONION] if ITEM_TYPE.ONION in self.items else 0
         self.items[ITEM_TYPE.ONION] = 0
         self.profit += item_prices[ITEM_TYPE.WHEAT] * self.items[ITEM_TYPE.WHEAT]
-        self.sold_items[ITEM_TYPE.WHEAT] = self.items[ITEM_TYPE.WHEAT]
+        self.sold_items[ITEM_TYPE.WHEAT] = self.items[ITEM_TYPE.WHEAT] if ITEM_TYPE.WHEAT in self.items else 0
         self.items[ITEM_TYPE.WHEAT] = 0
 
         self.currency += self.profit

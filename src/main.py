@@ -18,18 +18,18 @@ dialogue = DialogueManager()
 
 buy_item_sound = pygame.mixer.Sound(os.path.join("assets", "audio", "chaChing.wav")) # TODO: Better purchase sound
 
-def buy_item(item):
+def buy_item(item, received_quantity=1):
     price = item_prices[item]
 
     if player.currency >= price:
         player.currency -= price
 
-        player.items[item] += 1
+        player.items[item] += received_quantity
         
         buy_item_sound.play()
 
 def try_to_win_lmao():
-    if player.currency >= 100:
+    if player.currency >= 1000:
         pygame.quit()
         print("You win!")
         exit()
@@ -60,7 +60,7 @@ shop_buttons = [
     Button(f"Buy Carrot Seed - {item_prices[ITEM_TYPE.CARROT_SEEDS]}c", WIDTH // 2, HEIGHT // 2, buy_item, (ITEM_TYPE.CARROT_SEEDS,)),
     Button(f"Buy Onion Seed - {item_prices[ITEM_TYPE.ONION_SEEDS]}c", WIDTH // 2, HEIGHT // 2 + 40, buy_item, (ITEM_TYPE.ONION_SEEDS,)),
     Button(f"Buy Wheat Seed - {item_prices[ITEM_TYPE.WHEAT_SEEDS]}c", WIDTH // 2, HEIGHT // 2 + 80, buy_item, (ITEM_TYPE.WHEAT_SEEDS,)),
-    Button(f"Buy Wall - {item_prices[ITEM_TYPE.WALL]}c", WIDTH // 2, HEIGHT // 2 + 120, buy_item, (ITEM_TYPE.WALL,)),
+    Button(f"Buy 5 Walls - {item_prices[ITEM_TYPE.WALL]}c", WIDTH // 2, HEIGHT // 2 + 120, buy_item, (ITEM_TYPE.WALL,)),
     Button(f"Pay for your medical needs - 1,000c", WIDTH // 2, HEIGHT // 2 + 160, try_to_win_lmao, ()),
     Button(f"Exit Shop", WIDTH // 2, HEIGHT // 2 + 240, exit_shop, ()),
 ]
@@ -131,20 +131,21 @@ def handle_inputs(mx, my):
         if event.type == pygame.QUIT:
             run = False
         elif event.type == pygame.KEYDOWN:
-            if game_state == GameState.MainMenu and event.key == pygame.K_RETURN:
+            if not dialogue.is_active():
+                dialogue.on_confirm()
+            elif game_state == GameState.MainMenu and event.key == pygame.K_RETURN:
                 set_game_state(GameState.Playing)
-            if game_state == GameState.Playing and event.key == pygame.K_p:
+            elif game_state == GameState.Playing and event.key == pygame.K_p:
                 set_game_state(GameState.InShop)
                 player.sell_items()
-            if pygame.K_0 <= event.key <= pygame.K_9:
+            elif pygame.K_0 <= event.key <= pygame.K_9:
                 player_slots = len(player.get_interactable_items())
                 slot = max(1, min(player_slots, event.key - pygame.K_0))
                 player.select_slot(player_slots - slot)
         elif event.type == pygame.MOUSEBUTTONDOWN:
             if event.button == 1:
                 if game_state == GameState.Playing: # LMB
-                    if not player.mouse_down(mx, my):
-                        dialogue.on_confirm()
+                    player.mouse_down(mx, my)
                 elif game_state == GameState.InShop:
                     for b in shop_buttons:
                         b.on_click(mx, my)

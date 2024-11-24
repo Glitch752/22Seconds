@@ -30,6 +30,8 @@ class TILE_TYPE:
     PLANTED_ONION_0 = 9
     PLANTED_ONION_1 = 10
     PLANTED_ONION_2 = 11
+    WALL = 12
+    DESTROYED_WALL = 13
 
 RANDOM_TICK_TRANSITIONS = {}
 RANDOM_TICK_TRANSITIONS[TILE_TYPE.PLANTED_CARROT_0] = TILE_TYPE.PLANTED_CARROT_1
@@ -60,6 +62,8 @@ add_tile_image(TILE_TYPE.PLANTED_WHEAT_2, "planted_wheat_2.png")
 add_tile_image(TILE_TYPE.PLANTED_ONION_0, "planted_onion_0.png")
 add_tile_image(TILE_TYPE.PLANTED_ONION_1, "planted_onion_1.png")
 add_tile_image(TILE_TYPE.PLANTED_ONION_2, "planted_onion_2.png")
+add_tile_image(TILE_TYPE.WALL, "wall.png")
+add_tile_image(TILE_TYPE.DESTROYED_WALL, "destroyed_wall.png")
 
 SEED_ITEM_TO_TILE = {}
 SEED_ITEM_TO_TILE[ITEM_TYPE.CARROT_SEEDS] = TILE_TYPE.PLANTED_CARROT_0
@@ -70,6 +74,8 @@ TILE_PARTICLES = {}
 TILE_PARTICLES[TILE_TYPE.PLANTED_CARROT_2] = "orange"
 TILE_PARTICLES[TILE_TYPE.PLANTED_WHEAT_2] = "yellow"
 TILE_PARTICLES[TILE_TYPE.PLANTED_ONION_2] = "purple"
+
+COLLISION_TILES = set([TILE_TYPE.WALL])
 
 tilling_sound = pygame.mixer.Sound(os.path.join("assets", "audio", "till.wav"))
 harvesting_sound = pygame.mixer.Sound(os.path.join("assets", "audio", "pickUp.wav"))
@@ -100,6 +106,12 @@ class Map:
             if tile_type in RANDOM_TICK_TRANSITIONS:
                 self.tiles[tile] = RANDOM_TICK_TRANSITIONS[tile_type]
     
+    def is_collision(self, tile_x, tile_y):
+        tile_index = int(tile_x * MAP_HEIGHT + tile_y)
+        if tile_index < 0 or tile_index >= len(self.tiles):
+            return False
+        return self.tiles[tile_index] in COLLISION_TILES   
+     
     def tilled(self, tile_index, tile_center_pos):
         self.tiles[tile_index] = TILE_TYPE.TILLED_SOIL
         tilling_sound.play()
@@ -128,6 +140,11 @@ class Map:
         planting_sound.play()
         add_floating_text_hint(FloatingHintText(f"-1 {ITEM_NAMES[item]}", tile_center_pos, "orange"))
         return -1
+    def wall_placed(self, tile_index, tile_center_pos):
+        self.tiles[tile_index] = TILE_TYPE.WALL
+        planting_sound.play() # TODO: THUNK sound
+        add_floating_text_hint(FloatingHintText(f"Placed wall!", tile_center_pos, "white"))
+        return -1
     
     def get_interaction(self, tile_x, tile_y, item, player):
         """
@@ -152,6 +169,9 @@ class Map:
                     return (lambda: self.harvested(tile_index, tile_center_pos, player))
                 else:
                     return None
+            case ITEM_TYPE.WALL:
+                if tile_type == TILE_TYPE.SOIL:
+                    return (lambda: self.wall_placed(tile_index, tile_center_pos))
             case ITEM_TYPE.CARROT_SEEDS | ITEM_TYPE.WHEAT_SEEDS | ITEM_TYPE.ONION_SEEDS:
                 if tile_type != TILE_TYPE.TILLED_SOIL:
                     return None

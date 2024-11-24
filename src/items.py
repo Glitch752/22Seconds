@@ -16,6 +16,17 @@ class ITEM_TYPE:
     CARROT = 4
     WHEAT = 5
     ONION = 6
+    WALL = 7
+
+item_prices = {
+    ITEM_TYPE.CARROT: 5, # sell
+    ITEM_TYPE.ONION: 10, # sell
+    ITEM_TYPE.WHEAT: 15, # sell
+    ITEM_TYPE.CARROT_SEEDS: 10, # buy
+    ITEM_TYPE.ONION_SEEDS: 15, # buy
+    ITEM_TYPE.WHEAT_SEEDS: 20, # buy
+    ITEM_TYPE.WALL: 25 # buy
+}
 
 SLOT_BACKGROUND = (48, 29, 29) # TODO: Refactor out of items since we use this for other UI
 SLOT_BACKGROUND_SELECTED = (88, 59, 59)
@@ -37,6 +48,7 @@ add_item_data(ITEM_TYPE.ONION_SEEDS, "onion_seeds.png", "Onion seeds", True)
 add_item_data(ITEM_TYPE.CARROT, "carrot_sprite.png", "Carrot", False)
 add_item_data(ITEM_TYPE.WHEAT, "wheat_sprite.png", "Wheat", False)
 add_item_data(ITEM_TYPE.ONION, "onion_sprite.png", "Onion", False)
+add_item_data(ITEM_TYPE.WALL, "wall_sprite.png", "Wall", True)
 
 def is_interactable(item):
     return INTERACTABLE_ITEMS[item]
@@ -66,14 +78,14 @@ def render_item_slot(win: pygame.Surface, item, quantity, selected, slot_x, slot
         border_radius=ITEM_SLOT_BORDER_RADIUS
     )
 
+    item_image = ITEM_IMAGES[item]
+    win.blit(item_image, (x + ITEM_SLOT_PADDING, y + ITEM_SLOT_PADDING))
+
     if quantity != 1:
         win.blit(
             q := graphics.small_font_render(str(quantity)),
             (x + slot_size - q.get_width() - 2, y + slot_size - q.get_height() - 2)
         )
-
-    item_image = ITEM_IMAGES[item]
-    win.blit(item_image, (x + ITEM_SLOT_PADDING, y + ITEM_SLOT_PADDING))
 
     mouse_pos = pygame.mouse.get_pos()
     if pygame.Rect(bounds).collidepoint(mouse_pos):

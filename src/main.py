@@ -9,10 +9,14 @@ import math
 from dialogue import DialogueManager
 from day_cycle import draw_day_fading, update_day_cycle, get_brightness
 from particle import Particle, draw_particles, update_particles
+import os
 
 player = Player(MAP_WIDTH * TILE_SIZE // 2, MAP_HEIGHT * TILE_SIZE // 2, TILE_SIZE // 2 - 10)
 map = Map()
 dialogue = DialogueManager()
+
+day_track = pygame.mixer.Sound(os.path.join("assets", "audio", "main_track.wav"))
+night_track = pygame.mixer.Sound(os.path.join("assets", "audio", "track2.wav"))
 
 def update_player_movement(delta):
     keys = pygame.key.get_pressed()
@@ -59,7 +63,7 @@ def handle_inputs(mx, my):
     
     if not player.over_ui(mx, my) and not main_menu: # This is a bit of a mess
         selected_item = player.get_selected_item()[0]
-        interaction = map.get_interaction(selected_cell_x, selected_cell_y, selected_item)
+        interaction = map.get_interaction(selected_cell_x, selected_cell_y, selected_item, player)
         selection_color = INTERACTABLE_SELECTION_COLOR if interaction else NON_INTERACTABLE_SELECTION_COLOR
         
         if interaction != None and pygame.mouse.get_pressed(3)[0]:
@@ -86,6 +90,8 @@ def main():
         "Fuck you, Harold!",
     ])
     dialogue.on_confirm()
+
+    day_track.play(loops=-1)
 
     while run:
         delta = clock.tick_busy_loop(60) / 1000 # Fixes stuttering for some reason
@@ -123,7 +129,7 @@ def main():
             draw_main_menu()
         else:
             map.update()
-            map.draw(WIN, player, selected_cell_x, selected_cell_y, selection_color)
+            map.draw(WIN, delta, player, selected_cell_x, selected_cell_y, selection_color)
             
             draw_particles(WIN, player.pos)
             player.draw_player(WIN)

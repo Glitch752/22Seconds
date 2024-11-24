@@ -5,6 +5,7 @@ pygame.init()
 
 from constants import WIDTH, HEIGHT, TILE_SIZE
 
+GIANT_FONT = pygame.font.SysFont("Consolas", 36)
 BIG_FONT = pygame.font.SysFont("Consolas", 36)
 FONT = pygame.font.SysFont("Consolas", 30)
 SMALL_FONT = pygame.font.SysFont("Consolas", 24)
@@ -62,6 +63,9 @@ def normal_font_render(text, color='white'):
 @cache
 def big_font_render(text, color='white'):
     return BIG_FONT.render(text, True, color)
+@cache
+def giant_font_render(text, color='white'):
+    return GIANT_FONT.render(text, True, color)
 
 TOOLTIP_BACKGROUND_COLOR = (0, 0, 0)
 TOOLTIP_PADDING = 5

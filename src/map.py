@@ -12,7 +12,7 @@ MAP_WIDTH = 50
 MAP_HEIGHT = 30
 
 MAP_UPDATE_RATE = 600
-PARTICLE_SPAWN_RATE = 200
+PARTICLES_PER_TILE_SECOND = 5
 RANDOM_TICK_PER_UPDATE_RATIO = 0.01
 last_map_update = 0
 last_particle_spawn = 0
@@ -67,12 +67,12 @@ SEED_ITEM_TO_TILE[ITEM_TYPE.WHEAT_SEEDS] = TILE_TYPE.PLANTED_WHEAT_0
 SEED_ITEM_TO_TILE[ITEM_TYPE.ONION_SEEDS] = TILE_TYPE.PLANTED_ONION_0
 
 TILE_PARTICLES = {}
-TILE_PARTICLES[TILE_TYPE.PLANTED_CARROT_2] = "yellow"
+TILE_PARTICLES[TILE_TYPE.PLANTED_CARROT_2] = "orange"
 TILE_PARTICLES[TILE_TYPE.PLANTED_WHEAT_2] = "yellow"
-TILE_PARTICLES[TILE_TYPE.PLANTED_ONION_2] = "yellow"
-TILE_PARTICLES[TILE_TYPE.TILLED_SOIL] = "brown"
+TILE_PARTICLES[TILE_TYPE.PLANTED_ONION_2] = "purple"
 
 tilling_sound = pygame.mixer.Sound(os.path.join("assets", "audio", "till.wav"))
+harvesting_sound = pygame.mixer.Sound(os.path.join("assets", "audio", "pickUp.wav"))
 planting_sound = pygame.mixer.Sound(os.path.join("assets", "audio", "plant.wav"))
 
 class Map:
@@ -104,6 +104,25 @@ class Map:
         self.tiles[tile_index] = TILE_TYPE.TILLED_SOIL
         tilling_sound.play()
         add_floating_text_hint(FloatingHintText(f"Tilled soil!", tile_center_pos, "white"))
+    
+    def harvested(self, tile_index, tile_center_pos, player):
+        item = self.tiles[tile_index]
+        self.tiles[tile_index] = TILE_TYPE.TILLED_SOIL
+        harvesting_sound.play()
+        item_type = None
+        if item == TILE_TYPE.PLANTED_CARROT_2:
+            i = 0
+            item_type = ITEM_TYPE.CARROT
+        elif item == TILE_TYPE.PLANTED_ONION_2:
+            i = 1
+            item_type = ITEM_TYPE.ONION
+        elif item == TILE_TYPE.PLANTED_WHEAT_2:
+            i = 2
+            item_type = ITEM_TYPE.WHEAT
+        else:
+            i = 3
+        add_floating_text_hint(FloatingHintText(f"+1 {['Carrot', 'Onion', 'Wheat', 'ERROR'][i]}", tile_center_pos, "green"))
+        player.items[item_type] += 1
     def planted(self, tile_index, tile_center_pos, item):
         self.tiles[tile_index] = SEED_ITEM_TO_TILE[item]
         planting_sound.play()
@@ -111,7 +130,7 @@ class Map:
         return -1
         # TODO: Planting sound effect
     
-    def get_interaction(self, tile_x, tile_y, item):
+    def get_interaction(self, tile_x, tile_y, item, player):
         """
         Returns a lambda that will execute the proper interaction based on the selected tile and item,
         or None if no interaction should occur.
@@ -128,19 +147,18 @@ class Map:
         tile_type = self.tiles[tile_index]
         match item:
             case ITEM_TYPE.HOE:
-                return (lambda: self.tilled(tile_index, tile_center_pos)) if tile_type == TILE_TYPE.SOIL else None
+                if tile_type == TILE_TYPE.SOIL:
+                    return (lambda: self.tilled(tile_index, tile_center_pos))
+                elif tile_type in [TILE_TYPE.PLANTED_CARROT_2, TILE_TYPE.PLANTED_ONION_2, TILE_TYPE.PLANTED_WHEAT_2]:
+                    return (lambda: self.harvested(tile_index, tile_center_pos, player))
+                else:
+                    return None
             case ITEM_TYPE.CARROT_SEEDS | ITEM_TYPE.WHEAT_SEEDS | ITEM_TYPE.ONION_SEEDS:
                 if tile_type != TILE_TYPE.TILLED_SOIL:
                     return None
                 return (lambda: self.planted(tile_index, tile_center_pos, item)) if item in SEED_ITEM_TO_TILE else None
 
-    def draw(self, win: pygame.Surface, player, outline_x, outline_y, outline_color):
-        global last_particle_spawn
-        current_time = pygame.time.get_ticks()
-        add_particles = current_time - last_particle_spawn > PARTICLE_SPAWN_RATE
-        if add_particles:
-            last_particle_spawn = current_time
-
+    def draw(self, win: pygame.Surface, delta, player, outline_x, outline_y, outline_color):
         x_start = math.floor((player.pos.x - WIDTH / 2) / TILE_SIZE)
         x_end = math.ceil((player.pos.x + WIDTH / 2) / TILE_SIZE)
         y_start = math.floor((player.pos.y - HEIGHT / 2) / TILE_SIZE)
@@ -152,7 +170,7 @@ class Map:
                 y = tile_y * TILE_SIZE - player.pos.y + HEIGHT // 2
                 if tile_x >= 0 and tile_x < MAP_WIDTH and tile_y >= 0 and tile_y < MAP_HEIGHT:
                     tile_type = self.tiles[tile_x * MAP_HEIGHT + tile_y]
-                    if add_particles and tile_type in TILE_PARTICLES:
+                    if random.random() < delta * PARTICLES_PER_TILE_SECOND and tile_type in TILE_PARTICLES:
                         spawn_particles_in_square(tile_x * TILE_SIZE + TILE_SIZE//2, tile_y * TILE_SIZE + TILE_SIZE//2, TILE_PARTICLES[tile_type], TILE_SIZE//2, 1)
                 else:
                     tile_type = TILE_TYPE.SOIL

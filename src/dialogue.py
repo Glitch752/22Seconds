@@ -1,6 +1,6 @@
 import pygame
-from constants import *
-from graphics import *
+from constants import WIDTH
+from graphics import small_font_render, normal_font_render
 from items import ITEM_SLOT_BORDER_RADIUS, SLOT_BACKGROUND
 
 class DialogueManager:
@@ -53,7 +53,7 @@ class DialogueManager:
                 border_radius=ITEM_SLOT_BORDER_RADIUS
             )
 
-            y = HEIGHT * 0.9 - 70
+            y = 25
 
             for i, line in enumerate(self.lines):
                 if i <= self.current_line:

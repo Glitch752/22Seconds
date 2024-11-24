@@ -1,4 +1,5 @@
 import pygame
+import pygame.midi
 from constants import TILE_SIZE, WIDTH, HEIGHT
 from graphics import WHITE_IMAGE, add_floating_text_hint, FloatingHintText
 from items import ITEM_NAMES, ITEM_TYPE
@@ -62,6 +63,9 @@ SEED_ITEM_TO_TILE[ITEM_TYPE.CARROT_SEEDS] = TILE_TYPE.PLANTED_CARROT_0
 SEED_ITEM_TO_TILE[ITEM_TYPE.WHEAT_SEEDS] = TILE_TYPE.PLANTED_WHEAT_0
 SEED_ITEM_TO_TILE[ITEM_TYPE.ONION_SEEDS] = TILE_TYPE.PLANTED_ONION_0
 
+tilling_sound = pygame.mixer.Sound(os.path.join("assets", "audio", "till.wav"))
+planting_sound = pygame.mixer.Sound(os.path.join("assets", "audio", "plant.wav"))
+
 class Map:
     def __init__(self):
         self.tiles = []
@@ -87,10 +91,11 @@ class Map:
     
     def tilled(self, tile_index, tile_center_pos):
         self.tiles[tile_index] = TILE_TYPE.TILLED_SOIL
-        # TODO: Tilling sound effect
+        tilling_sound.play()
         add_floating_text_hint(FloatingHintText(f"Tilled soil!", tile_center_pos, "white"))
     def planted(self, tile_index, tile_center_pos, item):
         self.tiles[tile_index] = SEED_ITEM_TO_TILE[item]
+        planting_sound.play()
         add_floating_text_hint(FloatingHintText(f"-1 {ITEM_NAMES[item]}", tile_center_pos, "orange"))
         return -1
         # TODO: Planting sound effect

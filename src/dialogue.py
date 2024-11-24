@@ -17,6 +17,7 @@ class DialogueManager:
         self.current_line = 0
         self.timer = 0
         self.done = False
+        self.time_per_letter = 0.05
 
     def queue_dialogue(self, lines):
         self.queue.append(lines)
@@ -46,8 +47,8 @@ class DialogueManager:
         
         self.timer += delta
 
-        if self.timer > 0.1:
-            self.timer -= 0.1
+        if self.timer > self.time_per_letter:
+            self.timer -= self.time_per_letter
 
             self.current_char += 1
 

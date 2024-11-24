@@ -1,5 +1,11 @@
 from functools import cache
 import pygame, os
+import platform
+
+if platform.system() == "Windows":
+    import ctypes
+    ctypes.windll.user32.SetProcessDPIAware()
+
 pygame.mixer.pre_init(44100, -16, 2, 512)
 pygame.init()
 

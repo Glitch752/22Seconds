@@ -4,7 +4,7 @@ import pygame
 # Tile grid is based on top left of tiles
 
 GAMENAME = "Funny Farming Game"
-WIDTH, HEIGHT = 1280//2, 720//2
+WIDTH, HEIGHT = 1280, 720
 TILE_SIZE = 80
 
 DAY_LENGTH = 8 # Seconds

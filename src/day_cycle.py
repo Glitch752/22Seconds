@@ -3,7 +3,7 @@ from constants import DAY_LENGTH, NIGHT_LENGTH, DUSK_DAWN_LENGTH, WIDTH, HEIGHT
 from graphics import giant_font_render
 import os
 
-day_song = pygame.mixer.Sound(os.path.join("assets", "audio", "track2.wav"))
+day_song = pygame.mixer.Sound(os.path.join("assets", "audio", "main_track.wav"))
 night_song = pygame.mixer.Sound(os.path.join("assets", "audio", "track2.wav"))
 
 day_cycle_time = 0

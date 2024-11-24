@@ -44,9 +44,9 @@ def add_tile_image(tile, path):
     image = pygame.transform.scale(original_image, (TILE_SIZE, TILE_SIZE))
     TILE_IMAGES[tile] = image
 
-add_tile_image(TILE_TYPE.GRASS, "grass.png")
-add_tile_image(TILE_TYPE.SOIL, "soil.png")
-add_tile_image(TILE_TYPE.TILLED_SOIL, "tilled_soil.png")
+add_tile_image(TILE_TYPE.GRASS, "short_grass.png")
+add_tile_image(TILE_TYPE.SOIL, "dirt.png")
+add_tile_image(TILE_TYPE.TILLED_SOIL, "farmland.png")
 add_tile_image(TILE_TYPE.PLANTED_CARROT_0, "planted_carrot_0.png")
 add_tile_image(TILE_TYPE.PLANTED_CARROT_1, "planted_carrot_1.png")
 add_tile_image(TILE_TYPE.PLANTED_CARROT_2, "planted_carrot_2.png")

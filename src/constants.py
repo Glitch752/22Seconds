@@ -7,7 +7,7 @@ GAMENAME = "22 Seconds"
 WIDTH, HEIGHT = 1280, 720
 TILE_SIZE = 80
 
-DAY_LENGTH = 120 # Seconds
+DAY_LENGTH = 90 # Seconds
 DUSK_DAWN_LENGTH = 10 # Seconds
 NIGHT_LENGTH = 22 # Seconds
 

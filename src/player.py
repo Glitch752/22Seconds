@@ -12,7 +12,8 @@ class Player:
         self.radius = r
         self.speed = 300 # Pixels per second
 
-        self.image = pygame.transform.scale(img := pygame.image.load(os.path.join("assets", "sprites", "player.png")), (img.get_width() * 4, img.get_height() * 4))
+        self.image = pygame.transform.scale(img := pygame.image.load(os.path.join("assets", "sprites", "player_normal.png")), (img.get_width() * 4, img.get_height() * 4))
+        self.crazed_image = pygame.transform.scale(img := pygame.image.load(os.path.join("assets", "sprites", "player_crazed.png")), (img.get_width() * 4, img.get_height() * 4))
         self.current_image = None
         self.frame = 0
         self.timer = 0
@@ -129,7 +130,7 @@ class Player:
                 
                 self.frame = (self.frame + 1) % 4
             
-            self.current_image = self.image.subsurface((self.image.get_height() * self.frame, 0, self.image.get_height(), self.image.get_height()))
+            self.current_image = self.crazed_image.subsurface((self.crazed_image.get_height() * self.frame, 0, self.crazed_image.get_height(), self.crazed_image.get_height()))
 
             a = math.atan2(my, mx) + self.crazed_timer
 

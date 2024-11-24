@@ -15,3 +15,10 @@ def lerp(a, b, t):
 
 def clamp(x, mi, ma):
     return max(mi, min(x, ma))
+
+def spawn_particles_in_square(x, y, color, radius=5, num=20):
+    from particle import Particle
+    import random
+    return [
+        Particle(x + random.randint(-radius, radius), y + random.randint(-radius, radius), color) for _ in range(num)
+    ]

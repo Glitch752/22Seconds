@@ -128,7 +128,6 @@ class Map:
         planting_sound.play()
         add_floating_text_hint(FloatingHintText(f"-1 {ITEM_NAMES[item]}", tile_center_pos, "orange"))
         return -1
-        # TODO: Planting sound effect
     
     def get_interaction(self, tile_x, tile_y, item, player):
         """

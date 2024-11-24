@@ -35,7 +35,7 @@ class DialogueManager:
         return len(self.lines) and not self.done
     
     def update(self, delta):
-        if self.is_active():
+        if not self.is_active():
             return
         
         self.timer += delta

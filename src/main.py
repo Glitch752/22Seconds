@@ -67,25 +67,35 @@ shop_buttons = [
     Button(f"Exit Shop", WIDTH // 2, HEIGHT // 2 + 240, exit_shop, ()),
 ]
 
-intro_cutscene_text = [
-    "I think it was like, 1 in the morning.",
-    "I woke up the whole house...",
-    "    screamed my lungs out...",
-    "I don't know what to do anymore...",
-    " ",
-    "Mhm... Has it been just the screaming,",
-    "or have you been experiencing any other symptoms?",
-    "Shortness of breath, rashing, anything like that?",
-    " ",
-    "I guess... there's the dread.",
-    "    Every night, I go to sleep terrified.",
-    "    It's like... something is going to happen.",
-    "And when I wake up, usually it's nothing... but...",
-    " ",
-    "Mhm?",
-    " ",
-    "Recently, there's been some... thing... getting into my farm.",
-    "It destroys almost everything I have..."
+intro_cutscene_text = [[
+        "You",
+        "I think it was like, 1 in the morning.",
+        "I woke up the whole house...",
+        "    screamed my lungs out...",
+        "I don't know what to do anymore...",
+    ],
+    [
+        "Doctor",
+        "Mhm... Has it been just the screaming,",
+        "or have you been experiencing any other symptoms?",
+        "Shortness of breath, rashing, anything like that?",
+    ],
+    [
+        "You",
+        "I guess... there's the dread.",
+        "    Every night, I go to sleep terrified.",
+        "    It's like... something is going to happen.",
+        "And when I wake up, usually it's nothing... but...",
+    ],
+    [
+        "Doctor",
+        "Mhm?",
+    ],
+    [
+        "You",
+        "Recently, there's been some... thing... getting into my farm.",
+        "It destroys almost everything I have..."
+    ]
 ]
 
 def update_player_movement(delta):
@@ -200,19 +210,8 @@ def main():
 
     cutscene_timer = 0
 
-    dialogue.queue_dialogue([
-        "Harold",
-        "Hello, World!",
-        "I am Harold!",
-        "Harold",
-        "Hello, World!",
-        "I am Harold!",
-        "Harold",
-        "Hello, World!",
-        "I am Harold!",
-        "Harold",
-        "Hello, World!"
-    ])
+    for box in intro_cutscene_text:
+        dialogue.queue_dialogue(box)
 
     dialogue.on_confirm()
 

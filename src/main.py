@@ -38,6 +38,8 @@ class GameState:
     MainMenu = 0
     Playing = 1
     InShop = 2
+    Cutscene_Intro = 3
+    Cutscene_Outro = 4
 game_state = GameState.MainMenu
 
 def set_game_state(state):
@@ -65,6 +67,27 @@ shop_buttons = [
     Button(f"Exit Shop", WIDTH // 2, HEIGHT // 2 + 240, exit_shop, ()),
 ]
 
+intro_cutscene_text = [
+    "I think it was like, 1 in the morning.",
+    "I woke up the whole house...",
+    "    screamed my lungs out...",
+    "I don't know what to do anymore...",
+    " ",
+    "Mhm... Has it been just the screaming,",
+    "or have you been experiencing any other symptoms?",
+    "Shortness of breath, rashing, anything like that?",
+    " ",
+    "I guess... there's the dread.",
+    "    Every night, I go to sleep terrified.",
+    "    It's like... something is going to happen.",
+    "And when I wake up, usually it's nothing... but...",
+    " ",
+    "Mhm?",
+    " ",
+    "Recently, there's been some... thing... getting into my farm.",
+    "It destroys almost everything I have..."
+]
+
 def update_player_movement(delta):
     keys = pygame.key.get_pressed()
     movement_x = (keys[pygame.K_d] or keys[pygame.K_RIGHT]) - (keys[pygame.K_a] or keys[pygame.K_LEFT])
@@ -81,6 +104,7 @@ def draw_main_menu():
 
     WIN.blit(t := GIANT_FONT.render(constants.GAMENAME, True, 'black'), (WIDTH // 2 - t.get_width() // 2, HEIGHT * 0.25 - t.get_height() // 2))
     WIN.blit(t := SMALL_FONT.render("Press Enter to Play", True, 'black'), (WIDTH // 2 - t.get_width() // 2, HEIGHT * 0.75 - t.get_height() // 2))    
+    WIN.blit(t := SMALL_FONT.render("Made by Brody, Mikey, and Elly", True, 'black'), (WIDTH // 2 - t.get_width() // 2, HEIGHT * 0.9 - t.get_height() // 2))    
 
 def draw_currency():
     WIN.blit(big_font_render(f"Currency: {player.currency}c", 'black'), (17, 17))
@@ -134,7 +158,7 @@ def handle_inputs(mx, my):
             if not dialogue.is_active():
                 dialogue.on_confirm()
             elif game_state == GameState.MainMenu and event.key == pygame.K_RETURN:
-                set_game_state(GameState.Playing)
+                set_game_state(GameState.Cutscene_Intro)
             elif game_state == GameState.Playing and event.key == pygame.K_p:
                 set_game_state(GameState.InShop)
                 player.sell_items()
@@ -173,6 +197,8 @@ def main():
     
     clock = pygame.time.Clock()
     delta = 0
+
+    cutscene_timer = 0
 
     dialogue.queue_dialogue([
         "Harold",
@@ -235,6 +261,19 @@ def main():
         elif game_state == GameState.InShop:
             # TODO: Draw shop
             draw_shop()
+        elif game_state == GameState.Cutscene_Intro:
+            cutscene_timer += delta
+            if cutscene_timer >= len(intro_cutscene_text) + 5:
+                cutscene_timer = 0
+                game_state = GameState.Playing
+            WIN.fill('black')
+            y = HEIGHT * 0.1
+            for i, line in enumerate(intro_cutscene_text):
+                if cutscene_timer >= i:
+                    WIN.blit(t := normal_font_render(line, 'white'), (WIDTH // 5, y))
+                    y += t.get_height()
+        elif game_state == GameState.Cutscene_Outro:
+            pass
         else:
             map.update()
             map.draw(WIN, delta, player, selected_cell_x, selected_cell_y, selection_color)

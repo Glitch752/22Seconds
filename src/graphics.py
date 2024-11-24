@@ -12,9 +12,9 @@ pygame.init()
 from constants import WIDTH, HEIGHT, TILE_SIZE
 
 GIANT_FONT = pygame.font.Font(os.path.join("assets", "NotoSans-SemiBold.ttf"), 96)
-BIG_FONT = pygame.font.SysFont("Consolas", 36)
-FONT = pygame.font.SysFont("Consolas", 30)
-SMALL_FONT = pygame.font.SysFont("Consolas", 24)
+BIG_FONT = pygame.font.SysFont("Consolas", 30)
+FONT = pygame.font.SysFont("Consolas", 24)
+SMALL_FONT = pygame.font.SysFont("Consolas", 20)
 WIN = pygame.display.set_mode((WIDTH, HEIGHT))
 
 WHITE_IMAGE = pygame.Surface((TILE_SIZE, TILE_SIZE), pygame.SRCALPHA)

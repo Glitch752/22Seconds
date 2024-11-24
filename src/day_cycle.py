@@ -13,6 +13,10 @@ day_face_surface = pygame.Surface((WIDTH, HEIGHT))
 day_face_surface.fill((0, 0, 15))
 NIGHT_OPACITY = 150
 
+cha_ching_sound = pygame.mixer.Sound(os.path.join("assets", "audio", "chaChing.wav"))
+
+queued_sounds = []
+
 def update_day_cycle(delta):
     global day_cycle_time, was_day
     
@@ -36,6 +40,20 @@ def night_transition():
     print("NIGHTSLIFU")
     set_game_state(GameState.InShop)
     player.sell_items()
+    sounds = player.profit // 10 + 1
+    for i in range(sounds):
+        queued_sounds.append((pygame.time.get_ticks() + i * 100, cha_ching_sound))
+
+# TODO: wtf refactor this out of day_cycle lol
+def play_sounds():
+    i = 0
+    while i < len(queued_sounds):
+        sound = queued_sounds[i]
+        if sound[0] <= pygame.time.get_ticks():
+            sound[1].play()
+            queued_sounds.pop(i)
+            i -= 1
+        i += 1
     
 
 def draw_day_fading(win: pygame.Surface):

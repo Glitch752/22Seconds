@@ -5,7 +5,7 @@ from constants import WIDTH, HEIGHT, TILE_SIZE, clamp
 from player import Player
 from map import Map, MAP_WIDTH, MAP_HEIGHT
 from dialogue import DialogueManager
-from day_cycle import draw_day_fading, update_day_cycle
+from day_cycle import draw_day_fading, play_sounds, update_day_cycle
 from particle import draw_particles, update_particles
 from items import ITEM_TYPE, item_prices
 from ui import *
@@ -16,6 +16,8 @@ player = Player(MAP_WIDTH * TILE_SIZE // 2, MAP_HEIGHT * TILE_SIZE // 2, TILE_SI
 map = Map()
 dialogue = DialogueManager()
 
+buy_item_sound = pygame.mixer.Sound(os.path.join("assets", "audio", "chaChing.wav")) # TODO: Better purchase sound
+
 def buy_item(item):
     price = item_prices[item]
 
@@ -23,6 +25,8 @@ def buy_item(item):
         player.currency -= price
 
         player.items[item] += 1
+        
+        buy_item_sound.play()
 
 class GameState:
     MainMenu = 0
@@ -185,6 +189,7 @@ def main():
         )
 
         handle_inputs(mx, my)
+        play_sounds()
 
         # GAMEPLAY
         if game_state == GameState.Playing:

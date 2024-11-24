@@ -70,13 +70,14 @@ def draw_shop():
             if (x + y) % 2 == 0:
                 pygame.draw.rect(WIN, '#abef70', (x * TILE_SIZE - t, y * TILE_SIZE - t, TILE_SIZE, TILE_SIZE))
 
+    # TODO: Cards instead of buttons
     WIN.blit(t := big_font_render("Shop", 'black'), (WIDTH // 2 - t.get_width() // 2, 25))
     y = 85
-    WIN.blit(t := normal_font_render(f"Carrots Sold: {player.old_items[ITEM_TYPE.CARROT]}", 'black'), (WIDTH // 2 - t.get_width() // 2, y))
+    WIN.blit(t := normal_font_render(f"Carrots Sold: {player.get_sold(ITEM_TYPE.CARROT)}", 'black'), (WIDTH // 2 - t.get_width() // 2, y))
     y += t.get_height()
-    WIN.blit(t := normal_font_render(f"Onions Sold: {player.old_items[ITEM_TYPE.ONION]}", 'black'), (WIDTH // 2 - t.get_width() // 2, y))
+    WIN.blit(t := normal_font_render(f"Onions Sold: {player.get_sold(ITEM_TYPE.ONION)}", 'black'), (WIDTH // 2 - t.get_width() // 2, y))
     y += t.get_height()
-    WIN.blit(t := normal_font_render(f"Wheat Sold: {player.old_items[ITEM_TYPE.WHEAT]}", 'black'), (WIDTH // 2 - t.get_width() // 2, y))
+    WIN.blit(t := normal_font_render(f"Wheat Sold: {player.get_sold(ITEM_TYPE.WHEAT)}", 'black'), (WIDTH // 2 - t.get_width() // 2, y))
     y += t.get_height()
     WIN.blit(t := normal_font_render(f"Profit: {player.profit}", 'black'), (WIDTH // 2 - t.get_width() // 2, y))
     
@@ -104,9 +105,9 @@ def handle_inputs(mx, my):
             run = False
         elif event.type == pygame.KEYDOWN:
             if game_state == GameState.MainMenu and event.key == pygame.K_RETURN:
-                game_state = GameState.Playing
+                set_game_state(GameState.Playing)
             if game_state == GameState.Playing and event.key == pygame.K_p:
-                game_state = GameState.InShop
+                set_game_state(GameState.InShop)
                 player.sell_items()
         elif event.type == pygame.MOUSEBUTTONDOWN:
             if event.button == 1:
@@ -216,6 +217,3 @@ def main():
         pygame.display.flip()
 
     pygame.quit()
-
-if __name__ == "__main__":
-    main()

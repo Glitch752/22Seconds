@@ -10,7 +10,7 @@ readme = "README.md"
 requires-python = ">= 3.12"
 
 [tool.rye.scripts]
-"start" = { cmd="python ./src/main.py", desc="Run the game" }
+"start" = { cmd="python ./src/__main__.py", desc="Run the game" }
 
 [tool.rye]
 managed = false

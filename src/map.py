@@ -110,7 +110,7 @@ class Map:
         tile_index = int(tile_x * MAP_HEIGHT + tile_y)
         if tile_index < 0 or tile_index >= len(self.tiles):
             return False
-        return self.tiles[tile_index] in COLLISION_TILES   
+        return self.tiles[tile_index] in COLLISION_TILES
      
     def tilled(self, tile_index, tile_center_pos):
         self.tiles[tile_index] = TILE_TYPE.TILLED_SOIL

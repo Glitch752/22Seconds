@@ -29,7 +29,7 @@ class Player:
         self.items[ITEM_TYPE.WHEAT_SEEDS] = 11
         self.items[ITEM_TYPE.WALL] = 20
 
-        self.old_items = {}
+        self.sold_items = {}
         
         self.selected_slot = 0
         self.slot_selection_floating_text = None
@@ -38,20 +38,26 @@ class Player:
         self.currency = 0
     
     def sell_items(self):
-        self.old_items = self.items.copy()
+        self.sold_items = {}
 
         self.profit = 0
 
+        # TODO: Wtf
         self.profit += item_prices[ITEM_TYPE.CARROT] * self.items[ITEM_TYPE.CARROT]
+        self.sold_items[ITEM_TYPE.CARROT] = self.items[ITEM_TYPE.CARROT]
         self.items[ITEM_TYPE.CARROT] = 0
         self.profit += item_prices[ITEM_TYPE.ONION] * self.items[ITEM_TYPE.ONION]
+        self.sold_items[ITEM_TYPE.ONION] = self.items[ITEM_TYPE.ONION]
         self.items[ITEM_TYPE.ONION] = 0
         self.profit += item_prices[ITEM_TYPE.WHEAT] * self.items[ITEM_TYPE.WHEAT]
+        self.sold_items[ITEM_TYPE.WHEAT] = self.items[ITEM_TYPE.WHEAT]
         self.items[ITEM_TYPE.WHEAT] = 0
 
         self.currency += self.profit
 
         self.current_image = None
+    def get_sold(self, item_type):
+        return self.sold_items[item_type] if item_type in self.sold_items else 0
 
     def update_slot_selection(self, dy):
         selected_slot = self.selected_slot + dy
@@ -74,7 +80,7 @@ class Player:
         self.slot_selection_floating_text = FloatingHintText(
             ITEM_NAMES[self.get_selected_item()[0]],
             (WIDTH // 2, HEIGHT - 150),
-            "black",
+            "white",
             -5, 1.5, 0.25, False
         )
         add_floating_text_hint(self.slot_selection_floating_text)
@@ -98,12 +104,14 @@ class Player:
             self.angle = 270 - math.degrees(math.atan2(move.y, move.x))
 
         move *= self.speed * delta
+        
         # Scuffed collision
-        old_pos = self.pos
+        old_pos = self.pos.copy()
         self.pos[0] += move[0]
         if self.is_colliding(map):
             self.pos = old_pos
-        old_pos = self.pos
+        
+        old_pos = self.pos.copy()
         self.pos[1] += move[1]
         if self.is_colliding(map):
             self.pos = old_pos
@@ -123,13 +131,15 @@ class Player:
             self.selected_slot = interactable_items - 1
 
     def is_colliding(self, map):
-        possible_range = self.radius // TILE_SIZE + 1
-        for i in range(-possible_range, possible_range + 1):
-            for j in range(-possible_range, possible_range + 1):
-                if map.is_collision(self.pos.x // TILE_SIZE + i, self.pos.y // TILE_SIZE + j):
-                    return pygame.Rect(i * TILE_SIZE, j * TILE_SIZE, TILE_SIZE, TILE_SIZE).colliderect(
-                        self.pos.x - self.radius, self.pos.y - self.radius, self.radius * 2, self.radius * 2
-                    )
+        min_x, min_y, max_x, max_y = self.pos.x - self.radius, self.pos.y - self.radius, self.pos.x + self.radius, self.pos.y + self.radius
+        min_tile_x = int(min_x // TILE_SIZE)
+        min_tile_y = int(min_y // TILE_SIZE)
+        max_tile_x = int(max_x // TILE_SIZE)
+        max_tile_y = int(max_y // TILE_SIZE)
+        for x in range(min_tile_x, max_tile_x+1):
+            for y in range(min_tile_y, max_tile_y+1):
+                if map.is_collision(x, y):
+                    return True
         return False
 
     def over_ui(self, x, y):

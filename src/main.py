@@ -1,14 +1,13 @@
-import random
 from graphics import WIN, BIG_FONT, SMALL_FONT, draw_all_deferred, draw_floating_hint_texts
 import pygame
 import constants
 from constants import WIDTH, HEIGHT, TILE_SIZE, clamp
 from player import Player
-from map import Map, MAP_WIDTH, MAP_HEIGHT, TILE_TYPE
-import math
+from map import Map, MAP_WIDTH, MAP_HEIGHT
 from dialogue import DialogueManager
-from day_cycle import draw_day_fading, update_day_cycle, get_brightness
-from particle import Particle, draw_particles, update_particles
+from day_cycle import draw_day_fading, update_day_cycle
+from particle import draw_particles, update_particles
+import math
 import os
 
 player = Player(MAP_WIDTH * TILE_SIZE // 2, MAP_HEIGHT * TILE_SIZE // 2, TILE_SIZE // 2 - 10)
@@ -42,26 +41,31 @@ NOTHING_SELECTION_COLOR = 'gray'
 selected_cell_x = 0
 selected_cell_y = 0
 selection_color = NON_INTERACTABLE_SELECTION_COLOR
-main_menu = True
+
+class GameState:
+    MainMenu = 0
+    Playing = 1
+    InShop = 2
+game_state = GameState.MainMenu
 run = True
 
 def handle_inputs(mx, my):
-    global run, main_menu, selected_cell_x, selected_cell_y, selection_color
+    global run, game_state, selected_cell_x, selected_cell_y, selection_color
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             run = False
         elif event.type == pygame.KEYDOWN:
-            if main_menu and event.key == pygame.K_RETURN:
-                main_menu = False
+            if game_state == GameState.MainMenu and event.key == pygame.K_RETURN:
+                game_state = False
         elif event.type == pygame.MOUSEBUTTONDOWN:
-            if event.button == 1 and not main_menu: # LMB
+            if event.button == 1 and game_state == GameState.Playing: # LMB
                 if not player.mouse_down(mx, my):
                     dialogue.on_confirm()
         elif event.type == pygame.MOUSEWHEEL:
             player.update_slot_selection(event.y)
     
-    if not player.over_ui(mx, my) and not main_menu: # This is a bit of a mess
+    if not player.over_ui(mx, my) and game_state == GameState.Playing: # This is a bit of a mess
         selected_item = player.get_selected_item()[0]
         interaction = map.get_interaction(selected_cell_x, selected_cell_y, selected_item, player)
         selection_color = INTERACTABLE_SELECTION_COLOR if interaction else NON_INTERACTABLE_SELECTION_COLOR
@@ -74,7 +78,7 @@ def handle_inputs(mx, my):
         selection_color = NOTHING_SELECTION_COLOR
 
 def main():
-    global run, main_menu, selected_cell_x, selected_cell_y, selection_color, particles
+    global run, game_state, selected_cell_x, selected_cell_y, selection_color, particles
     
     clock = pygame.time.Clock()
     delta = 0
@@ -115,18 +119,21 @@ def main():
         handle_inputs(mx, my)
 
         # GAMEPLAY
-        if not main_menu:
+        if game_state == GameState.Playing:
             update_particles(delta)
             update_player_movement(delta)
             dialogue.update(delta)
             update_day_cycle(delta)
     
         # DRAW LOOP
-        WIN.fill("#bbff70" if main_menu else "#000000")
+        WIN.fill("#bbff70" if game_state == GameState.MainMenu else "#000000")
         
         # DRAW CHECKERBOARD TILES
-        if main_menu:
+        if game_state == GameState.MainMenu:
             draw_main_menu()
+        elif game_state == GameState.InShop:
+            # TODO: Draw shop
+            pass
         else:
             map.update()
             map.draw(WIN, delta, player, selected_cell_x, selected_cell_y, selection_color)
@@ -136,10 +143,10 @@ def main():
             
             draw_day_fading(WIN)
             
-            player.draw_ui(WIN)
-            
-            dialogue.draw(WIN)
             draw_floating_hint_texts(WIN, player.pos)
+            
+            player.draw_ui(WIN)
+            dialogue.draw(WIN)
         
         draw_all_deferred()
 

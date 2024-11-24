@@ -6,7 +6,7 @@ import os
 import random
 
 speaking_sounds = [
-    pygame.mixer.Sound(os.path.join("assets", "audio", f"speak_{str(sound).rjust(2, "0")}.wav")) for sound in range(1, 15)
+    pygame.mixer.Sound(os.path.join("assets", "audio", f"speak_{str(sound).rjust(2, '0')}.wav")) for sound in range(1, 15)
 ]
 
 class DialogueManager:

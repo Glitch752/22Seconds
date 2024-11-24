@@ -58,6 +58,8 @@ def handle_inputs(mx, my):
         elif event.type == pygame.KEYDOWN:
             if game_state == GameState.MainMenu and event.key == pygame.K_RETURN:
                 game_state = GameState.Playing
+            if game_state == GameState.Playing and event.key == pygame.K_p:
+                game_state = GameState.InShop
         elif event.type == pygame.MOUSEBUTTONDOWN:
             if event.button == 1 and game_state == GameState.Playing: # LMB
                 if not player.mouse_down(mx, my):

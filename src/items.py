@@ -30,13 +30,13 @@ def add_item_data(item, path, name, interactable):
     INTERACTABLE_ITEMS[item] = interactable
     ITEM_NAMES[item] = name
 
-add_item_data(ITEM_TYPE.HOE, "hoe.png", "Hoe", True)
+add_item_data(ITEM_TYPE.HOE, "hoe_sprite.png", "Hoe", True)
 add_item_data(ITEM_TYPE.CARROT_SEEDS, "carrot_seeds.png", "Carrot seeds", True)
 add_item_data(ITEM_TYPE.WHEAT_SEEDS, "wheat_seeds.png", "Wheat seeds", True)
 add_item_data(ITEM_TYPE.ONION_SEEDS, "onion_seeds.png", "Onion seeds", True)
-add_item_data(ITEM_TYPE.CARROT, "carrot.png", "Carrot", False)
-add_item_data(ITEM_TYPE.WHEAT, "wheat.png", "Wheat", False)
-add_item_data(ITEM_TYPE.ONION, "onion.png", "Onion", False)
+add_item_data(ITEM_TYPE.CARROT, "carrot_sprite.png", "Carrot", False)
+add_item_data(ITEM_TYPE.WHEAT, "wheat_sprite.png", "Wheat", False)
+add_item_data(ITEM_TYPE.ONION, "onion_sprite.png", "Onion", False)
 
 def is_interactable(item):
     return INTERACTABLE_ITEMS[item]

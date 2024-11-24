@@ -11,10 +11,10 @@ class DialogueManager:
         self.timer = 0
         self.done = False
 
-    def QueueDialogue(self, lines):
+    def queue_dialogue(self, lines):
         self.queue.append(lines)
     
-    def OnConfirm(self):
+    def on_confirm(self):
         self.done = False
         self.current_char = 0
         self.current_line = 0
@@ -22,7 +22,7 @@ class DialogueManager:
         if len(self.queue):
             self.lines = self.queue.pop(0)
     
-    def Update(self, delta):
+    def update(self, delta):
         if self.done or not len(self.lines):
             return
         
@@ -43,7 +43,7 @@ class DialogueManager:
                 
                 self.current_char = 0
 
-    def Draw(self, win):
+    def draw(self, win):
         if len(self.lines):
             draw_patchrect(win, pygame.Rect(WIDTH // 2 - 300, HEIGHT * 0.9 - 75, 600, 150))
 

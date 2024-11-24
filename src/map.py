@@ -39,7 +39,7 @@ RANDOM_TICK_TRANSITIONS[TILE_TYPE.PLANTED_ONION_1] = TILE_TYPE.PLANTED_ONION_2
 TILE_IMAGES = {}
 def add_tile_image(tile, path):
     try:
-        original_image = pygame.image.load(os.path.join("assets", "sprites", path))
+        original_image = pygame.image.load(os.path.join("assets", "tiles", path))
     except Exception as e:
         original_image = pygame.image.load(os.path.join("assets", "sprites", "unknown.png")) # TEMPORARY
     image = pygame.transform.scale(original_image, (TILE_SIZE, TILE_SIZE))

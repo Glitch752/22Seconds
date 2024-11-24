@@ -86,16 +86,43 @@ def main():
     dialogue.queue_dialogue([
         "Harold",
         "Hello, World!",
-        "I am Harold!"
+        "I am Harold!",
+        "Harold",
+        "Hello, World!",
+        "I am Harold!",
+        "Harold",
+        "Hello, World!",
+        "I am Harold!",
+        "Harold",
+        "Hello, World!"
     ])
 
     dialogue.queue_dialogue([
-        "Gerald",
-        "Fuck you, Harold!",
+        "You: I think it was like, 1 in the morning. ",
+        "You: I woke up the whole house… ",
+        "screamed my lungs out…",
+        "You: I don't know what to do anymore…",
+        "Doctor: Mhm… Has it been just the screaming, ",
+        "or have you been experiencing any other symptoms? ",
+        "Doctor: Shortness of breath, rashing, anything like that?",
+        "You: I guess… There's the dread. ",
+        "Every night, I go to sleep terrified. ",
+        "It's like… something is going to happen. ",
+        "You: And when I wake up, usually it's nothing… ",
+        "but…",
+        "Doctor: Mhm?",
+        "You: Recently, there's been some… thing… ",
+        "getting into my farm. ",
+        "You: It destroys almost everything I have…",
+        "*time skip*",
+        "Doctor: I see. I’ve talked with my colleagues, ",
+        "and we believe that you are (have? idk) ä̵̧̡̢̛̮̳̪̙͔̺̩̦́̾̈́̃̂͜͝f̷̩̣̻͖̫̙̫̼̰͙̙̆̎̊͐͆̐̃̅͊̕͜͝a̶̹̣̻̺͆̔̍̓̑́̋̓̌̅̊͛̕͝ͅf̴̙̟̯͙͒̈́̍̊̌̚a̵̢͍̳̩̓͛̓̌̂͐̐͒͠f̴̡̘̼̭̱͇̥̖̬̀̔̈̄̓̂̀̍͂͌̚͘͜͝ͅa̵̩̾̈́̔͛̔͒̀͆́̚͝d̸̨̪̥͉͍͙̪̱̅̓͂͑̎̇́̓̇͘ͅ",
+        "Doctor: We can begin medication right away.",
+        "*time skip*",
     ])
     dialogue.on_confirm()
 
-    day_track.play(loops=-1)
+    # day_track.play(loops=-1)
 
     while run:
         delta = clock.tick_busy_loop(60) / 1000 # Fixes stuttering for some reason

@@ -24,7 +24,11 @@ class Player:
         self.items[ITEM_TYPE.AXE] = 1
         # TEMPORARY
         self.items[ITEM_TYPE.CARROT] = 25
+        self.items[ITEM_TYPE.ONION] = 0
+        self.items[ITEM_TYPE.WHEAT] = 0
         self.items[ITEM_TYPE.CARROT_SEEDS] = 30
+        self.items[ITEM_TYPE.ONION_SEEDS] = 0
+        self.items[ITEM_TYPE.WHEAT_SEEDS] = 0
         self.items[ITEM_TYPE.WALL] = 20
 
         self.sold_items = {}
@@ -176,8 +180,11 @@ class Player:
         if self.crazed:
             tile_x, tile_y = int(self.pos.x // TILE_SIZE), int(self.pos.y // TILE_SIZE)
 
-            if map.tiles[tile_x * MAP_HEIGHT + tile_y] in [TILE_TYPE.PLANTED_CARROT_0, TILE_TYPE.PLANTED_CARROT_1, TILE_TYPE.PLANTED_CARROT_2, TILE_TYPE.PLANTED_ONION_0, TILE_TYPE.PLANTED_ONION_1, TILE_TYPE.PLANTED_ONION_2, TILE_TYPE.PLANTED_WHEAT_0, TILE_TYPE.PLANTED_WHEAT_1, TILE_TYPE.PLANTED_WHEAT_2]:
-                map.tiles[tile_x * MAP_HEIGHT + tile_y] = TILE_TYPE.SOIL
+            try:
+                if map.tiles[tile_x * MAP_HEIGHT + tile_y] in [TILE_TYPE.PLANTED_CARROT_0, TILE_TYPE.PLANTED_CARROT_1, TILE_TYPE.PLANTED_CARROT_2, TILE_TYPE.PLANTED_ONION_0, TILE_TYPE.PLANTED_ONION_1, TILE_TYPE.PLANTED_ONION_2, TILE_TYPE.PLANTED_WHEAT_0, TILE_TYPE.PLANTED_WHEAT_1, TILE_TYPE.PLANTED_WHEAT_2]:
+                    map.tiles[tile_x * MAP_HEIGHT + tile_y] = TILE_TYPE.SOIL
+            except IndexError:
+                pass
 
         interactable_items = len(self.get_interactable_items())
         if self.selected_slot >= interactable_items:

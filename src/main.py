@@ -5,8 +5,9 @@ import constants
 from constants import WIDTH, HEIGHT, TILE_SIZE, clamp
 from player import Player
 from map import Map, MAP_WIDTH, MAP_HEIGHT, TILE_TYPE
+import math
 
-player = Player(0, 0, TILE_SIZE // 2 - 10)
+player = Player(MAP_WIDTH * TILE_SIZE // 2, MAP_HEIGHT * TILE_SIZE // 2, TILE_SIZE // 2 - 10)
 map = Map()
 
 def update_player_movement(delta):
@@ -26,10 +27,18 @@ def draw_main_menu():
     WIN.blit(t := BIG_FONT.render(constants.GAMENAME, True, 'black'), (WIDTH // 2 - t.get_width() // 2, HEIGHT * 0.25 - t.get_height() // 2))
     WIN.blit(t := SMALL_FONT.render("Press Enter to Play", True, 'black'), (WIDTH // 2 - t.get_width() // 2, HEIGHT * 0.75 - t.get_height() // 2))    
 
-selected_cell_x = 0, selected_cell_y = 0
+NON_INTERACTABLE_SELECTION_COLOR = 'yellow'
+INTERACTABLE_SELECTION_COLOR = 'green'
+NOTHING_SELECTION_COLOR = 'gray'
+
+selected_cell_x = 0
+selected_cell_y = 0
+selection_color = NON_INTERACTABLE_SELECTION_COLOR
+main_menu = True
+run = True
 
 def handle_inputs(mx, my):
-    ui_control = True
+    global run, main_menu, selected_cell_x, selected_cell_y, selection_color
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -38,26 +47,32 @@ def handle_inputs(mx, my):
             if main_menu and event.key == pygame.K_RETURN:
                 main_menu = False
         elif event.type == pygame.MOUSEBUTTONDOWN:
-            if event.button == 1:
-                # LMB
-                ui_control = not player.mouse_down(mx, my)
-            
-            if ui_control:
-                pass
+            if event.button == 1 and not main_menu: # LMB
+                player.mouse_down(mx, my)
         elif event.type == pygame.MOUSEWHEEL:
             player.update_slot_selection(event.y)
+    
+    if not player.over_ui(mx, my) and not main_menu: # This is a bit of a mess
+        selected_item = player.get_selected_item()[0]
+        interaction = map.get_interaction(selected_cell_x, selected_cell_y, selected_item)
+        selection_color = INTERACTABLE_SELECTION_COLOR if interaction else NON_INTERACTABLE_SELECTION_COLOR
+        
+        if interaction != None and pygame.mouse.get_pressed(3)[0]:
+            result = interaction()
+            if result == -1:
+                player.decrement_selected_item_quantity()
+    else:
+        selection_color = NOTHING_SELECTION_COLOR
 
 
 def main():
+    global run, main_menu, selected_cell_x, selected_cell_y, selection_color
+    
     clock = pygame.time.Clock()
     delta = 0
 
-    main_menu = True
-
-    run = True
-
     while run:
-        delta = clock.tick(60) / 1000
+        delta = clock.tick_busy_loop(60) / 1000 # Fixes stuttering for some reason
 
         if delta:
             pygame.display.set_caption(f"{constants.GAMENAME} | {(1 / delta):.2f}fps")
@@ -67,8 +82,13 @@ def main():
         player_cell_x = player.pos.x // TILE_SIZE
         player_cell_y = player.pos.y // TILE_SIZE
 
-        selected_cell_x = clamp((mx + player.pos.x - WIDTH // 2) // TILE_SIZE, player_cell_x - 1, player_cell_x + 1)
-        selected_cell_y = clamp((my + player.pos.y - HEIGHT // 2) // TILE_SIZE, player_cell_y - 1, player_cell_y + 1)
+        reach = 2
+        selected_cell_x = math.floor(
+            clamp((mx + player.pos.x - WIDTH // 2) // TILE_SIZE, player_cell_x - reach, player_cell_x + reach)
+        )
+        selected_cell_y = math.floor(
+            clamp((my + player.pos.y - HEIGHT // 2) // TILE_SIZE, player_cell_y - reach, player_cell_y + reach)
+        )
 
         handle_inputs(mx, my)
 
@@ -77,14 +97,14 @@ def main():
             update_player_movement(delta)
     
         # DRAW LOOP
-        WIN.fill('#bbff70')
+        WIN.fill("#bbff70" if main_menu else "#000000")
         
         # DRAW CHECKERBOARD TILES
         if main_menu:
             draw_main_menu()
         else:
             map.update(delta)
-            map.draw(WIN, player, selected_cell_x, selected_cell_y)
+            map.draw(WIN, player, selected_cell_x, selected_cell_y, selection_color)
             player.draw(WIN)
 
         draw_all_deferred()

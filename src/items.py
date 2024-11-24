@@ -66,10 +66,11 @@ def render_item_slot(win: pygame.Surface, item, quantity, selected, slot_x, slot
         border_radius=ITEM_SLOT_BORDER_RADIUS
     )
 
-    win.blit(
-        q := graphics.small_font_render(str(quantity)),
-        (x + slot_size - q.get_width() - 2, y + slot_size - q.get_height() - 2)
-    )
+    if quantity != 1:
+        win.blit(
+            q := graphics.small_font_render(str(quantity)),
+            (x + slot_size - q.get_width() - 2, y + slot_size - q.get_height() - 2)
+        )
 
     item_image = ITEM_IMAGES[item]
     win.blit(item_image, (x + ITEM_SLOT_PADDING, y + ITEM_SLOT_PADDING))

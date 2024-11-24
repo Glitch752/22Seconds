@@ -21,6 +21,7 @@ class Player:
 
         self.items = {}
         self.items[ITEM_TYPE.HOE] = 1
+        self.items[ITEM_TYPE.AXE] = 1
         # TEMPORARY
         self.items[ITEM_TYPE.ONION] = 17
         self.items[ITEM_TYPE.WHEAT] = 4

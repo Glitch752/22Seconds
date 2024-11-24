@@ -147,7 +147,7 @@ class Map:
         add_floating_text_hint(FloatingHintText(f"Placed wall!", tile_center_pos, "white"))
         return -1
     def broken(self, tile_index, tile_center_pos):
-        self.tiles[tile_index] = TILE_TYPE.BROKEN_WALL
+        self.tiles[tile_index] = TILE_TYPE.DESTROYED_WALL
         planting_sound.play() # TODO: CHOP sound
         add_floating_text_hint(FloatingHintText(f"Broke wall!", tile_center_pos, "red"))
     

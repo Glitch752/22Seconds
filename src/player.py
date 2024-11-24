@@ -13,8 +13,12 @@ class Player:
         self.items = {}
         self.items[ITEM_TYPE.HOE] = 1
         self.items[ITEM_TYPE.ONION] = 17
-        self.items[ITEM_TYPE.CARROT_SEEDS] = 5
         self.items[ITEM_TYPE.WHEAT] = 4
+        self.items[ITEM_TYPE.CARROT] = 10
+        self.items[ITEM_TYPE.CARROT_SEEDS] = 24
+        self.items[ITEM_TYPE.ONION_SEEDS] = 10
+        self.items[ITEM_TYPE.WHEAT_SEEDS] = 11
+        
         self.selected_slot = 0
         self.slot_selection_floating_text = None
     

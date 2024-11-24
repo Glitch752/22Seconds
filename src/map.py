@@ -68,7 +68,7 @@ class Map:
         for x in range(MAP_WIDTH):
             for y in range(MAP_HEIGHT):
                 # TODO: Better generation
-                self.tiles.append(random.randint(0, 1))
+                self.tiles.append(TILE_TYPE.SOIL)
     
     def update(self, delta):
         global last_update

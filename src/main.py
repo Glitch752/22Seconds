@@ -7,7 +7,7 @@ from player import Player
 from map import Map, MAP_WIDTH, MAP_HEIGHT, TILE_TYPE
 import math
 from dialogue import DialogueManager
-from day_cycle import update_day_cycle, get_brightness
+from day_cycle import draw_day_fading, update_day_cycle, get_brightness
 
 player = Player(MAP_WIDTH * TILE_SIZE // 2, MAP_HEIGHT * TILE_SIZE // 2, TILE_SIZE // 2 - 10)
 map = Map()
@@ -113,7 +113,6 @@ def main():
             update_player_movement(delta)
             dialogue.update(delta)
             update_day_cycle(delta)
-            # print(get_brightness())
     
         # DRAW LOOP
         WIN.fill("#bbff70" if main_menu else "#000000")
@@ -124,10 +123,14 @@ def main():
         else:
             map.update(delta)
             map.draw(WIN, player, selected_cell_x, selected_cell_y, selection_color)
-            player.draw(WIN)
+            player.draw_player(WIN)
+            
+            draw_day_fading(WIN)
+            
+            player.draw_ui(WIN)
             dialogue.draw(WIN)
-
-        draw_floating_hint_texts(WIN, player.pos)
+            draw_floating_hint_texts(WIN, player.pos)
+        
         draw_all_deferred()
 
         pygame.display.flip()

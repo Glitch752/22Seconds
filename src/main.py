@@ -17,6 +17,7 @@ map = Map()
 dialogue = DialogueManager()
 
 buy_item_sound = pygame.mixer.Sound(os.path.join("assets", "audio", "chaChing.wav")) # TODO: Better purchase sound
+eurgh_item_sound = pygame.mixer.Sound(os.path.join("assets", "audio", "Aeeaahghgh.wav")) # TODO: Better bad eurgh sound
 
 def buy_item(item, received_quantity=1):
     price = item_prices[item]
@@ -27,12 +28,14 @@ def buy_item(item, received_quantity=1):
         player.items[item] += received_quantity
         
         buy_item_sound.play()
+    else:
+        eurgh_item_sound.play()
 
 def try_to_win_lmao():
     if player.currency >= 1000:
-        pygame.quit()
-        print("You win!")
-        exit()
+        set_game_state(GameState.Cutscene_Outro)
+    else:
+        eurgh_item_sound.play()
 
 class GameState:
     MainMenu = 0
@@ -278,7 +281,21 @@ def main():
             elif len(dialogue.queue) == 0 and not dialogue.is_shown():
                 set_game_state(GameState.Playing)
         elif game_state == GameState.Cutscene_Outro:
-            pass
+            if just_changed_state:  
+                intro_cutscene_text = [
+                    ["Doctor", "How have the symptoms been? Better?"],
+                    ["You", "I haven't had the nightmares… or the screaming."],
+                    ["Doctor", "And the dread?"],
+                    ["You", "The dread is still there.", "It's been getting worse, if anything…"],
+                    ["Doctor", "I see. In that case, we should be", "safe to increase the dosage of your medicine."],
+                ]
+                for box in intro_cutscene_text:
+                    dialogue.queue_dialogue(box)
+                dialogue.on_confirm()
+            elif len(dialogue.queue) == 0 and not dialogue.is_shown():
+                pygame.quit()
+                print("You win!")
+                exit()
         else:
             map.update()
             map.draw(WIN, delta, player, selected_cell_x, selected_cell_y, selection_color)

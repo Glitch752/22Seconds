@@ -79,11 +79,11 @@ def draw_shop():
     # TODO: Cards instead of buttons
     WIN.blit(t := big_font_render("Shop", 'black'), (WIDTH // 2 - t.get_width() // 2, 25))
     y = 85
-    WIN.blit(t := normal_font_render(f"Carrots Sold: {player.get_sold(ITEM_TYPE.CARROT)}", 'black'), (WIDTH // 2 - t.get_width() // 2, y))
+    WIN.blit(t := normal_font_render(f"Carrots Sold ({item_prices[ITEM_TYPE.CARROT]}c): {player.get_sold(ITEM_TYPE.CARROT)}", 'black'), (WIDTH // 2 - t.get_width() // 2, y))
     y += t.get_height()
-    WIN.blit(t := normal_font_render(f"Onions Sold: {player.get_sold(ITEM_TYPE.ONION)}", 'black'), (WIDTH // 2 - t.get_width() // 2, y))
+    WIN.blit(t := normal_font_render(f"Onions Sold ({item_prices[ITEM_TYPE.ONION]}c): {player.get_sold(ITEM_TYPE.ONION)}", 'black'), (WIDTH // 2 - t.get_width() // 2, y))
     y += t.get_height()
-    WIN.blit(t := normal_font_render(f"Wheat Sold: {player.get_sold(ITEM_TYPE.WHEAT)}", 'black'), (WIDTH // 2 - t.get_width() // 2, y))
+    WIN.blit(t := normal_font_render(f"Wheat Sold ({item_prices[ITEM_TYPE.WHEAT]}c): {player.get_sold(ITEM_TYPE.WHEAT)}", 'black'), (WIDTH // 2 - t.get_width() // 2, y))
     y += t.get_height()
     WIN.blit(t := normal_font_render(f"Profit: {player.profit}", 'black'), (WIDTH // 2 - t.get_width() // 2, y))
     

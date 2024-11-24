@@ -39,9 +39,13 @@ class Player:
         self.profit = 0
         self.currency = 0
 
-        self.crazed = True
+        self.crazed = False
         self.crazed_speed_multiplier = 3
         self.crazed_timer = 0
+        
+        # Set after running out of an item so the player doesn't
+        # accidentally start using the next item available.
+        self.wait_for_mouseup = False
     
     def sell_items(self):
         self.sold_items = {}
@@ -204,7 +208,10 @@ class Player:
     def get_selected_item(self):
         return self.get_interactable_items()[self.selected_slot]
     def decrement_selected_item_quantity(self):
-        self.items[self.get_selected_item()[0]] -= 1
+        item = self.get_selected_item()[0]
+        self.items[item] -= 1
+        if self.items[item] == 0:
+            self.wait_for_mouseup = True
     def get_interactable_items(self):
         return [item for item in self.get_item_list() if is_interactable(item[0])]
     def get_non_interactable_items(self):

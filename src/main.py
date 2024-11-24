@@ -5,7 +5,7 @@ from constants import WIDTH, HEIGHT, TILE_SIZE, clamp
 from player import Player
 from map import Map, MAP_WIDTH, MAP_HEIGHT
 from dialogue import DialogueManager
-from day_cycle import draw_day_fading, play_sounds, update_day_cycle
+from day_cycle import draw_day_fading, play_sounds, update_day_cycle, get_formatted_time
 from particle import draw_particles, update_particles
 from items import ITEM_TYPE, item_prices
 from ui import *
@@ -75,6 +75,14 @@ def draw_main_menu():
     WIN.blit(t := GIANT_FONT.render(constants.GAMENAME, True, 'black'), (WIDTH // 2 - t.get_width() // 2, HEIGHT * 0.25 - t.get_height() // 2))
     WIN.blit(t := SMALL_FONT.render("Press Enter to Play", True, 'black'), (WIDTH // 2 - t.get_width() // 2, HEIGHT * 0.75 - t.get_height() // 2))    
 
+def draw_currency():
+    WIN.blit(big_font_render(f"Currency: {player.currency}c", 'black'), (17, 17))
+    WIN.blit(big_font_render(f"Currency: {player.currency}c", 'yellow'), (15, 15))
+def draw_time():
+    time = get_formatted_time()
+    WIN.blit(surface := big_font_render(time, 'black'), (17, HEIGHT - 15 - surface.get_height()))
+    WIN.blit(surface := big_font_render(time, 'green'), (15, HEIGHT - 17 - surface.get_height()))
+
 def draw_shop():
     t = pygame.time.get_ticks() // 50
     t %= TILE_SIZE
@@ -86,16 +94,15 @@ def draw_shop():
     # TODO: Cards instead of buttons
     WIN.blit(t := big_font_render("Shop", 'black'), (WIDTH // 2 - t.get_width() // 2, 25))
     y = 85
-    WIN.blit(t := normal_font_render(f"Carrots Sold ({item_prices[ITEM_TYPE.CARROT]}c): {player.get_sold(ITEM_TYPE.CARROT)}", 'black'), (WIDTH // 2 - t.get_width() // 2, y))
+    WIN.blit(t := normal_font_render(f"Carrots Sold ({item_prices[ITEM_TYPE.CARROT]}c per): {player.get_sold(ITEM_TYPE.CARROT)}", 'black'), (WIDTH // 2 - t.get_width() // 2, y))
     y += t.get_height()
-    WIN.blit(t := normal_font_render(f"Onions Sold ({item_prices[ITEM_TYPE.ONION]}c): {player.get_sold(ITEM_TYPE.ONION)}", 'black'), (WIDTH // 2 - t.get_width() // 2, y))
+    WIN.blit(t := normal_font_render(f"Onions Sold ({item_prices[ITEM_TYPE.ONION]}c per): {player.get_sold(ITEM_TYPE.ONION)}", 'black'), (WIDTH // 2 - t.get_width() // 2, y))
     y += t.get_height()
-    WIN.blit(t := normal_font_render(f"Wheat Sold ({item_prices[ITEM_TYPE.WHEAT]}c): {player.get_sold(ITEM_TYPE.WHEAT)}", 'black'), (WIDTH // 2 - t.get_width() // 2, y))
+    WIN.blit(t := normal_font_render(f"Wheat Sold ({item_prices[ITEM_TYPE.WHEAT]}c per): {player.get_sold(ITEM_TYPE.WHEAT)}", 'black'), (WIDTH // 2 - t.get_width() // 2, y))
     y += t.get_height()
     WIN.blit(t := normal_font_render(f"Profit: {player.profit}", 'black'), (WIDTH // 2 - t.get_width() // 2, y))
     
-    WIN.blit(big_font_render(f"Currency: {player.currency}c", 'black'), (7, 7))
-    WIN.blit(big_font_render(f"Currency: {player.currency}c", 'yellow'), (5, 5))
+    draw_currency()
 
     for b in shop_buttons:
         b.draw(WIN)
@@ -141,11 +148,15 @@ def handle_inputs(mx, my):
         selected_item = player.get_selected_item()[0]
         interaction = map.get_interaction(selected_cell_x, selected_cell_y, selected_item, player)
         selection_color = INTERACTABLE_SELECTION_COLOR if interaction else NON_INTERACTABLE_SELECTION_COLOR
-        
-        if interaction != None and pygame.mouse.get_pressed(3)[0]:
-            result = interaction()
-            if result == -1:
-                player.decrement_selected_item_quantity()
+
+        if interaction != None:
+            if pygame.mouse.get_pressed(3)[0]:
+                if not player.wait_for_mouseup:
+                    result = interaction()
+                    if result == -1:
+                        player.decrement_selected_item_quantity()
+            else:
+                player.wait_for_mouseup = False
     else:
         selection_color = NOTHING_SELECTION_COLOR
 
@@ -205,7 +216,7 @@ def main():
             update_particles(delta)
             update_player_movement(delta)
             dialogue.update(delta)
-            update_day_cycle(delta)
+            update_day_cycle(delta, player)
     
         # DRAW LOOP
         WIN.fill("#bbff70" if game_state != GameState.Playing else "#000000")
@@ -229,6 +240,9 @@ def main():
             
             player.draw_ui(WIN)
             dialogue.draw(WIN)
+            
+            draw_currency()
+            draw_time()
         
         draw_all_deferred()
 

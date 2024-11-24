@@ -18,7 +18,7 @@ cha_ching_sound = pygame.mixer.Sound(os.path.join("assets", "audio", "chaChing.w
 
 queued_sounds = []
 
-def update_day_cycle(delta):
+def update_day_cycle(delta, player):
     global day_cycle_time, was_day
     
     cycle_length = DAY_LENGTH + NIGHT_LENGTH
@@ -29,11 +29,11 @@ def update_day_cycle(delta):
     if is_day != was_day:
         was_day = is_day
         if is_day:
-            day_transition()
+            day_transition(player)
         else:
-            night_transition()
+            night_transition(player)
 
-def day_transition():
+def day_transition(player):
     from main import set_game_state, GameState, player
     print("DAYSLIFU")
     set_game_state(GameState.InShop)
@@ -41,9 +41,11 @@ def day_transition():
     sounds = player.profit // 10 + 1
     for i in range(sounds):
         queued_sounds.append((pygame.time.get_ticks() + i * 100, cha_ching_sound))
+    player.crazed = False
 
-def night_transition():
+def night_transition(player):
     print("NIGHTSLIFU")
+    player.crazed = True
 
 # TODO: wtf refactor this out of day_cycle lol
 def play_sounds():
@@ -87,3 +89,9 @@ def get_brightness():
         return ease(1 - (day_cycle_time - (DAY_LENGTH - DUSK_DAWN_LENGTH)) / DUSK_DAWN_LENGTH)
     else:
         return 0
+
+def get_formatted_time():
+    global day_cycle_time
+    
+    t = day_cycle_time / (DAY_LENGTH + NIGHT_LENGTH) * 24
+    return f"{str(int(t)).rjust(2, "0")}:{str(int((t % 1) * 60)).rjust(2, "0")}"

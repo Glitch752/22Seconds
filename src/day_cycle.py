@@ -2,6 +2,7 @@ import pygame
 from constants import DAY_LENGTH, NIGHT_LENGTH, DUSK_DAWN_LENGTH, WIDTH, HEIGHT
 from graphics import giant_font_render
 import os
+import random
 
 day_song = pygame.mixer.Sound(os.path.join("assets", "audio", "main_track.wav"))
 night_song = pygame.mixer.Sound(os.path.join("assets", "audio", "track2.wav"))
@@ -67,7 +68,10 @@ def draw_day_fading(win: pygame.Surface):
         # It's night... spooky
         time_remaining = NIGHT_LENGTH - (day_cycle_time - DAY_LENGTH)
         # Only works for <60 second nights, whatever for now
-        win.blit(font := giant_font_render(f"00:{str(int(time_remaining)).rjust(2, '0')}", "red"), (WIDTH // 2 - font.get_width() // 2, 15))
+        win.blit(
+            font := giant_font_render(f"00:{str(int(time_remaining)).rjust(2, '0')}", "red"),
+            (WIDTH // 2 - font.get_width() // 2 + random.randint(-2,2), 15 + random.randint(-2,2))
+        )
         pass
 
 def ease(t):

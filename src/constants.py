@@ -3,7 +3,7 @@ import pygame
 # Positive x is right, positive y is down
 # Tile grid is based on top left of tiles
 
-GAMENAME = "Funny Farming Game"
+GAMENAME = "22 Seconds"
 WIDTH, HEIGHT = 1280, 720
 TILE_SIZE = 80
 

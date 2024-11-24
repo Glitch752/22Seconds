@@ -1,11 +1,17 @@
 from functools import cache
 import pygame, os
+import platform
+
+if platform.system() == "Windows":
+    import ctypes
+    ctypes.windll.user32.SetProcessDPIAware()
+
 pygame.mixer.pre_init(44100, -16, 2, 512)
 pygame.init()
 
 from constants import WIDTH, HEIGHT, TILE_SIZE
 
-GIANT_FONT = pygame.font.SysFont("Consolas", 96)
+GIANT_FONT = pygame.font.Font(os.path.join("assets", "NotoSans-SemiBold.ttf"), 96)
 BIG_FONT = pygame.font.SysFont("Consolas", 36)
 FONT = pygame.font.SysFont("Consolas", 30)
 SMALL_FONT = pygame.font.SysFont("Consolas", 24)

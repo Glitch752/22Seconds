@@ -1,4 +1,4 @@
-from graphics import WIN, GIANT_FONT, SMALL_FONT, draw_all_deferred, draw_floating_hint_texts
+from graphics import WIN, GIANT_FONT, big_font_render, SMALL_FONT, draw_all_deferred, draw_floating_hint_texts
 import pygame
 import constants
 from constants import WIDTH, HEIGHT, TILE_SIZE, clamp
@@ -7,6 +7,7 @@ from map import Map, MAP_WIDTH, MAP_HEIGHT
 from dialogue import DialogueManager
 from day_cycle import draw_day_fading, update_day_cycle
 from particle import draw_particles, update_particles
+from items import ITEM_TYPE
 import math
 import os
 
@@ -33,6 +34,22 @@ def draw_main_menu():
 
     WIN.blit(t := GIANT_FONT.render(constants.GAMENAME, True, 'black'), (WIDTH // 2 - t.get_width() // 2, HEIGHT * 0.25 - t.get_height() // 2))
     WIN.blit(t := SMALL_FONT.render("Press Enter to Play", True, 'black'), (WIDTH // 2 - t.get_width() // 2, HEIGHT * 0.75 - t.get_height() // 2))    
+
+def draw_shop():
+    t = pygame.time.get_ticks() // 50
+    t %= TILE_SIZE
+    for x in range(WIDTH // TILE_SIZE + 1):
+        for y in range(HEIGHT // TILE_SIZE + 1):
+            if (x + y) % 2 == 0:
+                pygame.draw.rect(WIN, '#abef70', (x * TILE_SIZE - t, y * TILE_SIZE - t, TILE_SIZE, TILE_SIZE))
+
+    WIN.blit(t := big_font_render("Shop", 'black'), (WIDTH // 2 - t.get_width() // 2, 25))
+    y = 100
+    WIN.blit(t := big_font_render(f"Carrots Sold: {player.items[ITEM_TYPE.CARROT]}", 'black'), (WIDTH // 2 - t.get_width() // 2, y))
+    y += t.get_height()
+    WIN.blit(t := big_font_render(f"Onions Sold: {player.items[ITEM_TYPE.ONION]}", 'black'), (WIDTH // 2 - t.get_width() // 2, y))
+    y += t.get_height()
+    WIN.blit(t := big_font_render(f"Wheat Sold: {player.items[ITEM_TYPE.WHEAT]}", 'black'), (WIDTH // 2 - t.get_width() // 2, y))
 
 NON_INTERACTABLE_SELECTION_COLOR = 'yellow'
 INTERACTABLE_SELECTION_COLOR = 'green'
@@ -100,27 +117,7 @@ def main():
     ])
 
     dialogue.queue_dialogue([
-        "You: I think it was like, 1 in the morning. ",
-        "You: I woke up the whole house… ",
-        "screamed my lungs out…",
-        "You: I don't know what to do anymore…",
-        "Doctor: Mhm… Has it been just the screaming, ",
-        "or have you been experiencing any other symptoms? ",
-        "Doctor: Shortness of breath, rashing, anything like that?",
-        "You: I guess… There's the dread. ",
-        "Every night, I go to sleep terrified. ",
-        "It's like… something is going to happen. ",
-        "You: And when I wake up, usually it's nothing… ",
-        "but…",
-        "Doctor: Mhm?",
-        "You: Recently, there's been some… thing… ",
-        "getting into my farm. ",
-        "You: It destroys almost everything I have…",
-        "*time skip*",
-        "Doctor: I see. I’ve talked with my colleagues, ",
-        "and we believe that you are (have? idk) ä̵̧̡̢̛̮̳̪̙͔̺̩̦́̾̈́̃̂͜͝f̷̩̣̻͖̫̙̫̼̰͙̙̆̎̊͐͆̐̃̅͊̕͜͝a̶̹̣̻̺͆̔̍̓̑́̋̓̌̅̊͛̕͝ͅf̴̙̟̯͙͒̈́̍̊̌̚a̵̢͍̳̩̓͛̓̌̂͐̐͒͠f̴̡̘̼̭̱͇̥̖̬̀̔̈̄̓̂̀̍͂͌̚͘͜͝ͅa̵̩̾̈́̔͛̔͒̀͆́̚͝d̸̨̪̥͉͍͙̪̱̅̓͂͑̎̇́̓̇͘ͅ",
-        "Doctor: We can begin medication right away.",
-        "*time skip*",
+        ""
     ])
     dialogue.on_confirm()
 
@@ -156,14 +153,14 @@ def main():
             update_day_cycle(delta)
     
         # DRAW LOOP
-        WIN.fill("#bbff70" if game_state == GameState.MainMenu else "#000000")
+        WIN.fill("#bbff70" if game_state != GameState.Playing else "#000000")
         
         # DRAW CHECKERBOARD TILES
         if game_state == GameState.MainMenu:
             draw_main_menu()
         elif game_state == GameState.InShop:
             # TODO: Draw shop
-            pass
+            draw_shop()
         else:
             map.update()
             map.draw(WIN, delta, player, selected_cell_x, selected_cell_y, selection_color)

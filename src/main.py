@@ -14,8 +14,8 @@ player = Player(MAP_WIDTH * TILE_SIZE // 2, MAP_HEIGHT * TILE_SIZE // 2, TILE_SI
 map = Map()
 dialogue = DialogueManager()
 
-day_track = pygame.mixer.Sound(os.path.join("assets", "audio", "main_track.wav"))
-night_track = pygame.mixer.Sound(os.path.join("assets", "audio", "track2.wav"))
+day_track = os.path.join("assets", "audio", "main_track.wav")
+night_track = os.path.join("assets", "audio", "track2.wav")
 
 def update_player_movement(delta):
     keys = pygame.key.get_pressed()
@@ -122,7 +122,8 @@ def main():
     ])
     dialogue.on_confirm()
 
-    # day_track.play(loops=-1)
+    pygame.mixer.music.load(day_track)
+    pygame.mixer.music.queue(night_track)
 
     while run:
         delta = clock.tick_busy_loop(60) / 1000 # Fixes stuttering for some reason

@@ -41,9 +41,15 @@ def day_transition():
     sounds = player.profit // 10 + 1
     for i in range(sounds):
         queued_sounds.append((pygame.time.get_ticks() + i * 100, cha_ching_sound))
+    pygame.mixer.music.stop()
+    pygame.mixer.music.load(os.path.join("assets", "audio", "shop_track.wav"))
+    pygame.mixer.music.play()
 
 def night_transition():
     print("NIGHTSLIFU")
+    pygame.mixer.music.stop()
+    pygame.mixer.music.load(os.path.join("assets", "audio", "track2.wav"))
+    pygame.mixer.music.play()
 
 # TODO: wtf refactor this out of day_cycle lol
 def play_sounds():

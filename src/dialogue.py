@@ -2,6 +2,12 @@ import pygame
 from constants import WIDTH
 from graphics import small_font_render, normal_font_render
 from items import ITEM_SLOT_BORDER_RADIUS, SLOT_BACKGROUND
+import os
+import random
+
+speaking_sounds = [
+    pygame.mixer.Sound(os.path.join("assets", "audio", f"speak_{str(sound).rjust(2, "0")}.wav")) for sound in range(1, 15)
+]
 
 class DialogueManager:
     def __init__(self) -> None:
@@ -43,6 +49,8 @@ class DialogueManager:
                     return
                 
                 self.current_char = 0
+            elif self.lines[self.current_line][self.current_char] != " ":
+                speaking_sounds[random.randint(0, len(speaking_sounds) - 1)].play()
 
     def draw(self, win):
         if len(self.lines):

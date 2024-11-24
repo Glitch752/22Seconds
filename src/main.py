@@ -67,37 +67,6 @@ shop_buttons = [
     Button(f"Exit Shop", WIDTH // 2, HEIGHT // 2 + 240, exit_shop, ()),
 ]
 
-intro_cutscene_text = [[
-        "You",
-        "I think it was like, 1 in the morning.",
-        "I woke up the whole house...",
-        "    screamed my lungs out...",
-        "I don't know what to do anymore...",
-    ],
-    [
-        "Doctor",
-        "Mhm... Has it been just the screaming,",
-        "or have you been experiencing any other symptoms?",
-        "Shortness of breath, rashing, anything like that?",
-    ],
-    [
-        "You",
-        "I guess... there's the dread.",
-        "    Every night, I go to sleep terrified.",
-        "    It's like... something is going to happen.",
-        "And when I wake up, usually it's nothing... but...",
-    ],
-    [
-        "Doctor",
-        "Mhm?",
-    ],
-    [
-        "You",
-        "Recently, there's been some... thing... getting into my farm.",
-        "It destroys almost everything I have..."
-    ]
-]
-
 def update_player_movement(delta):
     keys = pygame.key.get_pressed()
     movement_x = (keys[pygame.K_d] or keys[pygame.K_RIGHT]) - (keys[pygame.K_a] or keys[pygame.K_LEFT])
@@ -165,7 +134,7 @@ def handle_inputs(mx, my):
         if event.type == pygame.QUIT:
             run = False
         elif event.type == pygame.KEYDOWN:
-            if not dialogue.is_active():
+            if dialogue.is_shown():
                 dialogue.on_confirm()
             elif game_state == GameState.MainMenu and event.key == pygame.K_RETURN:
                 set_game_state(GameState.Cutscene_Intro)
@@ -208,15 +177,12 @@ def main():
     clock = pygame.time.Clock()
     delta = 0
 
-    cutscene_timer = 0
-
-    for box in intro_cutscene_text:
-        dialogue.queue_dialogue(box)
-
     dialogue.on_confirm()
 
     pygame.mixer.music.load(day_track)
     pygame.mixer.music.play()
+    
+    last_game_state = game_state
 
     while run:
         delta = clock.tick_busy_loop(60) / 1000 # Fixes stuttering for some reason
@@ -248,11 +214,15 @@ def main():
         if game_state == GameState.Playing:
             update_particles(delta)
             update_player_movement(delta)
-            dialogue.update(delta)
             update_day_cycle(delta, player)
     
+        dialogue.update(delta)
+        
         # DRAW LOOP
-        WIN.fill("#bbff70" if game_state != GameState.Playing else "#000000")
+        WIN.fill("#bbff70" if game_state in [GameState.MainMenu, GameState.InShop] else "#000000")
+        
+        just_changed_state = last_game_state != game_state
+        last_game_state = game_state
         
         # DRAW CHECKERBOARD TILES
         if game_state == GameState.MainMenu:
@@ -261,16 +231,52 @@ def main():
             # TODO: Draw shop
             draw_shop()
         elif game_state == GameState.Cutscene_Intro:
-            cutscene_timer += delta
-            if cutscene_timer >= len(intro_cutscene_text) + 5:
-                cutscene_timer = 0
-                game_state = GameState.Playing
-            WIN.fill('black')
-            y = HEIGHT * 0.1
-            for i, line in enumerate(intro_cutscene_text):
-                if cutscene_timer >= i:
-                    WIN.blit(t := normal_font_render(line, 'white'), (WIDTH // 5, y))
-                    y += t.get_height()
+            if just_changed_state:  
+                intro_cutscene_text = [
+                    [
+                        "You",
+                        "I think it was like, 1 in the morning.",
+                        "I woke up the whole house...",
+                        "    screamed my lungs out...",
+                        "I don't know what to do anymore...",
+                    ],
+                    [
+                        "Doctor",
+                        "Mhm... Has it been just the screaming,",
+                        "or have you been experiencing any other symptoms?",
+                        "Shortness of breath, rashing, anything like that?",
+                    ],
+                    [
+                        "You",
+                        "I guess... there's the dread.",
+                        "    Every night, I go to sleep terrified.",
+                        "    It's like... something is going to happen.",
+                        "And when I wake up, usually it's nothing... but...",
+                    ],
+                    [
+                        "Doctor",
+                        "Mhm?",
+                    ],
+                    [
+                        "You",
+                        "Recently, there's been some... thing...",
+                        "getting into my farm.",
+                        "It destroys almost everything I have..."
+                    ],
+                    [
+                        "You",
+                        "Oh, well... I guess I should get going.",
+                    ],
+                    [
+                        "Doctor",
+                        "Wait-",
+                    ],
+                ]
+                for box in intro_cutscene_text:
+                    dialogue.queue_dialogue(box)
+                dialogue.on_confirm()
+            elif len(dialogue.queue) == 0 and not dialogue.is_shown():
+                set_game_state(GameState.Playing)
         elif game_state == GameState.Cutscene_Outro:
             pass
         else:
@@ -285,10 +291,11 @@ def main():
             draw_floating_hint_texts(WIN, player.pos)
             
             player.draw_ui(WIN)
-            dialogue.draw(WIN)
             
             draw_currency()
             draw_time()
+        
+        dialogue.draw(WIN)
         
         draw_all_deferred()
 

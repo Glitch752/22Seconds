@@ -15,6 +15,7 @@ day_face_surface.fill((0, 0, 15))
 NIGHT_OPACITY = 150
 
 cha_ching_sound = pygame.mixer.Sound(os.path.join("assets", "audio", "chaChing.wav"))
+transformation_sound_effect = pygame.mixer.Sound(os.path.join("assets", "audio", "transformation.wav"))
 
 queued_sounds = []
 
@@ -52,6 +53,7 @@ def night_transition(player):
     pygame.mixer.music.load(os.path.join("assets", "audio", "track2.wav"))
     pygame.mixer.music.play()
     player.crazed = True
+    transformation_sound_effect.play()
 
 # TODO: wtf refactor this out of day_cycle lol
 def play_sounds():

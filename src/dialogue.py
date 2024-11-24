@@ -23,14 +23,20 @@ class DialogueManager:
     
     def on_confirm(self):
         # TODO: If still speaking, finish the line instead of skipping it.
-        
-        self.done = False
-        self.current_char = 0
-        self.current_line = 0
-        self.lines.clear()
-        if len(self.queue):
-            self.lines = self.queue.pop(0)
+        if not self.done and len(self.lines):
+            self.current_line = len(self.lines) - 1
+            self.current_char = len(self.lines[self.current_line])
+            self.done = True
+        else:
+            self.done = False
+            self.current_char = 0
+            self.current_line = 0
+            self.lines.clear()
+            if len(self.queue):
+                self.lines = self.queue.pop(0)
     
+    def is_shown(self):
+        return len(self.lines)
     def is_active(self):
         return len(self.lines) and not self.done
     
@@ -62,7 +68,7 @@ class DialogueManager:
             pygame.draw.rect(
                 win,
                 SLOT_BACKGROUND,
-                pygame.Rect(WIDTH // 2 - 300, 20, 600, 120),
+                pygame.Rect(WIDTH // 2 - 300, 20, 600, len(self.lines) * 30 + 20),
                 border_radius=ITEM_SLOT_BORDER_RADIUS
             )
 

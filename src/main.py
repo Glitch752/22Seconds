@@ -50,7 +50,8 @@ def handle_inputs(mx, my):
                 main_menu = False
         elif event.type == pygame.MOUSEBUTTONDOWN:
             if event.button == 1 and not main_menu: # LMB
-                player.mouse_down(mx, my)
+                if not player.mouse_down(mx, my):
+                    dialogue.OnConfirm()
         elif event.type == pygame.MOUSEWHEEL:
             player.update_slot_selection(event.y)
     
@@ -78,6 +79,11 @@ def main():
         "Hello, World!",
         "I am Harold!"
     ])
+
+    dialogue.QueueDialogue([
+        "Gerald",
+        "Fuck you, Harold!",
+    ])
     dialogue.OnConfirm()
 
     while run:
@@ -104,6 +110,7 @@ def main():
         # GAMEPLAY
         if not main_menu:
             update_player_movement(delta)
+            dialogue.Update(delta)
     
         # DRAW LOOP
         WIN.fill("#bbff70" if main_menu else "#000000")

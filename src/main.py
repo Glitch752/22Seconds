@@ -6,9 +6,11 @@ from constants import WIDTH, HEIGHT, TILE_SIZE, clamp
 from player import Player
 from map import Map, MAP_WIDTH, MAP_HEIGHT, TILE_TYPE
 import math
+from dialogue import DialogueManager
 
 player = Player(MAP_WIDTH * TILE_SIZE // 2, MAP_HEIGHT * TILE_SIZE // 2, TILE_SIZE // 2 - 10)
 map = Map()
+dialogue = DialogueManager()
 
 def update_player_movement(delta):
     keys = pygame.key.get_pressed()
@@ -48,7 +50,8 @@ def handle_inputs(mx, my):
                 main_menu = False
         elif event.type == pygame.MOUSEBUTTONDOWN:
             if event.button == 1 and not main_menu: # LMB
-                player.mouse_down(mx, my)
+                if not player.mouse_down(mx, my):
+                    dialogue.OnConfirm()
         elif event.type == pygame.MOUSEWHEEL:
             player.update_slot_selection(event.y)
     
@@ -70,6 +73,18 @@ def main():
     
     clock = pygame.time.Clock()
     delta = 0
+
+    dialogue.QueueDialogue([
+        "Harold",
+        "Hello, World!",
+        "I am Harold!"
+    ])
+
+    dialogue.QueueDialogue([
+        "Gerald",
+        "Fuck you, Harold!",
+    ])
+    dialogue.OnConfirm()
 
     while run:
         delta = clock.tick_busy_loop(60) / 1000 # Fixes stuttering for some reason
@@ -95,6 +110,7 @@ def main():
         # GAMEPLAY
         if not main_menu:
             update_player_movement(delta)
+            dialogue.Update(delta)
     
         # DRAW LOOP
         WIN.fill("#bbff70" if main_menu else "#000000")
@@ -106,6 +122,7 @@ def main():
             map.update(delta)
             map.draw(WIN, player, selected_cell_x, selected_cell_y, selection_color)
             player.draw(WIN)
+            dialogue.Draw(WIN)
 
         draw_floating_hint_texts(WIN, player.pos)
         draw_all_deferred()

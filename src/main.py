@@ -1,5 +1,5 @@
 import graphics
-from graphics import WIN, BIG_FONT, SMALL_FONT, draw_all_deferred
+from graphics import WIN, BIG_FONT, SMALL_FONT, draw_all_deferred, draw_floating_hint_texts
 import pygame
 import constants
 from constants import WIDTH, HEIGHT, TILE_SIZE, clamp
@@ -124,6 +124,7 @@ def main():
             player.draw(WIN)
             dialogue.Draw(WIN)
 
+        draw_floating_hint_texts(WIN, player.pos)
         draw_all_deferred()
 
         pygame.display.flip()

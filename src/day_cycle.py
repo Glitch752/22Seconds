@@ -28,7 +28,7 @@ def draw_day_fading(win: pygame.Surface):
         cycle_length = DAY_LENGTH + NIGHT_LENGTH
         time_remaining = NIGHT_LENGTH - ((day_cycle_time % cycle_length) - DAY_LENGTH)
         # Only works for <60 second nights, whatever for now
-        win.blit(font := giant_font_render(f"00:{str(int(time_remaining)).rjust(2, "0")}", "red"), (WIDTH // 2 - font.get_width() // 2, 15))
+        win.blit(font := giant_font_render(f"00:{str(int(time_remaining)).rjust(2, '0')}", "red"), (WIDTH // 2 - font.get_width() // 2, 15))
         pass
 
 def ease(t):

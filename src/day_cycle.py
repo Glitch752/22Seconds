@@ -100,4 +100,4 @@ def get_formatted_time():
     global day_cycle_time
     
     t = day_cycle_time / (DAY_LENGTH + NIGHT_LENGTH) * 24
-    return f"{str(int(t)).rjust(2, "0")}:{str(int((t % 1) * 60)).rjust(2, "0")}"
+    return f"{str(int(t)).rjust(2, '0')}:{str(int((t % 1) * 60)).rjust(2, '0')}"

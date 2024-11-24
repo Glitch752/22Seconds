@@ -6,9 +6,11 @@ from constants import WIDTH, HEIGHT, TILE_SIZE, clamp
 from player import Player
 from map import Map, MAP_WIDTH, MAP_HEIGHT, TILE_TYPE
 import math
+from dialogue import DialogueManager
 
 player = Player(MAP_WIDTH * TILE_SIZE // 2, MAP_HEIGHT * TILE_SIZE // 2, TILE_SIZE // 2 - 10)
 map = Map()
+dialogue = DialogueManager()
 
 def update_player_movement(delta):
     keys = pygame.key.get_pressed()
@@ -71,6 +73,13 @@ def main():
     clock = pygame.time.Clock()
     delta = 0
 
+    dialogue.QueueDialogue([
+        "Harold",
+        "Hello, World!",
+        "I am Harold!"
+    ])
+    dialogue.OnConfirm()
+
     while run:
         delta = clock.tick_busy_loop(60) / 1000 # Fixes stuttering for some reason
 
@@ -106,6 +115,7 @@ def main():
             map.update(delta)
             map.draw(WIN, player, selected_cell_x, selected_cell_y, selection_color)
             player.draw(WIN)
+            dialogue.Draw(WIN)
 
         draw_all_deferred()
 

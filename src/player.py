@@ -1,6 +1,6 @@
 import pygame
 from constants import WIDTH, HEIGHT, TILE_SIZE
-from map import MAP_WIDTH, MAP_HEIGHT
+from map import MAP_WIDTH, MAP_HEIGHT, TILE_TYPE
 from items import ITEM_NAMES, ITEM_TYPE, render_item_slot, is_interactable, get_slot_bounds, item_prices
 from graphics import add_floating_text_hint, FloatingHintText
 import os
@@ -39,7 +39,9 @@ class Player:
         self.profit = 0
         self.currency = 0
 
-        self.crazed = False
+        self.crazed = True
+        self.crazed_speed_multiplier = 3
+        self.crazed_timer = 0
     
     def sell_items(self):
         self.sold_items = {}
@@ -88,37 +90,71 @@ class Player:
         add_floating_text_hint(self.slot_selection_floating_text)
     
     def update(self, mx, my, map, delta):
-        if mx or my:
-            self.timer += delta
+        if not self.crazed:
 
-        if self.timer >= 0.15:
-            self.timer -= 0.15
+            if mx or my:
+                self.timer += delta
+
+            if self.timer >= 0.15:
+                self.timer -= 0.15
+                
+                self.frame = (self.frame + 1) % 4
             
-            self.frame = (self.frame + 1) % 4
-        
-        self.current_image = self.image.subsurface((self.image.get_height() * self.frame, 0, self.image.get_height(), self.image.get_height()))
+            self.current_image = self.image.subsurface((self.image.get_height() * self.frame, 0, self.image.get_height(), self.image.get_height()))
 
-        move = pygame.Vector2(mx, my)
+            move = pygame.Vector2(mx, my)
 
-        if move.magnitude():
-            move = move.normalize()
+            if move.magnitude():
+                move = move.normalize()
 
-            self.angle = 270 - math.degrees(math.atan2(move.y, move.x))
+                self.angle = 270 - math.degrees(math.atan2(move.y, move.x))
 
-        move *= self.speed * delta
-        
+            move *= self.speed * delta
+        else:
+            self.crazed_timer += delta
+    
+            if mx or my:
+                self.timer += delta
+
+            if self.timer >= 0.08:
+                self.timer -= 0.08
+                
+                self.frame = (self.frame + 1) % 4
+            
+            self.current_image = self.image.subsurface((self.image.get_height() * self.frame, 0, self.image.get_height(), self.image.get_height()))
+
+            a = math.atan2(my, mx) + self.crazed_timer
+
+            move = pygame.Vector2(math.cos(a), math.sin(a))
+
+            if move.magnitude():
+                move = move.normalize()
+
+                self.angle = 270 - math.degrees(a)
+
+            move *= self.speed * self.crazed_speed_multiplier * delta
+
+
         # Scuffed collision
         originally_colliding = self.is_colliding(map)
         
         old_pos = self.pos.copy()
         self.pos[0] += move[0]
-        if not originally_colliding and self.is_colliding(map):
+        if not originally_colliding and (pos := self.is_colliding(map)):
             self.pos = old_pos
+
+            if self.crazed:
+                map.tiles[pos[0] * MAP_HEIGHT + pos[1]] = TILE_TYPE.DESTROYED_WALL
+                # TODO REFLECTION MATH
         
         old_pos = self.pos.copy()
         self.pos[1] += move[1]
-        if not originally_colliding and self.is_colliding(map):
+        if not originally_colliding and (pos := self.is_colliding(map)):
             self.pos = old_pos
+
+            if self.crazed:
+                map.tiles[pos[0] * MAP_HEIGHT + pos[1]] = TILE_TYPE.DESTROYED_WALL
+                # TODO REFLECTION MATH
         
         if self.pos.x <= 0:
             self.pos.x = 0
@@ -143,8 +179,8 @@ class Player:
         for x in range(min_tile_x, max_tile_x+1):
             for y in range(min_tile_y, max_tile_y+1):
                 if map.is_collision(x, y):
-                    return True
-        return False
+                    return x, y
+        return None
 
     def over_ui(self, x, y):
         """Returns if the mouse is over the UI"""

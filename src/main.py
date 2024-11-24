@@ -116,8 +116,9 @@ def handle_inputs(mx, my):
                 set_game_state(GameState.InShop)
                 player.sell_items()
             if pygame.K_0 <= event.key <= pygame.K_9:
-                print(event.key - pygame.K_0)
-                player.select_slot(event.key - pygame.K_0)
+                player_slots = len(player.get_interactable_items())
+                slot = max(1, min(player_slots, event.key - pygame.K_0))
+                player.select_slot(player_slots - slot)
         elif event.type == pygame.MOUSEBUTTONDOWN:
             if event.button == 1:
                 if game_state == GameState.Playing: # LMB

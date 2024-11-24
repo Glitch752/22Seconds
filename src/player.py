@@ -107,14 +107,16 @@ class Player:
         move *= self.speed * delta
         
         # Scuffed collision
+        originally_colliding = self.is_colliding(map)
+        
         old_pos = self.pos.copy()
         self.pos[0] += move[0]
-        if self.is_colliding(map):
+        if not originally_colliding and self.is_colliding(map):
             self.pos = old_pos
         
         old_pos = self.pos.copy()
         self.pos[1] += move[1]
-        if self.is_colliding(map):
+        if not originally_colliding and self.is_colliding(map):
             self.pos = old_pos
         
         if self.pos.x <= 0:

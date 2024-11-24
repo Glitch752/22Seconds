@@ -146,6 +146,10 @@ class Map:
         planting_sound.play() # TODO: THUNK sound
         add_floating_text_hint(FloatingHintText(f"Placed wall!", tile_center_pos, "white"))
         return -1
+    def broken(self, tile_index, tile_center_pos):
+        self.tiles[tile_index] = TILE_TYPE.BROKEN_WALL
+        planting_sound.play() # TODO: CHOP sound
+        add_floating_text_hint(FloatingHintText(f"Broke wall!", tile_center_pos, "red"))
     
     def get_interaction(self, tile_x, tile_y, item, player):
         """
@@ -170,7 +174,13 @@ class Map:
                     return (lambda: self.harvested(tile_index, tile_center_pos, player))
                 else:
                     return None
+            case ITEM_TYPE.AXE:
+                if tile_type == TILE_TYPE.WALL:
+                    return (lambda: self.broken(tile_index, tile_center_pos))
             case ITEM_TYPE.WALL:
+                if pygame.Rect(tile_x * TILE_SIZE, tile_y * TILE_SIZE, TILE_SIZE, TILE_SIZE)\
+                    .colliderect(player.pos.x - player.radius, player.pos.y - player.radius, player.radius*2, player.radius*2):
+                    return None
                 if tile_type == TILE_TYPE.SOIL:
                     return (lambda: self.wall_placed(tile_index, tile_center_pos))
             case ITEM_TYPE.CARROT_SEEDS | ITEM_TYPE.WHEAT_SEEDS | ITEM_TYPE.ONION_SEEDS:

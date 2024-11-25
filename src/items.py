@@ -20,9 +20,9 @@ class ITEM_TYPE:
     AXE = 8
 
 item_prices = {
-    ITEM_TYPE.CARROT: 5, # sell
-    ITEM_TYPE.ONION: 10, # sell
-    ITEM_TYPE.WHEAT: 15, # sell
+    ITEM_TYPE.CARROT: 6, # sell
+    ITEM_TYPE.ONION: 12, # sell
+    ITEM_TYPE.WHEAT: 18, # sell
     ITEM_TYPE.CARROT_SEEDS: 10, # buy
     ITEM_TYPE.ONION_SEEDS: 15, # buy
     ITEM_TYPE.WHEAT_SEEDS: 20, # buy

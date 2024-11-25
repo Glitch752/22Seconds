@@ -133,7 +133,17 @@ class Map:
             item_type = ITEM_TYPE.WHEAT
         else:
             i = 3
-        r = random.randint(1, 2)
+            
+        v = random.random()
+        if v <= 0.1:
+            # 10% chance of harvesting 1
+            r = 1
+        elif v <= 0.9:
+            # 80% chance of harvesting 2
+            r = 2
+        else:
+            # 10% chance of harvesting 3
+            r = 3
         add_floating_text_hint(FloatingHintText(f"+{r} {['Carrot', 'Onion', 'Wheat', 'ERROR'][i]}", tile_center_pos, "green"))
         player.items[item_type] += r
     def planted(self, tile_index, tile_center_pos, item):

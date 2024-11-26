@@ -38,6 +38,7 @@ class DialogueManager:
     
     def is_shown(self):
         return len(self.lines)
+    
     def is_active(self):
         return len(self.lines) and not self.done
     

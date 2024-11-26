@@ -50,7 +50,7 @@ def add_tile_image(tile, path):
     image = pygame.transform.scale(original_image, (TILE_SIZE, TILE_SIZE))
     TILE_IMAGES[tile] = image
 
-add_tile_image(TILE_TYPE.GRASS, "short_grass.png")
+add_tile_image(TILE_TYPE.GRASS, "short-grass.png")
 add_tile_image(TILE_TYPE.SOIL, "dirt.png")
 add_tile_image(TILE_TYPE.TILLED_SOIL, "farmland.png")
 add_tile_image(TILE_TYPE.PLANTED_CARROT_0, "planted_carrot_0.png")
@@ -87,7 +87,7 @@ class Map:
         for x in range(MAP_WIDTH):
             for y in range(MAP_HEIGHT):
                 # TODO: Better generation
-                self.tiles.append(TILE_TYPE.SOIL)
+                self.tiles.append(TILE_TYPE.SOIL if random.random() <= 0.4 else TILE_TYPE.GRASS)
     
     def update(self):
         global last_map_update
@@ -116,6 +116,11 @@ class Map:
         self.tiles[tile_index] = TILE_TYPE.TILLED_SOIL
         tilling_sound.play()
         add_floating_text_hint(FloatingHintText(f"Tilled soil!", tile_center_pos, "white"))
+     
+    def shoveled(self, tile_index, tile_center_pos):
+        self.tiles[tile_index] = TILE_TYPE.SOIL
+        tilling_sound.play() # TODO shovel sound
+        add_floating_text_hint(FloatingHintText(f"Shoveled ground!", tile_center_pos, "white"))
     
     def harvested(self, tile_index, tile_center_pos, player):
         item = self.tiles[tile_index]
@@ -133,7 +138,7 @@ class Map:
             item_type = ITEM_TYPE.WHEAT
         else:
             i = 3
-            
+
         v = random.random()
         if v <= 0.1:
             # 10% chance of harvesting 1
@@ -146,16 +151,19 @@ class Map:
             r = 3
         add_floating_text_hint(FloatingHintText(f"+{r} {['Carrot', 'Onion', 'Wheat', 'ERROR'][i]}", tile_center_pos, "green"))
         player.items[item_type] += r
+
     def planted(self, tile_index, tile_center_pos, item):
         self.tiles[tile_index] = SEED_ITEM_TO_TILE[item]
         planting_sound.play()
         add_floating_text_hint(FloatingHintText(f"-1 {ITEM_NAMES[item]}", tile_center_pos, "orange"))
         return -1
+    
     def wall_placed(self, tile_index, tile_center_pos):
         self.tiles[tile_index] = TILE_TYPE.WALL
         planting_sound.play() # TODO: THUNK sound
         add_floating_text_hint(FloatingHintText(f"Placed wall!", tile_center_pos, "white"))
         return -1
+    
     def broken(self, tile_index, tile_center_pos):
         self.tiles[tile_index] = TILE_TYPE.DESTROYED_WALL
         planting_sound.play() # TODO: CHOP sound
@@ -187,6 +195,9 @@ class Map:
             case ITEM_TYPE.AXE:
                 if tile_type == TILE_TYPE.WALL:
                     return (lambda: self.broken(tile_index, tile_center_pos))
+            case ITEM_TYPE.SHOVEL:
+                if tile_type == TILE_TYPE.GRASS:
+                    return (lambda: self.shoveled(tile_index, tile_center_pos))
             case ITEM_TYPE.WALL:
                 if pygame.Rect(tile_x * TILE_SIZE, tile_y * TILE_SIZE, TILE_SIZE, TILE_SIZE)\
                     .colliderect(player.pos.x - player.radius, player.pos.y - player.radius, player.radius*2, player.radius*2):

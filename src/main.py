@@ -1,6 +1,8 @@
-from graphics import WIN, GIANT_FONT, big_font_render, SMALL_FONT, draw_all_deferred, draw_floating_hint_texts
 import pygame
 import constants
+import math
+import os
+from graphics import WIN, GIANT_FONT, big_font_render, SMALL_FONT, draw_all_deferred, draw_floating_hint_texts
 from constants import WIDTH, HEIGHT, TILE_SIZE, clamp
 from player import Player
 from map import Map, MAP_WIDTH, MAP_HEIGHT
@@ -9,11 +11,9 @@ from day_cycle import draw_day_fading, play_sounds, update_day_cycle, get_format
 from particle import draw_particles, update_particles
 from items import ITEM_TYPE, item_prices
 from ui import *
-import math
-import os
 
 player = Player(MAP_WIDTH * TILE_SIZE // 2, MAP_HEIGHT * TILE_SIZE // 2, TILE_SIZE // 2 - 10)
-map = Map()
+farm = Map()
 dialogue = DialogueManager()
 
 buy_item_sound = pygame.mixer.Sound(os.path.join("assets", "audio", "chaChing.wav")) # TODO: Better purchase sound
@@ -43,6 +43,7 @@ class GameState:
     InShop = 2
     Cutscene_Intro = 3
     Cutscene_Outro = 4
+
 game_state = GameState.MainMenu
 
 def set_game_state(state):
@@ -74,7 +75,7 @@ def update_player_movement(delta):
     keys = pygame.key.get_pressed()
     movement_x = (keys[pygame.K_d] or keys[pygame.K_RIGHT]) - (keys[pygame.K_a] or keys[pygame.K_LEFT])
     movement_y = (keys[pygame.K_s] or keys[pygame.K_DOWN]) - (keys[pygame.K_w] or keys[pygame.K_UP])
-    player.update(movement_x, movement_y, map, delta)
+    player.update(movement_x, movement_y, farm, delta)
 
 def draw_main_menu():
     t = pygame.time.get_ticks() // 50
@@ -160,7 +161,7 @@ def handle_inputs(mx, my):
     
     if not player.over_ui(mx, my) and game_state == GameState.Playing: # This is a bit of a mess
         selected_item = player.get_selected_item()[0]
-        interaction = map.get_interaction(selected_cell_x, selected_cell_y, selected_item, player)
+        interaction = farm.get_interaction(selected_cell_x, selected_cell_y, selected_item, player)
         selection_color = INTERACTABLE_SELECTION_COLOR if interaction else NON_INTERACTABLE_SELECTION_COLOR
 
         if interaction != None:
@@ -297,8 +298,8 @@ def main():
                 print("You win!")
                 exit()
         else:
-            map.update()
-            map.draw(WIN, delta, player, selected_cell_x, selected_cell_y, selection_color)
+            farm.update()
+            farm.draw(WIN, delta, player, selected_cell_x, selected_cell_y, selection_color)
             
             draw_particles(WIN, player.pos)
             player.draw_player(WIN)

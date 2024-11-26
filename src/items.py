@@ -18,6 +18,7 @@ class ITEM_TYPE:
     ONION = 6
     WALL = 7
     AXE = 8
+    SHOVEL = 9
 
 item_prices = {
     ITEM_TYPE.CARROT: 6, # sell
@@ -51,6 +52,7 @@ add_item_data(ITEM_TYPE.WHEAT, "wheat_sprite.png", "Wheat", False)
 add_item_data(ITEM_TYPE.ONION, "onion_sprite.png", "Onion", False)
 add_item_data(ITEM_TYPE.WALL, "wall_sprite.png", "Wall", True)
 add_item_data(ITEM_TYPE.AXE, "axe_sprite.png", "Axe", True)
+add_item_data(ITEM_TYPE.SHOVEL, "shovel_sprite.png", "Shovel", True)
 
 def is_interactable(item):
     return INTERACTABLE_ITEMS[item]

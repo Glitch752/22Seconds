@@ -37,7 +37,6 @@ def update_day_cycle(delta, player):
 
 def day_transition(player):
     from main import set_game_state, GameState, player
-    print("DAYSLIFU")
     set_game_state(GameState.InShop)
     player.sell_items()
     sounds = player.profit // 10 + 1
@@ -49,7 +48,6 @@ def day_transition(player):
     player.crazed = False
 
 def night_transition(player):
-    print("NIGHTSLIFU")
     pygame.mixer.music.stop()
     pygame.mixer.music.load(os.path.join("assets", "audio", "track2.wav"))
     pygame.mixer.music.play()
@@ -66,7 +64,6 @@ def play_sounds():
             queued_sounds.pop(i)
             i -= 1
         i += 1
-    
 
 def draw_day_fading(win: pygame.Surface):
     global day_cycle_time

@@ -33,6 +33,14 @@ class TILE_TYPE:
     WALL = 12
     DESTROYED_WALL = 13
     WATER = 14
+    WET_TILLED_SOIL = 15
+
+CAN_WET = [
+    TILE_TYPE.TILLED_SOIL,
+    TILE_TYPE.PLANTED_CARROT_0, TILE_TYPE.PLANTED_CARROT_1, TILE_TYPE.PLANTED_CARROT_2,
+    TILE_TYPE.PLANTED_ONION_0, TILE_TYPE.PLANTED_ONION_1, TILE_TYPE.PLANTED_ONION_2,
+    TILE_TYPE.PLANTED_WHEAT_0, TILE_TYPE.PLANTED_WHEAT_1, TILE_TYPE.PLANTED_WHEAT_2,
+]
 
 RANDOM_TICK_TRANSITIONS = {}
 RANDOM_TICK_TRANSITIONS[TILE_TYPE.PLANTED_CARROT_0] = TILE_TYPE.PLANTED_CARROT_1
@@ -66,6 +74,7 @@ add_tile_image(TILE_TYPE.PLANTED_ONION_2, "planted_onion_2.png")
 add_tile_image(TILE_TYPE.WALL, "wall.png")
 add_tile_image(TILE_TYPE.DESTROYED_WALL, "destroyed_wall.png")
 add_tile_image(TILE_TYPE.WATER, "water.png")
+add_tile_image(TILE_TYPE.WET_TILLED_SOIL, "wet_farmland.png")
 
 SEED_ITEM_TO_TILE = {}
 SEED_ITEM_TO_TILE[ITEM_TYPE.CARROT_SEEDS] = TILE_TYPE.PLANTED_CARROT_0
@@ -183,7 +192,13 @@ class Map:
         self.player.items[ITEM_TYPE.WATERING_CAN_EMPTY] = 0
         self.player.items[ITEM_TYPE.WATERING_CAN_FULL] = 5
         harvesting_sound.play() # TODO: water fill sound
-        add_floating_text_hint(FloatingHintText(f"Filled can!", tile_center_pos, "white"))
+        add_floating_text_hint(FloatingHintText(f"Filled can!", tile_center_pos, "skyblue"))
+    
+    def make_wet(self, tile_index, tile_center_pos):
+        self.tiles[tile_index] = TILE_TYPE.WET_TILLED_SOIL
+        self.player.items[ITEM_TYPE.WATERING_CAN_FULL] -= 1
+        harvesting_sound.play() # TODO: water fill sound
+        add_floating_text_hint(FloatingHintText(f"Watered!", tile_center_pos, "skyblue"))
 
     def get_interaction(self, tile_x, tile_y, item, player):
         """
@@ -228,6 +243,12 @@ class Map:
                 if tile_type != TILE_TYPE.WATER:
                     return None
                 return (lambda: self.swap_cans(tile_index, tile_center_pos))
+            case ITEM_TYPE.WATERING_CAN_FULL:
+                if player.items[ITEM_TYPE.WATERING_CAN_FULL] > 0:
+                    if tile_type == TILE_TYPE.TILLED_SOIL:
+                        return (lambda: self.make_wet(tile_index, tile_center_pos))
+                else:
+                    return None
 
     def draw(self, win: pygame.Surface, delta, player, outline_x, outline_y, outline_color):
         x_start = math.floor((player.pos.x - WIDTH / 2) / TILE_SIZE)

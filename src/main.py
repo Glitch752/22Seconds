@@ -9,33 +9,12 @@ from map import Map, MAP_WIDTH, MAP_HEIGHT
 from dialogue import DialogueManager
 from day_cycle import draw_day_fading, play_sounds, update_day_cycle, get_formatted_time
 from particle import draw_particles, update_particles
-from items import ITEM_TYPE, item_prices
+from shop import draw_shop, shop_click, shop_hover
 from ui import *
 
 player = Player(MAP_WIDTH * TILE_SIZE // 2, MAP_HEIGHT * TILE_SIZE // 2, TILE_SIZE // 2 - 10)
 farm = Map(player)
 dialogue = DialogueManager()
-
-buy_item_sound = pygame.mixer.Sound(os.path.join("assets", "audio", "chaChing.wav")) # TODO: Better purchase sound
-eurgh_item_sound = pygame.mixer.Sound(os.path.join("assets", "audio", "Aeeaahghgh.wav")) # TODO: Better bad eurgh sound
-
-def buy_item(item, received_quantity=1):
-    price = item_prices[item]
-
-    if player.currency >= price:
-        player.currency -= price
-
-        player.items[item] += received_quantity
-        
-        buy_item_sound.play()
-    else:
-        eurgh_item_sound.play()
-
-def try_to_win_lmao():
-    if player.currency >= 1000:
-        set_game_state(GameState.Cutscene_Outro)
-    else:
-        eurgh_item_sound.play()
 
 class GameState:
     MainMenu = 0
@@ -55,21 +34,6 @@ def set_game_state(state):
 day_track = os.path.join("assets", "audio", "main_track.wav")
 night_track = os.path.join("assets", "audio", "track2.wav")
 shop_track = os.path.join("assets", "audio", "track3.wav")
-
-def exit_shop():
-    set_game_state(GameState.Playing)
-    pygame.mixer.music.stop()
-    pygame.mixer.music.load(day_track)
-    pygame.mixer.music.play()
-
-shop_buttons = [
-    Button(f"Buy Carrot Seed - {item_prices[ITEM_TYPE.CARROT_SEEDS]}c", WIDTH // 2, HEIGHT // 2, buy_item, (ITEM_TYPE.CARROT_SEEDS,)),
-    Button(f"Buy Onion Seed - {item_prices[ITEM_TYPE.ONION_SEEDS]}c", WIDTH // 2, HEIGHT // 2 + 40, buy_item, (ITEM_TYPE.ONION_SEEDS,)),
-    Button(f"Buy Wheat Seed - {item_prices[ITEM_TYPE.WHEAT_SEEDS]}c", WIDTH // 2, HEIGHT // 2 + 80, buy_item, (ITEM_TYPE.WHEAT_SEEDS,)),
-    Button(f"Buy 5 Walls - {item_prices[ITEM_TYPE.WALL]}c", WIDTH // 2, HEIGHT // 2 + 120, buy_item, (ITEM_TYPE.WALL,)),
-    Button(f"Pay for your medical needs - 1,000c", WIDTH // 2, HEIGHT // 2 + 160, try_to_win_lmao, ()),
-    Button(f"Exit Shop", WIDTH // 2, HEIGHT // 2 + 240, exit_shop, ()),
-]
 
 def update_player_movement(delta):
     keys = pygame.key.get_pressed()
@@ -99,30 +63,6 @@ def draw_time():
     time = get_formatted_time()
     WIN.blit(surface := big_font_render(time, 'black'), (17, HEIGHT - 15 - surface.get_height()))
     WIN.blit(surface := big_font_render(time, 'green'), (15, HEIGHT - 17 - surface.get_height()))
-
-def draw_shop():
-    t = pygame.time.get_ticks() // 50
-    t %= TILE_SIZE
-    for x in range(WIDTH // TILE_SIZE + 1):
-        for y in range(HEIGHT // TILE_SIZE + 1):
-            if (x + y) % 2 == 0:
-                pygame.draw.rect(WIN, '#abef70', (x * TILE_SIZE - t, y * TILE_SIZE - t, TILE_SIZE, TILE_SIZE))
-
-    # TODO: Cards instead of buttons
-    WIN.blit(t := big_font_render("Shop", 'black'), (WIDTH // 2 - t.get_width() // 2, 25))
-    y = 85
-    WIN.blit(t := normal_font_render(f"Carrots Sold ({item_prices[ITEM_TYPE.CARROT]}c per): {player.get_sold(ITEM_TYPE.CARROT)}", 'black'), (WIDTH // 2 - t.get_width() // 2, y))
-    y += t.get_height()
-    WIN.blit(t := normal_font_render(f"Onions Sold ({item_prices[ITEM_TYPE.ONION]}c per): {player.get_sold(ITEM_TYPE.ONION)}", 'black'), (WIDTH // 2 - t.get_width() // 2, y))
-    y += t.get_height()
-    WIN.blit(t := normal_font_render(f"Wheat Sold ({item_prices[ITEM_TYPE.WHEAT]}c per): {player.get_sold(ITEM_TYPE.WHEAT)}", 'black'), (WIDTH // 2 - t.get_width() // 2, y))
-    y += t.get_height()
-    WIN.blit(t := normal_font_render(f"Profit: {player.profit}", 'black'), (WIDTH // 2 - t.get_width() // 2, y))
-    
-    draw_currency()
-
-    for b in shop_buttons:
-        b.draw(WIN)
 
 NON_INTERACTABLE_SELECTION_COLOR = 'yellow'
 INTERACTABLE_SELECTION_COLOR = 'green'
@@ -157,8 +97,7 @@ def handle_inputs(mx, my):
                 if game_state == GameState.Playing: # LMB
                     player.mouse_down(mx, my)
                 elif game_state == GameState.InShop:
-                    for b in shop_buttons:
-                        b.on_click(mx, my)
+                    shop_click(mx, my)
         elif event.type == pygame.MOUSEWHEEL:
             player.update_slot_selection(event.y)
     
@@ -200,9 +139,9 @@ def main():
         mx, my = pygame.mouse.get_pos()
 
         if game_state == GameState.InShop:
-            for b in shop_buttons:
-                b.on_hover(mx, my)
+            shop_hover(mx, my)
 
+        # TODO: Move this playing-specific code to a separate file
         player_cell_x = player.pos.x // TILE_SIZE
         player_cell_y = player.pos.y // TILE_SIZE
 
@@ -235,8 +174,7 @@ def main():
         if game_state == GameState.MainMenu:
             draw_main_menu()
         elif game_state == GameState.InShop:
-            # TODO: Draw shop
-            draw_shop()
+            draw_shop(WIN)
         elif game_state == GameState.Cutscene_Intro:
             if just_changed_state:  
                 intro_cutscene_text = [

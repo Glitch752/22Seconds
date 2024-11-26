@@ -32,6 +32,7 @@ class TILE_TYPE:
     PLANTED_ONION_2 = 11
     WALL = 12
     DESTROYED_WALL = 13
+    WATER = 14
 
 RANDOM_TICK_TRANSITIONS = {}
 RANDOM_TICK_TRANSITIONS[TILE_TYPE.PLANTED_CARROT_0] = TILE_TYPE.PLANTED_CARROT_1
@@ -64,6 +65,7 @@ add_tile_image(TILE_TYPE.PLANTED_ONION_1, "planted_onion_1.png")
 add_tile_image(TILE_TYPE.PLANTED_ONION_2, "planted_onion_2.png")
 add_tile_image(TILE_TYPE.WALL, "wall.png")
 add_tile_image(TILE_TYPE.DESTROYED_WALL, "destroyed_wall.png")
+add_tile_image(TILE_TYPE.WATER, "water.png")
 
 SEED_ITEM_TO_TILE = {}
 SEED_ITEM_TO_TILE[ITEM_TYPE.CARROT_SEEDS] = TILE_TYPE.PLANTED_CARROT_0
@@ -75,19 +77,27 @@ TILE_PARTICLES[TILE_TYPE.PLANTED_CARROT_2] = "orange"
 TILE_PARTICLES[TILE_TYPE.PLANTED_WHEAT_2] = "yellow"
 TILE_PARTICLES[TILE_TYPE.PLANTED_ONION_2] = "purple"
 
-COLLISION_TILES = set([TILE_TYPE.WALL])
+COLLISION_TILES = set([TILE_TYPE.WALL, TILE_TYPE.WATER])
 
 tilling_sound = pygame.mixer.Sound(os.path.join("assets", "audio", "till.wav"))
 harvesting_sound = pygame.mixer.Sound(os.path.join("assets", "audio", "pickUp.wav"))
 planting_sound = pygame.mixer.Sound(os.path.join("assets", "audio", "plant.wav"))
 
 class Map:
-    def __init__(self):
+    def __init__(self, player):
         self.tiles = []
         for x in range(MAP_WIDTH):
             for y in range(MAP_HEIGHT):
                 # TODO: Better generation
                 self.tiles.append(TILE_TYPE.SOIL if random.random() <= 0.4 else TILE_TYPE.GRASS)
+        
+        # set water pool
+        self.tiles[(MAP_WIDTH // 2) * MAP_HEIGHT + 2] = TILE_TYPE.WATER
+        self.tiles[(MAP_WIDTH // 2) * MAP_HEIGHT + 3] = TILE_TYPE.WATER
+        self.tiles[(MAP_WIDTH // 2 + 1) * MAP_HEIGHT + 2] = TILE_TYPE.WATER
+        self.tiles[(MAP_WIDTH // 2 + 1) * MAP_HEIGHT + 3] = TILE_TYPE.WATER
+
+        self.player = player
     
     def update(self):
         global last_map_update
@@ -169,6 +179,12 @@ class Map:
         planting_sound.play() # TODO: CHOP sound
         add_floating_text_hint(FloatingHintText(f"Broke wall!", tile_center_pos, "red"))
     
+    def swap_cans(self, tile_index, tile_center_pos):
+        self.player.items[ITEM_TYPE.WATERING_CAN_EMPTY] = 0
+        self.player.items[ITEM_TYPE.WATERING_CAN_FULL] = 5
+        harvesting_sound.play() # TODO: water fill sound
+        add_floating_text_hint(FloatingHintText(f"Filled can!", tile_center_pos, "white"))
+
     def get_interaction(self, tile_x, tile_y, item, player):
         """
         Returns a lambda that will execute the proper interaction based on the selected tile and item,
@@ -208,6 +224,10 @@ class Map:
                 if tile_type != TILE_TYPE.TILLED_SOIL:
                     return None
                 return (lambda: self.planted(tile_index, tile_center_pos, item)) if item in SEED_ITEM_TO_TILE else None
+            case ITEM_TYPE.WATERING_CAN_EMPTY:
+                if tile_type != TILE_TYPE.WATER:
+                    return None
+                return (lambda: self.swap_cans(tile_index, tile_center_pos))
 
     def draw(self, win: pygame.Surface, delta, player, outline_x, outline_y, outline_color):
         x_start = math.floor((player.pos.x - WIDTH / 2) / TILE_SIZE)

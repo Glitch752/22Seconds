@@ -13,7 +13,7 @@ from items import ITEM_TYPE, item_prices
 from ui import *
 
 player = Player(MAP_WIDTH * TILE_SIZE // 2, MAP_HEIGHT * TILE_SIZE // 2, TILE_SIZE // 2 - 10)
-farm = Map()
+farm = Map(player)
 dialogue = DialogueManager()
 
 buy_item_sound = pygame.mixer.Sound(os.path.join("assets", "audio", "chaChing.wav")) # TODO: Better purchase sound

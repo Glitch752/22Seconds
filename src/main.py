@@ -192,7 +192,7 @@ def main():
     last_game_state = game_state
 
     while run:
-        delta = clock.tick_busy_loop(60) / 1000 # Fixes stuttering for some reason
+        delta = clock.tick_busy_loop(0) / 1000 # Fixes stuttering for some reason
 
         if delta:
             pygame.display.set_caption(f"{constants.GAMENAME} | {(1 / delta):.2f}fps")

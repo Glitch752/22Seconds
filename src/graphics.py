@@ -2,6 +2,10 @@ from functools import cache
 import pygame, os
 import platform
 
+import pygame.geometry
+import pygame.system
+import pygame.window
+
 if platform.system() == "Windows":
     import ctypes
     ctypes.windll.user32.SetProcessDPIAware()

@@ -85,9 +85,12 @@ def draw_main_menu():
             if (x + y) % 2 == 0:
                 pygame.draw.rect(WIN, '#abef70', (x * TILE_SIZE - t, y * TILE_SIZE - t, TILE_SIZE, TILE_SIZE))
 
-    WIN.blit(t := GIANT_FONT.render(constants.GAMENAME, True, 'black'), (WIDTH // 2 - t.get_width() // 2, HEIGHT * 0.25 - t.get_height() // 2))
-    WIN.blit(t := SMALL_FONT.render("Press Enter to Play", True, 'black'), (WIDTH // 2 - t.get_width() // 2, HEIGHT * 0.75 - t.get_height() // 2))    
-    WIN.blit(t := SMALL_FONT.render("Made by Brody, Mikey, and Elly", True, 'black'), (WIDTH // 2 - t.get_width() // 2, HEIGHT * 0.9 - t.get_height() // 2))    
+    WIN.blit(t := GIANT_FONT.render(constants.GAMENAME, True, 'black'), (2 + WIDTH // 2 - t.get_width() // 2, 2 + HEIGHT * 0.25 - t.get_height() // 2))
+    WIN.blit(t := GIANT_FONT.render(constants.GAMENAME, True, 'white'), (WIDTH // 2 - t.get_width() // 2, HEIGHT * 0.25 - t.get_height() // 2))
+    WIN.blit(t := SMALL_FONT.render("Press Enter to Play", True, 'black'), (1 + WIDTH // 2 - t.get_width() // 2, 1 + HEIGHT * 0.75 - t.get_height() // 2))    
+    WIN.blit(t := SMALL_FONT.render("Press Enter to Play", True, 'white'), (WIDTH // 2 - t.get_width() // 2, HEIGHT * 0.75 - t.get_height() // 2))    
+    WIN.blit(t := SMALL_FONT.render("Made by Brody, Mikey, and Elly", True, 'black'), (1 + WIDTH // 2 - t.get_width() // 2, 1 + HEIGHT * 0.9 - t.get_height() // 2))    
+    WIN.blit(t := SMALL_FONT.render("Made by Brody, Mikey, and Elly", True, 'white'), (WIDTH // 2 - t.get_width() // 2, HEIGHT * 0.9 - t.get_height() // 2))    
 
 def draw_currency():
     WIN.blit(big_font_render(f"Currency: {player.currency}c", 'black'), (17, 17))

@@ -1,5 +1,5 @@
 import pygame
-from constants import WIDTH, HEIGHT, TILE_SIZE
+from constants import WIDTH, HEIGHT, TILE_SIZE, lerp
 from map import MAP_WIDTH, MAP_HEIGHT, TILE_TYPE
 from items import ITEM_NAMES, ITEM_TYPE, render_item_slot, is_interactable, get_slot_bounds, item_prices
 from graphics import add_floating_text_hint, FloatingHintText
@@ -18,6 +18,7 @@ class Player:
         self.frame = 0
         self.timer = 0
 
+        self.target_angle = 0
         self.angle = 0
 
         self.items = {}
@@ -114,7 +115,7 @@ class Player:
             if move.magnitude():
                 move = move.normalize()
 
-                self.angle = 270 - math.degrees(math.atan2(move.y, move.x))
+                self.target_angle = 270 - math.degrees(math.atan2(move.y, move.x))
 
             move *= self.speed * delta
         else:
@@ -140,13 +141,19 @@ class Player:
             if move.magnitude():
                 move = move.normalize()
 
-                self.angle = 270 - math.degrees(a)
+                self.target_angle = 270 - math.degrees(a)
     
             if self.slowdown_time:
                 move *= self.speed * 0.5 * self.crazed_speed_multiplier * delta
             else:
                 move *= self.speed * self.crazed_speed_multiplier * delta
 
+        if self.target_angle > self.angle + 180:
+            self.target_angle -= 360
+        if self.target_angle < self.angle - 180:
+            self.target_angle += 360
+
+        self.angle = lerp(self.angle, self.target_angle, 0.1)
 
         # Scuffed collision
         originally_colliding = self.is_colliding(map)
@@ -236,8 +243,12 @@ class Player:
         return [items for items in self.get_item_list() if not is_interactable(items[0])]
 
     def draw_player(self, win):
-        # pygame.draw.circle(win, 'violet', (WIDTH // 2, HEIGHT // 2), self.radius)
         win.blit(t := pygame.transform.rotate(self.current_image, self.angle), (WIDTH // 2 - t.get_width() // 2, HEIGHT // 2 - t.get_height() // 2))
+        
+        # r = 20
+
+        # pygame.draw.circle(win, 'blue', (WIDTH // 2 + math.cos(math.radians(self.target_angle)) * r, HEIGHT // 2 + math.sin(math.radians(self.target_angle)) * r), 4)
+        # pygame.draw.circle(win, 'red', (WIDTH // 2 + math.cos(math.radians(self.angle)) * r, HEIGHT // 2 + math.sin(math.radians(self.angle)) * r), 4)
 
     def draw_ui(self, win):
         for i, (item, amount) in enumerate(self.get_non_interactable_items()):

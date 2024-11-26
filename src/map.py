@@ -202,7 +202,7 @@ class Map:
                 if pygame.Rect(tile_x * TILE_SIZE, tile_y * TILE_SIZE, TILE_SIZE, TILE_SIZE)\
                     .colliderect(player.pos.x - player.radius, player.pos.y - player.radius, player.radius*2, player.radius*2):
                     return None
-                if tile_type == TILE_TYPE.SOIL:
+                if tile_type == TILE_TYPE.SOIL or tile_type == TILE_TYPE.GRASS:
                     return (lambda: self.wall_placed(tile_index, tile_center_pos))
             case ITEM_TYPE.CARROT_SEEDS | ITEM_TYPE.WHEAT_SEEDS | ITEM_TYPE.ONION_SEEDS:
                 if tile_type != TILE_TYPE.TILLED_SOIL:

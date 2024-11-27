@@ -13,7 +13,6 @@ class Player:
         self.speed = 300 # Pixels per second
 
         self.image = pygame.transform.scale(img := pygame.image.load(os.path.join("assets", "sprites", "player_normal.png")), (img.get_width() * 4, img.get_height() * 4))
-        self.crazed_image = pygame.transform.scale(img := pygame.image.load(os.path.join("assets", "sprites", "player_crazed.png")), (img.get_width() * 4, img.get_height() * 4))
         self.current_image = None
         self.frame = 0
         self.timer = 0
@@ -42,11 +41,6 @@ class Player:
 
         self.profit = 0
         self.currency = 0
-
-        self.crazed = False
-        self.crazed_speed_multiplier = 3
-        self.crazed_timer = 0
-        self.slowdown_time = 0
         
         # Set after running out of an item so the player doesn't
         # accidentally start using the next item available.
@@ -99,55 +93,24 @@ class Player:
         add_floating_text_hint(self.slot_selection_floating_text)
     
     def update(self, mx, my, map, delta):
-        if not self.crazed:
+        if mx or my:
+            self.timer += delta
 
-            if mx or my:
-                self.timer += delta
-
-            if self.timer >= 0.15:
-                self.timer -= 0.15
-                
-                self.frame = (self.frame + 1) % 4
+        if self.timer >= 0.15:
+            self.timer -= 0.15
             
-            self.current_image = self.image.subsurface((self.image.get_height() * self.frame, 0, self.image.get_height(), self.image.get_height()))
+            self.frame = (self.frame + 1) % 4
+        
+        self.current_image = self.image.subsurface((self.image.get_height() * self.frame, 0, self.image.get_height(), self.image.get_height()))
 
-            move = pygame.Vector2(mx, my)
+        move = pygame.Vector2(mx, my)
 
-            if move.magnitude():
-                move = move.normalize()
+        if move.magnitude():
+            move = move.normalize()
 
-                self.target_angle = 270 - math.degrees(math.atan2(move.y, move.x))
+            self.target_angle = 270 - math.degrees(math.atan2(move.y, move.x))
 
-            move *= self.speed * delta
-        else:
-            self.crazed_timer += delta
-    
-            if self.slowdown_time:
-                self.slowdown_time = max(0, self.slowdown_time - delta)
-
-            if mx or my:
-                self.timer += delta
-
-            if self.timer >= 0.08:
-                self.timer -= 0.08
-                
-                self.frame = (self.frame + 1) % 4
-            
-            self.current_image = self.crazed_image.subsurface((self.crazed_image.get_height() * self.frame, 0, self.crazed_image.get_height(), self.crazed_image.get_height()))
-
-            a = math.atan2(my, mx) + self.crazed_timer
-
-            move = pygame.Vector2(math.cos(a), math.sin(a))
-
-            if move.magnitude():
-                move = move.normalize()
-
-                self.target_angle = 270 - math.degrees(a)
-    
-            if self.slowdown_time:
-                move *= self.speed * 0.5 * self.crazed_speed_multiplier * delta
-            else:
-                move *= self.speed * self.crazed_speed_multiplier * delta
+        move *= self.speed * delta
 
         if self.target_angle > self.angle + 180:
             self.target_angle -= 360
@@ -163,19 +126,11 @@ class Player:
         self.pos[0] += move[0]
         if not originally_colliding and (pos := self.is_colliding(map)):
             self.pos = old_pos
-
-            if self.crazed:
-                map.tiles[pos[0] * MAP_HEIGHT + pos[1]] = TILE_TYPE.DESTROYED_WALL
-                self.slowdown_time = 0.75
         
         old_pos = self.pos.copy()
         self.pos[1] += move[1]
         if not originally_colliding and (pos := self.is_colliding(map)):
             self.pos = old_pos
-
-            if self.crazed:
-                map.tiles[pos[0] * MAP_HEIGHT + pos[1]] = TILE_TYPE.DESTROYED_WALL
-                self.slowdown_time = 0.75
 
         if self.pos.x <= 0:
             self.pos.x = 0
@@ -186,15 +141,6 @@ class Player:
             self.pos.y = 0
         if self.pos.y >= MAP_HEIGHT * TILE_SIZE:
             self.pos.y = MAP_HEIGHT * TILE_SIZE
-
-        if self.crazed:
-            tile_x, tile_y = int(self.pos.x // TILE_SIZE), int(self.pos.y // TILE_SIZE)
-
-            try:
-                if map.tiles[tile_x * MAP_HEIGHT + tile_y] in [TILE_TYPE.PLANTED_CARROT_0, TILE_TYPE.PLANTED_CARROT_1, TILE_TYPE.PLANTED_CARROT_2, TILE_TYPE.PLANTED_ONION_0, TILE_TYPE.PLANTED_ONION_1, TILE_TYPE.PLANTED_ONION_2, TILE_TYPE.PLANTED_WHEAT_0, TILE_TYPE.PLANTED_WHEAT_1, TILE_TYPE.PLANTED_WHEAT_2]:
-                    map.tiles[tile_x * MAP_HEIGHT + tile_y] = TILE_TYPE.SOIL
-            except IndexError:
-                pass
 
         interactable_items = len(self.get_interactable_items())
         if self.selected_slot >= interactable_items:

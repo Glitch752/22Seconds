@@ -12,7 +12,7 @@ class Player:
         self.radius = r
         self.speed = 300 # Pixels per second
 
-        self.image = pygame.transform.scale(img := pygame.image.load(os.path.join("assets", "sprites", "player_normal.png")).convert(), (img.get_width() * 4, img.get_height() * 4))
+        self.image = pygame.transform.scale(img := pygame.image.load(os.path.join("assets", "sprites", "player_normal.png")).convert_alpha(), (img.get_width() * 4, img.get_height() * 4))
         self.current_image = None
         self.frame = 0
         self.timer = 0
@@ -189,14 +189,9 @@ class Player:
     def get_non_interactable_items(self):
         return [items for items in self.get_item_list() if not is_interactable(items[0])]
 
-    def draw_player(self, win):
-        win.blit(t := pygame.transform.rotate(self.current_image, self.angle), (WIDTH // 2 - t.get_width() // 2, HEIGHT // 2 - t.get_height() // 2))
-        
-        # r = 20
-
-        # pygame.draw.circle(win, 'blue', (WIDTH // 2 + math.cos(math.radians(self.target_angle)) * r, HEIGHT // 2 + math.sin(math.radians(self.target_angle)) * r), 4)
-        # pygame.draw.circle(win, 'red', (WIDTH // 2 + math.cos(math.radians(self.angle)) * r, HEIGHT // 2 + math.sin(math.radians(self.angle)) * r), 4)
-
+    def draw_player(self, win, camera_pos):
+        win.blit(t := pygame.transform.rotate(self.current_image, self.angle), (self.pos.x + WIDTH // 2 - t.get_width() // 2 - camera_pos.x, self.pos.y + HEIGHT // 2 - t.get_height() // 2 - camera_pos.y))
+    
     def draw_ui(self, win):
         for i, (item, amount) in enumerate(self.get_non_interactable_items()):
             render_item_slot(win, item, amount, False, i, 0, False, True)

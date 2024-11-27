@@ -130,6 +130,13 @@ def main():
     
     last_game_state = game_state
 
+    # temporary bc i'm tryna watch yt
+    pygame.mixer.music.set_volume(0)
+
+    sfx_channel = pygame.mixer.Channel(0)
+
+    camera = pygame.Vector2()
+
     while run:
         delta = clock.tick_busy_loop(0) / 1000 # Fixes stuttering for some reason
 
@@ -160,6 +167,14 @@ def main():
         if game_state == GameState.Playing:
             update_particles(delta)
             update_player_movement(delta)
+            
+            c_target = player.pos.copy()
+            
+            camera = camera.lerp(c_target, 0.05)
+
+            camera.x = clamp(camera.x, WIDTH // 2, TILE_SIZE * MAP_WIDTH - WIDTH // 2)
+            camera.y = clamp(camera.y, HEIGHT // 2, TILE_SIZE * MAP_HEIGHT - HEIGHT // 2)
+
             update_day_cycle(delta, player)
     
         dialogue.update(delta)
@@ -240,14 +255,14 @@ def main():
                 exit()
         else:
             farm.update()
-            farm.draw(WIN, delta, player, selected_cell_x, selected_cell_y, selection_color)
+            farm.draw(WIN, delta, camera, selected_cell_x, selected_cell_y, selection_color)
             
-            draw_particles(WIN, player.pos)
-            player.draw_player(WIN)
+            draw_particles(WIN, camera)
+            player.draw_player(WIN, camera)
             
             draw_day_fading(WIN)
             
-            draw_floating_hint_texts(WIN, player.pos)
+            draw_floating_hint_texts(WIN, camera)
             
             player.draw_ui(WIN)
             

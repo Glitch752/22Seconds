@@ -39,7 +39,7 @@ ITEM_IMAGES = {}
 INTERACTABLE_ITEMS = {}
 ITEM_NAMES = {}
 def add_item_data(item, path, name, interactable):
-    original_image = pygame.image.load(os.path.join("assets", "sprites", path)).convert()
+    original_image = pygame.image.load(os.path.join("assets", "sprites", path)).convert_alpha()
     image = pygame.transform.scale(original_image, (ITEM_SLOT_ITEM_SIZE, ITEM_SLOT_ITEM_SIZE))
     ITEM_IMAGES[item] = image
     INTERACTABLE_ITEMS[item] = interactable

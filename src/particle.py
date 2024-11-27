@@ -33,10 +33,10 @@ class Particle:
 
 particles: list[Particle] = []
 
-def draw_particles(win, player_pos):
+def draw_particles(win, camera_pos):
     global particles
     for p in particles:
-        p.draw(win, player_pos)
+        p.draw(win, camera_pos)
 
 def update_particles(delta):
     global particles

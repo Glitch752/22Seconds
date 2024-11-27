@@ -250,27 +250,27 @@ class Map:
                 else:
                     return None
 
-    def draw(self, win: pygame.Surface, delta, player, outline_x, outline_y, outline_color):
-        x_start = math.floor((player.pos.x - WIDTH / 2) / TILE_SIZE)
-        x_end = math.ceil((player.pos.x + WIDTH / 2) / TILE_SIZE)
-        y_start = math.floor((player.pos.y - HEIGHT / 2) / TILE_SIZE)
-        y_end = math.ceil((player.pos.y + HEIGHT / 2) / TILE_SIZE)
+    def draw(self, win: pygame.Surface, delta, camera, outline_x, outline_y, outline_color):
+        x_start = math.floor((camera.x - WIDTH / 2) / TILE_SIZE)
+        x_end = math.ceil((camera.x + WIDTH / 2) / TILE_SIZE)
+        y_start = math.floor((camera.y - HEIGHT / 2) / TILE_SIZE)
+        y_end = math.ceil((camera.y + HEIGHT / 2) / TILE_SIZE)
         blits = []
         for tile_x in range(x_start, x_end):
             for tile_y in range(y_start, y_end):
-                x = tile_x * TILE_SIZE - player.pos.x + WIDTH // 2
-                y = tile_y * TILE_SIZE - player.pos.y + HEIGHT // 2
+                x = tile_x * TILE_SIZE - camera.x + WIDTH // 2
+                y = tile_y * TILE_SIZE - camera.y + HEIGHT // 2
                 if tile_x >= 0 and tile_x < MAP_WIDTH and tile_y >= 0 and tile_y < MAP_HEIGHT:
                     tile_type = self.tiles[tile_x * MAP_HEIGHT + tile_y]
                     if random.random() < delta * PARTICLES_PER_TILE_SECOND and tile_type in TILE_PARTICLES:
                         spawn_particles_in_square(tile_x * TILE_SIZE + TILE_SIZE//2, tile_y * TILE_SIZE + TILE_SIZE//2, TILE_PARTICLES[tile_type], TILE_SIZE//2, 1)
                 else:
-                    tile_type = TILE_TYPE.SOIL
+                    tile_type = TILE_TYPE.WALL
                 blits.append([TILE_IMAGES[tile_type], (x, y)])
         win.blits(blits, False)
 
         # Draw outline
-        x = outline_x * TILE_SIZE - player.pos.x + WIDTH // 2
-        y = outline_y * TILE_SIZE - player.pos.y + HEIGHT // 2
+        x = outline_x * TILE_SIZE - camera.x + WIDTH // 2
+        y = outline_y * TILE_SIZE - camera.y + HEIGHT // 2
         win.blit(WHITE_IMAGE, (x, y))
         pygame.draw.rect(win, outline_color, (x, y, TILE_SIZE, TILE_SIZE), 1)

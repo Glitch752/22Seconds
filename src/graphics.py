@@ -99,7 +99,7 @@ def draw_all_deferred():
 
 def add_floating_text_hint(hint):
     floating_hint_texts.append(hint)
-def draw_floating_hint_texts(win, player_pos):
+def draw_floating_hint_texts(win, camera_pos):
     global floating_hint_texts
     i = 0
     while i < len(floating_hint_texts):
@@ -107,5 +107,5 @@ def draw_floating_hint_texts(win, player_pos):
         if floating_hint_text.is_complete():
             floating_hint_texts.pop(i)
             i -= 1
-        floating_hint_text.draw(win, player_pos)
+        floating_hint_text.draw(win, camera_pos)
         i += 1

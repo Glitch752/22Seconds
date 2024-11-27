@@ -68,14 +68,6 @@ def draw_day_fading(win: pygame.Surface):
     win.blit(day_face_surface, (0, 0))
 
     if brightness == 0:
-        # It's night... spooky
-        time_remaining = NIGHT_LENGTH - (day_cycle_time - DAY_LENGTH)
-        shake_amount = int(3 / max(0.5, time_remaining / NIGHT_LENGTH)) + 1
-        # Only works for <60 second nights, whatever for now
-        win.blit(
-            font := giant_font_render(f"00:{str(int(time_remaining)).rjust(2, '0')}", "red"),
-            (WIDTH // 2 - font.get_width() // 2 + random.randint(-shake_amount,shake_amount), 15 + random.randint(-shake_amount,shake_amount))
-        )
         pass
 
 def ease(t):

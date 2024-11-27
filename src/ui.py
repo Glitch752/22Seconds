@@ -27,8 +27,8 @@ class Button:
         self.color = self.hover_color if c else self.normal_color
         
         if c and not self.hover:
-            # AUDIO['select'].play()
             # TODO Play button hover sound
+            # AUDIO['select'].play()
             pass
         
         self.hover = c

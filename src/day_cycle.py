@@ -47,10 +47,7 @@ def day_transition(player):
     pygame.mixer.music.play()
 
 def night_transition(player):
-    pygame.mixer.music.stop()
-    pygame.mixer.music.load(os.path.join("assets", "audio", "track2.wav"))
-    pygame.mixer.music.play()
-    transformation_sound_effect.play()
+    pass
 
 # TODO: wtf refactor this out of day_cycle lol
 def play_sounds():

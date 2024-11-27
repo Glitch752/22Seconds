@@ -55,8 +55,6 @@ def draw_shop(win):
         for y in range(HEIGHT // TILE_SIZE + 1):
             if (x + y) % 2 == 0:
                 pygame.draw.rect(win, '#abef70', (x * TILE_SIZE - t, y * TILE_SIZE - t, TILE_SIZE, TILE_SIZE))
-
-    # TODO: Cards instead of buttons
     win.blit(t := big_font_render("Shop", 'black'), (WIDTH // 2 - t.get_width() // 2, 25))
     y = 85
     win.blit(t := normal_font_render(f"Carrots Sold ({item_prices[ITEM_TYPE.CARROT]}c per): {player.get_sold(ITEM_TYPE.CARROT)}", 'black'), (WIDTH // 2 - t.get_width() // 2, y))
@@ -69,6 +67,7 @@ def draw_shop(win):
     
     draw_currency()
 
+    # TODO: Cards instead of buttons
     for b in shop_buttons:
         b.draw(win)
 

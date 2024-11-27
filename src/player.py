@@ -12,7 +12,7 @@ class Player:
         self.radius = r
         self.speed = 300 # Pixels per second
 
-        self.image = pygame.transform.scale(img := pygame.image.load(os.path.join("assets", "sprites", "player_normal.png")), (img.get_width() * 4, img.get_height() * 4))
+        self.image = pygame.transform.scale(img := pygame.image.load(os.path.join("assets", "sprites", "player_normal.png")).convert(), (img.get_width() * 4, img.get_height() * 4))
         self.current_image = None
         self.frame = 0
         self.timer = 0

@@ -10,7 +10,7 @@ night_song = pygame.mixer.Sound(os.path.join("assets", "audio", "track2.wav"))
 day_cycle_time = 0
 was_day = True
 
-day_face_surface = pygame.Surface((WIDTH, HEIGHT))
+day_face_surface = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
 day_face_surface.fill((0, 0, 15))
 NIGHT_OPACITY = 150
 

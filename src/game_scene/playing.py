@@ -167,10 +167,11 @@ class PlayingGameScene(GameScene):
             player.select_slot(player_slots - slot)
             return
 
-        if type == InputType.CLICK_DOWN:
+        if type == InputType.CLICK_DOWN or pygame.mouse.get_pressed(3)[0]:
             self.game.player.mouse_down()
             self.game.inputs.interaction = True
             return
-        
-        elif type == InputType.CLICK_UP:
+
+        if type == InputType.CLICK_UP or not pygame.mouse.get_pressed(3)[0]:
             self.game.inputs.interaction = False
+            return

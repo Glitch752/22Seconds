@@ -75,7 +75,7 @@ class InShopScene(GameScene):
         y += t.get_height()
         win.blit(t := normal_font_render(f"Profit: {player.profit}", 'black'), (WIDTH // 2 - t.get_width() // 2, y))
         
-        draw_currency()
+        draw_currency(win, player)
 
         # TODO: Cards instead of buttons
         for b in self.shop_buttons:
@@ -87,11 +87,9 @@ class InShopScene(GameScene):
             for b in self.shop_buttons:
                 b.on_click(mx, my)
             return
-        
-    def enter(self: Self):
-        for box in self.cutscene_text:
-            self.game.dialogue.queue_dialogue(box)
-        self.game.dialogue.on_confirm()
+
+        if type == InputType.CANCEL:
+            self.exit_shop()
     
     def update(self: Self, inputs: Inputs, dt: float):
         mx, my = pygame.mouse.get_pos()

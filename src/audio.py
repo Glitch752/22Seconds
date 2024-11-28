@@ -10,7 +10,7 @@ class SOUND_TYPE:
 class AudioManager:
     day_track: str = os.path.join("assets", "audio", "main_track.wav")
     night_track: str = os.path.join("assets", "audio", "track2.wav")
-    shop_track: str = os.path.join("assets", "audio", "track3.wav")
+    shop_track: str = os.path.join("assets", "audio", "shop_track.wav")
     current_track: str = ""
     
     queued_sounds: list[tuple[int, pygame.mixer.Sound]] = []

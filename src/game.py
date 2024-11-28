@@ -39,6 +39,7 @@ class Game:
         self.current_scene.exit()
         self.current_scene = new_scene
         self.current_scene.enter()
+
     def enter_playing_scene(self):
         self.update_scene(self.playing_game_scene)
     

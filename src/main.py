@@ -2,6 +2,7 @@ import pygame
 import constants
 from game import Game
 from game_scene.playing import PlayingGameScene
+from game_scene.in_shop import InShopScene
 from ui import *
 
 game = Game()
@@ -11,9 +12,8 @@ def main():
     
     # game.start(IntroCutsceneScene(game))
     # TEMPORARY
-    game.audio_manager.play_day_track()
-    game.start(PlayingGameScene(game))
-    
+    game.start(InShopScene(game))
+
     clock = pygame.time.Clock()
     while not game.should_quit_game:
         current_monitor_refresh_rate = pygame.display.get_current_refresh_rate()

@@ -3,7 +3,7 @@ from enum import Enum, auto
 import pygame
 import math
 
-from constants import TARGET_RADIUS, WIDTH
+from constants import HEIGHT, TARGET_RADIUS, WIDTH
 
 class InputType(Enum):
     SELECT_SLOT_1 = auto() # 1 for keyboard
@@ -127,8 +127,8 @@ class Inputs:
                 self.movement_x += 1
             
             mouse_x, mouse_y = pygame.mouse.get_pos()
-            self.target_x = WIDTH // 2 - mouse_x
-            self.target_y = WIDTH // 2 - mouse_y
+            self.target_x = mouse_x - WIDTH // 2
+            self.target_y = mouse_y - HEIGHT // 2
         else:
             joystick = self.joysticks[0]
             self.movement_x = joystick.get_axis(pygame.CONTROLLER_AXIS_LEFTX)
@@ -138,8 +138,8 @@ class Inputs:
             self.target_y = joystick.get_axis(pygame.CONTROLLER_AXIS_RIGHTY) * TARGET_RADIUS
         
         target_mag = math.sqrt(self.target_x ** 2 + self.target_y ** 2)
-        self.target_x = self.target_x / target_mag if target_mag > TARGET_RADIUS else self.target_x
-        self.target_y = self.target_y / target_mag if target_mag > TARGET_RADIUS else self.target_y
+        self.target_x = self.target_x / target_mag * TARGET_RADIUS if target_mag > TARGET_RADIUS else self.target_x
+        self.target_y = self.target_y / target_mag * TARGET_RADIUS if target_mag > TARGET_RADIUS else self.target_y
         
         movement_mag = math.sqrt(self.movement_x ** 2 + self.movement_y ** 2)
         self.movement_x = self.movement_x / movement_mag if movement_mag > 1 else self.movement_x

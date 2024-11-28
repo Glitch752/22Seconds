@@ -2,7 +2,6 @@ from dialogue import DialogueManager
 import game_scene
 from graphics import WIN, draw_all_deferred
 from inputs import InputType, Inputs
-from map import Map
 from audio import AudioManager
 from player import Player
 import constants
@@ -11,12 +10,10 @@ import pygame
 # Stores global state required throughout the game
 class Game:
     player: Player
-    farm: Map
     dialogue_manager: DialogueManager = DialogueManager()
     
     current_scene: game_scene.GameScene
     
-    camera_position: pygame.Vector2 = pygame.Vector2()
     audio_manager: AudioManager = AudioManager()
     
     should_quit_game: bool = False
@@ -33,7 +30,6 @@ class Game:
             constants.MAP_HEIGHT * constants.TILE_SIZE // 2,
             constants.TILE_SIZE // 2 - 10
         )
-        self.farm = Map()
         self.playing_game_scene = game_scene.playing.PlayingGameScene(self)
     
     def check_keyboard_input(self):
@@ -55,7 +51,6 @@ class Game:
             self.handle_event(event)
         
         self.inputs.update()
-        self.player.update(self.inputs.movement_x, self.inputs.movement_y, self.farm, delta)
         self.dialogue_manager.update(delta)
         
         self.current_scene.update(self.inputs, delta)

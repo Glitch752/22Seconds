@@ -5,7 +5,6 @@ from audio import SOUND_TYPE
 from game import Game
 from game_scene import GameScene
 from constants import HEIGHT, TILE_SIZE, WIDTH
-from game_scene import OutroCutsceneScene
 from game_scene.playing import draw_currency
 from graphics import big_font_render, normal_font_render
 from inputs import InputType, Inputs
@@ -35,6 +34,7 @@ class InShopScene(GameScene):
             self.game.audio_manager.play_sound(SOUND_TYPE.NO_MONEY)
 
     def try_to_win_lmao(self):
+        from game_scene.outro_cutscene import OutroCutsceneScene
         player = self.game.player
         if player.currency >= 1000:
             self.game.audio_manager.play_sound(SOUND_TYPE.BUY_ITEM)

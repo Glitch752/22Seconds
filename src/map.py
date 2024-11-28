@@ -2,7 +2,7 @@ import pygame
 import pygame.midi
 from constants import TILE_SIZE, WIDTH, HEIGHT
 from graphics.particles import spawn_particles_in_square
-from graphics import WHITE_IMAGE, add_floating_text_hint, FloatingHintText
+from graphics import add_floating_text_hint, FloatingHintText
 from items import ITEM_NAMES, ITEM_TYPE
 import random
 import os
@@ -240,7 +240,7 @@ class Map:
                     return None
 
     last_draw_time = 0
-    def draw(self, win: pygame.Surface, camera_position: pygame.Vector2, outline_x: int, outline_y: int, outline_color: str):
+    def draw(self, win: pygame.Surface, camera_position: pygame.Vector2):
         current_time = pygame.time.get_ticks()
         delta = (current_time - self.last_draw_time) / 1000
         self.last_draw_time = current_time
@@ -262,9 +262,3 @@ class Map:
                     tile_type = TILE_TYPE.WALL
                 blits.append([TILE_IMAGES[tile_type], (x, y)])
         win.blits(blits, False)
-
-        # Draw outline
-        x = outline_x * TILE_SIZE - camera_position.x + WIDTH // 2
-        y = outline_y * TILE_SIZE - camera_position.y + HEIGHT // 2
-        win.blit(WHITE_IMAGE, (x, y))
-        pygame.draw.rect(win, outline_color, (x, y, TILE_SIZE, TILE_SIZE), 1)

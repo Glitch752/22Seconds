@@ -3,13 +3,14 @@ import math
 from typing import Self
 import pygame
 
-from constants import DAY_LENGTH, DUSK_DAWN_LENGTH, HEIGHT, MAP_HEIGHT, MAP_WIDTH, NIGHT_LENGTH, NIGHT_OPACITY, TILE_SIZE, WIDTH
+from constants import CROSSHAIR_COLOR, CROSSHAIR_ONLY_WITH_JOYSTICK, CROSSHAIR_SIZE, CROSSHAIR_THICKNESS, DAY_LENGTH, DUSK_DAWN_LENGTH, HEIGHT, MAP_HEIGHT, MAP_WIDTH, NIGHT_LENGTH, NIGHT_OPACITY, TILE_SIZE, WIDTH
 from game import Game
 from game_scene import GameScene
-from graphics import big_font_render
+from graphics import WHITE_IMAGE, big_font_render
 from graphics.floating_hint_text import draw_floating_hint_texts
 from graphics.particles import draw_particles, update_particles
 from inputs import InputType, Inputs
+from map import Map
 from player import Player
 from utils import clamp, ease
 
@@ -31,6 +32,10 @@ def draw_time(win: pygame.Surface, day_cycle_time: float):
 class PlayingGameScene(GameScene):
     selected_cell_x: int = 0
     selected_cell_y: int = 0
+    target_x: float = 0
+    target_y: float = 0
+    farm: Map = Map()
+    
     selection_color: str = NOTHING_SELECTION_COLOR
     camera_position: pygame.Vector2
     
@@ -53,7 +58,7 @@ class PlayingGameScene(GameScene):
     
     def update(self: Self, inputs: Inputs, dt: float):
         player = self.game.player
-        player.update(inputs.movement_x, inputs.movement_y, self.game.farm, dt)
+        player.update(inputs.movement_x, inputs.movement_y, self.farm, dt)
         
         # Interaction
         mx, my = pygame.mouse.get_pos()
@@ -62,9 +67,11 @@ class PlayingGameScene(GameScene):
         else:
             selected_item = player.get_selected_item()[0]
             
-            selected_cell_x = math.floor((mx + self.game.camera_position.x - WIDTH // 2) // TILE_SIZE)
-            selected_cell_y = math.floor((my + self.game.camera_position.y - HEIGHT // 2) // TILE_SIZE)
-            interaction = self.game.farm.get_interaction(selected_cell_x, selected_cell_y, selected_item, player)
+            self.selected_cell_x = math.floor((inputs.target_x + self.camera_position.x) // TILE_SIZE)
+            self.selected_cell_y = math.floor((inputs.target_y + self.camera_position.y) // TILE_SIZE)
+            self.target_x = inputs.target_x
+            self.target_y = inputs.target_y
+            interaction = self.farm.get_interaction(self.selected_cell_x, self.selected_cell_y, selected_item, player)
             self.selection_color = INTERACTABLE_SELECTION_COLOR if interaction else NON_INTERACTABLE_SELECTION_COLOR
 
             if interaction != None:
@@ -78,7 +85,7 @@ class PlayingGameScene(GameScene):
         
         # General updates
         update_particles(dt)
-        self.game.farm.update()
+        self.farm.update()
         
         camera_target = player.pos.copy()
         camera_target.x = clamp(camera_target.x, WIDTH // 2, TILE_SIZE * MAP_WIDTH - WIDTH // 2)
@@ -123,7 +130,18 @@ class PlayingGameScene(GameScene):
     def draw(self: Self, win: pygame.Surface):
         win.fill("#000000")
         
-        self.game.farm.draw(win, self.camera_position, self.selected_cell_x, self.selected_cell_y, self.selection_color)
+        self.farm.draw(win, self.camera_position)
+        
+        # Draw outline
+        x = self.selected_cell_x * TILE_SIZE - self.camera_position.x + WIDTH // 2
+        y = self.selected_cell_y * TILE_SIZE - self.camera_position.y + HEIGHT // 2
+        win.blit(WHITE_IMAGE, (x, y))
+        pygame.draw.rect(win, self.selection_color, (x, y, TILE_SIZE, TILE_SIZE), 1)
+        
+        # Draw target crosshair
+        if not CROSSHAIR_ONLY_WITH_JOYSTICK or self.game.inputs.joystick_enabled:
+            pygame.draw.line(win, CROSSHAIR_COLOR, (WIDTH // 2 + self.target_x - CROSSHAIR_SIZE, HEIGHT // 2 + self.target_y), (WIDTH // 2 + self.target_x + CROSSHAIR_SIZE, HEIGHT // 2 + self.target_y), width=CROSSHAIR_THICKNESS)
+            pygame.draw.line(win, CROSSHAIR_COLOR, (WIDTH // 2 + self.target_x, HEIGHT // 2 + self.target_y - CROSSHAIR_SIZE), (WIDTH // 2 + self.target_x, HEIGHT // 2 + self.target_y + CROSSHAIR_SIZE), width=CROSSHAIR_THICKNESS)
         
         draw_particles(win, self.camera_position)
         self.game.player.draw_player(win, self.camera_position)

@@ -1,12 +1,37 @@
 import pygame
-from constants import WIDTH, HEIGHT, TILE_SIZE, lerp
-from map import MAP_WIDTH, MAP_HEIGHT, TILE_TYPE
+from constants import WIDTH, HEIGHT, TILE_SIZE
+from map import MAP_WIDTH, MAP_HEIGHT, Map
 from items import ITEM_NAMES, ITEM_TYPE, render_item_slot, is_interactable, get_slot_bounds, item_prices
 from graphics import add_floating_text_hint, FloatingHintText
 import os
 import math
 
+from utils import lerp
+
 class Player:
+    pos: pygame.Vector2
+    radius: int
+    speed: int
+    
+    image: pygame.Surface
+    current_image: pygame.Surface
+    
+    animation_frame: int
+    animation_timer: float
+    target_angle: float
+    angle: float
+    
+    items: dict
+    sold_items: dict
+    
+    selected_slot: int
+    slot_selection_floating_text: FloatingHintText
+    
+    profit: int
+    currency: int
+    
+    wait_for_mouseup: bool
+    
     def __init__(self, x, y, r=16):
         self.pos = pygame.Vector2(x, y)
         self.radius = r
@@ -14,8 +39,8 @@ class Player:
 
         self.image = pygame.transform.scale(img := pygame.image.load(os.path.join("assets", "sprites", "player_normal.png")).convert_alpha(), (img.get_width() * 4, img.get_height() * 4))
         self.current_image = None
-        self.frame = 0
-        self.timer = 0
+        self.animation_frame = 0
+        self.animation_timer = 0
 
         self.target_angle = 0
         self.angle = 0
@@ -92,25 +117,18 @@ class Player:
         )
         add_floating_text_hint(self.slot_selection_floating_text)
     
-    def update(self, mx, my, map, delta):
-        if mx or my:
-            self.timer += delta
+    def update(self, movement_x: float, movement_y: float, farm: Map, delta: float):
+        move = pygame.Vector2(movement_x, movement_y)
 
-        if self.timer >= 0.15:
-            self.timer -= 0.15
-            
-            self.frame = (self.frame + 1) % 4
-        
-        self.current_image = self.image.subsurface((self.image.get_height() * self.frame, 0, self.image.get_height(), self.image.get_height()))
+        if move.magnitude_squared() > 0:
+            self.animation_timer += delta * move.magnitude()
+        if self.animation_timer >= 0.15:
+            self.animation_timer -= 0.15
+            self.animation_frame = (self.animation_frame + 1) % 4
+        self.current_image = self.image.subsurface((self.image.get_height() * self.animation_frame, 0, self.image.get_height(), self.image.get_height()))
 
-        move = pygame.Vector2(mx, my)
-
-        if move.magnitude():
-            move = move.normalize()
-
+        if move.magnitude() > 0:
             self.target_angle = 270 - math.degrees(math.atan2(move.y, move.x))
-
-        move *= self.speed * delta
 
         if self.target_angle > self.angle + 180:
             self.target_angle -= 360
@@ -119,19 +137,22 @@ class Player:
 
         self.angle = lerp(self.angle, self.target_angle, 0.1)
 
+        move *= self.speed * delta
+
         # Scuffed collision
-        originally_colliding = self.is_colliding(map)
+        originally_colliding = self.is_colliding(farm)
         
         old_pos = self.pos.copy()
         self.pos[0] += move[0]
-        if not originally_colliding and (pos := self.is_colliding(map)):
+        if not originally_colliding and (pos := self.is_colliding(farm)):
             self.pos = old_pos
         
         old_pos = self.pos.copy()
         self.pos[1] += move[1]
-        if not originally_colliding and (pos := self.is_colliding(map)):
+        if not originally_colliding and (pos := self.is_colliding(farm)):
             self.pos = old_pos
 
+        # Clamp player to map
         if self.pos.x <= 0:
             self.pos.x = 0
         if self.pos.x >= MAP_WIDTH * TILE_SIZE:
@@ -142,6 +163,7 @@ class Player:
         if self.pos.y >= MAP_HEIGHT * TILE_SIZE:
             self.pos.y = MAP_HEIGHT * TILE_SIZE
 
+        # Ensure selected slot is within bounds
         interactable_items = len(self.get_interactable_items())
         if self.selected_slot >= interactable_items:
             self.selected_slot = interactable_items - 1
@@ -159,17 +181,18 @@ class Player:
         return None
 
     def over_ui(self, x, y):
-        """Returns if the mouse is over the UI"""
+        """Returns if the mouse is over the inventory UI"""
         for i in range(len(self.get_interactable_items())):
             if pygame.Rect(get_slot_bounds(i, 0, True, True)).collidepoint((x, y)):
                 return True
         return False
 
-    def mouse_down(self, x, y):
-        """Returns if an interaction was registered"""
+    def mouse_down(self):
+        """Returns if an interaction was inventory registered"""
+        x, y = pygame.mouse.get_pos()
+        
         for i in range(len(self.get_interactable_items())):
             if pygame.Rect(get_slot_bounds(i, 0, True, True)).collidepoint((x, y)):
-                # TODO show name of item when selecting slots (and also when scrolling)
                 self.select_slot(i)
                 return True
         

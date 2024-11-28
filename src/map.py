@@ -1,21 +1,13 @@
 import pygame
 import pygame.midi
 from constants import TILE_SIZE, WIDTH, HEIGHT
-from particle import spawn_particles_in_square
+from graphics.particles import spawn_particles_in_square
 from graphics import WHITE_IMAGE, add_floating_text_hint, FloatingHintText
 from items import ITEM_NAMES, ITEM_TYPE
 import random
 import os
 import math
-
-MAP_WIDTH = 50
-MAP_HEIGHT = 30
-
-MAP_UPDATE_RATE = 600
-PARTICLES_PER_TILE_SECOND = 5
-RANDOM_TICK_PER_UPDATE_RATIO = 0.01
-last_map_update = 0
-last_particle_spawn = 0
+from constants import MAP_WIDTH, MAP_HEIGHT, MAP_UPDATE_RATE, PARTICLES_PER_TILE_SECOND, RANDOM_TICK_PER_UPDATE_RATIO
 
 class TILE_TYPE:
     GRASS = 0
@@ -93,34 +85,31 @@ harvesting_sound = pygame.mixer.Sound(os.path.join("assets", "audio", "pickUp.wa
 planting_sound = pygame.mixer.Sound(os.path.join("assets", "audio", "plant.wav"))
 
 class Map:
-    def __init__(self, player):
+    last_map_update = 0
+    
+    def __init__(self):
         self.tiles = []
         for x in range(MAP_WIDTH):
             for y in range(MAP_HEIGHT):
                 # TODO: Better generation
                 self.tiles.append(TILE_TYPE.SOIL if random.random() <= 0.4 else TILE_TYPE.GRASS)
         
-        # set water pool
+        # Add a water pool
         self.tiles[(MAP_WIDTH // 2) * MAP_HEIGHT + 2] = TILE_TYPE.WATER
         self.tiles[(MAP_WIDTH // 2) * MAP_HEIGHT + 3] = TILE_TYPE.WATER
         self.tiles[(MAP_WIDTH // 2 + 1) * MAP_HEIGHT + 2] = TILE_TYPE.WATER
         self.tiles[(MAP_WIDTH // 2 + 1) * MAP_HEIGHT + 3] = TILE_TYPE.WATER
-
-        self.player = player
     
     def update(self):
-        global last_map_update
         current_time = pygame.time.get_ticks()
-        if current_time - last_map_update < MAP_UPDATE_RATE:
+        if current_time - self.last_map_update < MAP_UPDATE_RATE:
             return
-        last_map_update = current_time
+        self.last_map_update = current_time
 
         random_ticks = math.ceil(MAP_WIDTH * MAP_HEIGHT * RANDOM_TICK_PER_UPDATE_RATIO)
         for i in range(random_ticks):
             tile = random.randint(0, len(self.tiles) - 1)
             
-            tx, ty = tile % MAP_WIDTH, tile // MAP_WIDTH
-
             tile_type = self.tiles[tile]
             if tile_type in RANDOM_TICK_TRANSITIONS:
                 self.tiles[tile] = RANDOM_TICK_TRANSITIONS[tile_type]
@@ -188,15 +177,15 @@ class Map:
         planting_sound.play() # TODO: CHOP sound
         add_floating_text_hint(FloatingHintText(f"Broke wall!", tile_center_pos, "red"))
     
-    def swap_cans(self, tile_index, tile_center_pos):
-        self.player.items[ITEM_TYPE.WATERING_CAN_EMPTY] = 0
-        self.player.items[ITEM_TYPE.WATERING_CAN_FULL] = 5
+    def swap_cans(self, tile_index, tile_center_pos, player):
+        player.items[ITEM_TYPE.WATERING_CAN_EMPTY] = 0
+        player.items[ITEM_TYPE.WATERING_CAN_FULL] = 5
         harvesting_sound.play() # TODO: water fill sound
         add_floating_text_hint(FloatingHintText(f"Filled can!", tile_center_pos, "skyblue"))
     
-    def make_wet(self, tile_index, tile_center_pos):
+    def make_wet(self, tile_index, tile_center_pos, player):
         self.tiles[tile_index] = TILE_TYPE.WET_TILLED_SOIL
-        self.player.items[ITEM_TYPE.WATERING_CAN_FULL] -= 1
+        player.items[ITEM_TYPE.WATERING_CAN_FULL] -= 1
         harvesting_sound.play() # TODO: water fill sound
         add_floating_text_hint(FloatingHintText(f"Watered!", tile_center_pos, "skyblue"))
 
@@ -242,24 +231,29 @@ class Map:
             case ITEM_TYPE.WATERING_CAN_EMPTY:
                 if tile_type != TILE_TYPE.WATER:
                     return None
-                return (lambda: self.swap_cans(tile_index, tile_center_pos))
+                return (lambda: self.swap_cans(tile_index, tile_center_pos, player))
             case ITEM_TYPE.WATERING_CAN_FULL:
                 if player.items[ITEM_TYPE.WATERING_CAN_FULL] > 0:
                     if tile_type == TILE_TYPE.TILLED_SOIL:
-                        return (lambda: self.make_wet(tile_index, tile_center_pos))
+                        return (lambda: self.make_wet(tile_index, tile_center_pos, player))
                 else:
                     return None
 
-    def draw(self, win: pygame.Surface, delta, camera, outline_x, outline_y, outline_color):
-        x_start = math.floor((camera.x - WIDTH / 2) / TILE_SIZE)
-        x_end = math.ceil((camera.x + WIDTH / 2) / TILE_SIZE)
-        y_start = math.floor((camera.y - HEIGHT / 2) / TILE_SIZE)
-        y_end = math.ceil((camera.y + HEIGHT / 2) / TILE_SIZE)
+    last_draw_time = 0
+    def draw(self, win: pygame.Surface, camera_position: pygame.Vector2, outline_x: int, outline_y: int, outline_color: str):
+        current_time = pygame.time.get_ticks()
+        delta = (current_time - self.last_draw_time) / 1000
+        self.last_draw_time = current_time
+        
+        x_start = math.floor((camera_position.x - WIDTH / 2) / TILE_SIZE)
+        x_end = math.ceil((camera_position.x + WIDTH / 2) / TILE_SIZE)
+        y_start = math.floor((camera_position.y - HEIGHT / 2) / TILE_SIZE)
+        y_end = math.ceil((camera_position.y + HEIGHT / 2) / TILE_SIZE)
         blits = []
         for tile_x in range(x_start, x_end):
             for tile_y in range(y_start, y_end):
-                x = tile_x * TILE_SIZE - camera.x + WIDTH // 2
-                y = tile_y * TILE_SIZE - camera.y + HEIGHT // 2
+                x = tile_x * TILE_SIZE - camera_position.x + WIDTH // 2
+                y = tile_y * TILE_SIZE - camera_position.y + HEIGHT // 2
                 if tile_x >= 0 and tile_x < MAP_WIDTH and tile_y >= 0 and tile_y < MAP_HEIGHT:
                     tile_type = self.tiles[tile_x * MAP_HEIGHT + tile_y]
                     if random.random() < delta * PARTICLES_PER_TILE_SECOND and tile_type in TILE_PARTICLES:
@@ -270,7 +264,7 @@ class Map:
         win.blits(blits, False)
 
         # Draw outline
-        x = outline_x * TILE_SIZE - camera.x + WIDTH // 2
-        y = outline_y * TILE_SIZE - camera.y + HEIGHT // 2
+        x = outline_x * TILE_SIZE - camera_position.x + WIDTH // 2
+        y = outline_y * TILE_SIZE - camera_position.y + HEIGHT // 2
         win.blit(WHITE_IMAGE, (x, y))
         pygame.draw.rect(win, outline_color, (x, y, TILE_SIZE, TILE_SIZE), 1)

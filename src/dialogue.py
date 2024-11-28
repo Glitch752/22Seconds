@@ -5,10 +5,6 @@ from items import ITEM_SLOT_BORDER_RADIUS, SLOT_BACKGROUND
 import os
 import random
 
-speaking_sounds = [
-    pygame.mixer.Sound(os.path.join("assets", "audio", f"speak_{str(sound).rjust(2, '0')}.wav")) for sound in range(1, 15)
-]
-
 class DialogueManager:
     def __init__(self) -> None:
         self.queue = []
@@ -18,6 +14,7 @@ class DialogueManager:
         self.timer = 0
         self.done = False
         self.time_per_letter = 0.05
+        self.speaking_sounds = [pygame.mixer.Sound(os.path.join("assets", "audio", f"speak_{str(sound).rjust(2, '0')}.wav")) for sound in range(1, 15)]
 
     def queue_dialogue(self, lines):
         self.queue.append(lines)
@@ -63,7 +60,7 @@ class DialogueManager:
                 
                 self.current_char = 0
             elif self.lines[self.current_line][self.current_char] != " ":
-                speaking_sounds[random.randint(0, len(speaking_sounds) - 1)].play()
+                self.speaking_sounds[random.randint(0, len(self.speaking_sounds) - 1)].play()
 
     def draw(self, win):
         if len(self.lines):

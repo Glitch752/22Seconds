@@ -1,6 +1,9 @@
 from constants import *
 from graphics import *
 
+# TODO: UI interaction sounds (hover, click)
+# TODO: More generic UI system idk
+
 class Button:
     def __init__(self, text, x, y, pointer, args=()):
         self.text = text
@@ -22,7 +25,7 @@ class Button:
 
         self.color = self.normal_color
 
-    def on_hover(self, mx, my):
+    def check_hover(self, mx, my):
         c = self.rect.collidepoint(mx, my)
         self.color = self.hover_color if c else self.normal_color
         

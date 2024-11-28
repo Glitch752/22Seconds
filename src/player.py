@@ -122,13 +122,15 @@ class Player:
     def update(self, movement_x: float, movement_y: float, farm: Map, delta: float):
         if movement_x != 0.0:
             self.flipped = movement_x < 0
-
+        
         move = pygame.Vector2(movement_x, movement_y)
 
         if move.magnitude_squared() > 0:
             self.animation_timer += delta * move.magnitude()
-        if self.animation_timer >= 0.15:
-            self.animation_timer -= 0.15
+        else:
+            self.animation_frame = 0
+        if self.animation_timer >= 0.20:
+            self.animation_timer -= 0.20
             self.animation_frame = (self.animation_frame + 1) % 4
         self.current_image = self.image.subsurface((64 * self.animation_frame, 0, 64, 128))
 

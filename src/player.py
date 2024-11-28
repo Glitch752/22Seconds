@@ -176,7 +176,7 @@ class Player:
             self.selected_slot = interactable_items - 1
 
     def is_colliding(self, map):
-        min_x, min_y, max_x, max_y = self.pos.x - self.radius, self.pos.y - self.radius, self.pos.x + self.radius, self.pos.y + self.radius * 2
+        min_x, min_y, max_x, max_y = self.pos.x - self.radius, self.pos.y - self.radius * 2, self.pos.x + self.radius, self.pos.y + self.radius * 1.25
         min_tile_x = int(min_x // TILE_SIZE)
         min_tile_y = int(min_y // TILE_SIZE)
         max_tile_x = int(max_x // TILE_SIZE)
@@ -220,7 +220,7 @@ class Player:
         return [items for items in self.get_item_list() if not is_interactable(items[0])]
 
     def draw_player(self, win, camera_pos):
-        win.blit(t := pygame.transform.flip(self.current_image, self.flipped, False), (self.pos.x + WIDTH // 2 - t.get_width() // 2 - camera_pos.x, self.pos.y + HEIGHT // 2 - t.get_height() // 2 - camera_pos.y))
+        win.blit(t := pygame.transform.flip(self.current_image, self.flipped, False), (self.pos.x + WIDTH // 2 - t.get_width() // 2 - camera_pos.x, self.pos.y + HEIGHT // 2 - t.get_height() // 2 - camera_pos.y - self.radius))
     
     def draw_ui(self, win):
         for i, (item, amount) in enumerate(self.get_non_interactable_items()):

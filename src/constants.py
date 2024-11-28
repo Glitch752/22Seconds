@@ -9,7 +9,7 @@ DAY_LENGTH = 90 # Seconds
 DUSK_DAWN_LENGTH = 10 # Seconds
 NIGHT_LENGTH = 22 # Seconds
 
-TARGET_RADIUS = TILE_SIZE * 3 # Pixels
+TARGET_RADIUS = TILE_SIZE * 2 # Pixels
 
 # Map stuff
 MAP_WIDTH = 50

@@ -50,11 +50,7 @@ class PlayingGameScene(GameScene):
         self.day_fade_surface.fill((0, 0, 15))
     
     def enter(self: Self):
-        if self.get_daylight() == 0:
-            self.game.audio_manager.play_night_track()
-        else:
-            self.game.audio_manager.play_day_track()
-    
+        self.game.audio_manager.play_day_track()
     
     def update(self: Self, inputs: Inputs, dt: float):
         player = self.game.player
@@ -75,7 +71,7 @@ class PlayingGameScene(GameScene):
             self.selection_color = INTERACTABLE_SELECTION_COLOR if interaction else NON_INTERACTABLE_SELECTION_COLOR
 
             if interaction != None:
-                if pygame.mouse.get_pressed(3)[0]:
+                if inputs.interaction:
                     if not player.wait_for_mouseup:
                         result = interaction()
                         if result == -1:
@@ -110,11 +106,12 @@ class PlayingGameScene(GameScene):
         """Called when the day starts"""
         import game_scene.in_shop
         self.game.update_scene(game_scene.in_shop.InShopScene(self.game))
+        self.game.audio_manager.play_day_track()
 
     def night_transition(self: Self):
         """Called when the night starts"""
         # TODO: Sound effects
-        pass
+        self.game.audio_manager.play_night_track()
 
     def get_daylight(self: Self):
         """Returns a value from 0 to 1 representing the current daylight. Throughout the entire night, this value is 0."""
@@ -139,7 +136,7 @@ class PlayingGameScene(GameScene):
         pygame.draw.rect(win, self.selection_color, (x, y, TILE_SIZE, TILE_SIZE), 1)
         
         # Draw target crosshair
-        if not CROSSHAIR_ONLY_WITH_JOYSTICK or self.game.inputs.joystick_enabled:
+        if not CROSSHAIR_ONLY_WITH_JOYSTICK or not self.game.inputs.using_keyboard_input:
             pygame.draw.line(win, CROSSHAIR_COLOR, (WIDTH // 2 + self.target_x - CROSSHAIR_SIZE, HEIGHT // 2 + self.target_y), (WIDTH // 2 + self.target_x + CROSSHAIR_SIZE, HEIGHT // 2 + self.target_y), width=CROSSHAIR_THICKNESS)
             pygame.draw.line(win, CROSSHAIR_COLOR, (WIDTH // 2 + self.target_x, HEIGHT // 2 + self.target_y - CROSSHAIR_SIZE), (WIDTH // 2 + self.target_x, HEIGHT // 2 + self.target_y + CROSSHAIR_SIZE), width=CROSSHAIR_THICKNESS)
         
@@ -172,4 +169,8 @@ class PlayingGameScene(GameScene):
 
         if type == InputType.CLICK_DOWN:
             self.game.player.mouse_down()
+            self.game.inputs.interaction = True
             return
+        
+        elif type == InputType.CLICK_UP:
+            self.game.inputs.interaction = False

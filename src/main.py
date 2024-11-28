@@ -11,6 +11,7 @@ def main():
     
     # game.start(IntroCutsceneScene(game))
     # TEMPORARY
+    game.audio_manager.play_day_track()
     game.start(PlayingGameScene(game))
     
     clock = pygame.time.Clock()

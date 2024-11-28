@@ -5,6 +5,11 @@ import math
 
 from constants import HEIGHT, TARGET_RADIUS, WIDTH
 
+def deadzone(x, z=0.1):
+    if abs(x) >= z:
+        return (x - z) / (1 - z)
+    return 0
+
 class InputType(Enum):
     SELECT_SLOT_1 = auto() # 1 for keyboard
     SELECT_SLOT_2 = auto() # 2 for keyboard
@@ -78,7 +83,7 @@ class InputType(Enum):
     @staticmethod
     def from_controller_input(button: int, down: bool) -> Self:
         match button:
-            case pygame.CONTROLLER_BUTTON_A:
+            case pygame.CONTROLLER_BUTTON_RIGHTSTICK:
                 return InputType.CLICK_DOWN if down else InputType.CLICK_UP
             case pygame.CONTROLLER_BUTTON_X:
                 return InputType.ALTERNATE_CLICK_DOWN if down else InputType.ALTERNATE_CLICK_UP
@@ -104,9 +109,12 @@ class Inputs:
     # and the mouse when using keyboard input
     target_x: float
     target_y: float
+
+    interaction: bool
     
     def __init__(self):
         self.joystick_update()
+        self.interaction = False
     
     def joystick_update(self):
         self.joysticks = [pygame.joystick.Joystick(i) for i in range(pygame.joystick.get_count())]
@@ -131,11 +139,11 @@ class Inputs:
             self.target_y = mouse_y - HEIGHT // 2
         else:
             joystick = self.joysticks[0]
-            self.movement_x = joystick.get_axis(pygame.CONTROLLER_AXIS_LEFTX)
-            self.movement_y = joystick.get_axis(pygame.CONTROLLER_AXIS_LEFTY)
+            self.movement_x = deadzone(joystick.get_axis(pygame.CONTROLLER_AXIS_LEFTX))
+            self.movement_y = deadzone(joystick.get_axis(pygame.CONTROLLER_AXIS_LEFTY))
             
-            self.target_x = joystick.get_axis(pygame.CONTROLLER_AXIS_RIGHTX) * TARGET_RADIUS
-            self.target_y = joystick.get_axis(pygame.CONTROLLER_AXIS_RIGHTY) * TARGET_RADIUS
+            self.target_x = deadzone(joystick.get_axis(pygame.CONTROLLER_AXIS_RIGHTX)) * TARGET_RADIUS
+            self.target_y = deadzone(joystick.get_axis(pygame.CONTROLLER_AXIS_RIGHTY)) * TARGET_RADIUS
         
         target_mag = math.sqrt(self.target_x ** 2 + self.target_y ** 2)
         self.target_x = self.target_x / target_mag * TARGET_RADIUS if target_mag > TARGET_RADIUS else self.target_x

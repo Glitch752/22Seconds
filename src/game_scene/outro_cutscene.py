@@ -2,7 +2,7 @@ from typing import Self
 
 import pygame
 from game import Game
-from game_scene import GameScene, PlayingGameScene
+from game_scene import GameScene
 from inputs import Inputs
 
 class OutroCutsceneScene(GameScene):

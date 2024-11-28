@@ -159,12 +159,13 @@ class PlayingGameScene(GameScene):
         if type.is_slot_select():
             # This depends on the select slot input type being in order,
             # which is a bit of a hack but it's fine for now
-            slot_index = slot - InputType.SELECT_SLOT_1 + 1
+            # TODO this code crashes the game (using number keys to select items)
+            # slot_index = slot - InputType.SELECT_SLOT_1 + 1
             
-            player = self.game.player
-            player_slots = len(player.get_interactable_items())
-            slot = max(1, min(player_slots, slot_index))
-            player.select_slot(player_slots - slot)
+            # player = self.game.player
+            # player_slots = len(player.get_interactable_items())
+            # slot = max(1, min(player_slots, slot_index))
+            # player.select_slot(player_slots - slot)
             return
 
         if type == InputType.CLICK_DOWN or pygame.mouse.get_pressed(3)[0]:

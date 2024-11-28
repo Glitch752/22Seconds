@@ -61,7 +61,7 @@ class InputType(Enum):
                 return InputType.SELECT_SLOT_9 if down else None
             case pygame.K_0:
                 return InputType.SELECT_SLOT_10 if down else None
-            case pygame.K_a:
+            case pygame.K_z:
                 return InputType.CLICK_DOWN if down else InputType.CLICK_UP
             case pygame.K_x:
                 return InputType.ALTERNATE_CLICK_DOWN if down else InputType.ALTERNATE_CLICK_UP

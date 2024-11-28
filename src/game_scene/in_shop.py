@@ -15,10 +15,10 @@ class InShopScene(GameScene):
     def __init__(self: Self, game: Game):
         super().__init__(game)
         self.shop_buttons = [
-            Button(f"Buy Carrot Seed - {item_prices[ITEM_TYPE.CARROT_SEEDS]}c", WIDTH // 2, HEIGHT // 2, self.buy_item, (ITEM_TYPE.CARROT_SEEDS)),
-            Button(f"Buy Onion Seed - {item_prices[ITEM_TYPE.ONION_SEEDS]}c", WIDTH // 2, HEIGHT // 2 + 40, self.buy_item, (ITEM_TYPE.ONION_SEEDS)),
-            Button(f"Buy Wheat Seed - {item_prices[ITEM_TYPE.WHEAT_SEEDS]}c", WIDTH // 2, HEIGHT // 2 + 80, self.buy_item, (ITEM_TYPE.WHEAT_SEEDS)),
-            Button(f"Buy 5 Walls - {item_prices[ITEM_TYPE.WALL]}c", WIDTH // 2, HEIGHT // 2 + 120, self.buy_item, (ITEM_TYPE.WALL)),
+            Button(f"Buy Carrot Seed - {item_prices[ITEM_TYPE.CARROT_SEEDS]}c", WIDTH // 2, HEIGHT // 2, self.buy_item, (ITEM_TYPE.CARROT_SEEDS,)),
+            Button(f"Buy Onion Seed - {item_prices[ITEM_TYPE.ONION_SEEDS]}c", WIDTH // 2, HEIGHT // 2 + 40, self.buy_item, (ITEM_TYPE.ONION_SEEDS,)),
+            Button(f"Buy Wheat Seed - {item_prices[ITEM_TYPE.WHEAT_SEEDS]}c", WIDTH // 2, HEIGHT // 2 + 80, self.buy_item, (ITEM_TYPE.WHEAT_SEEDS,)),
+            Button(f"Buy 5 Walls - {item_prices[ITEM_TYPE.WALL]}c", WIDTH // 2, HEIGHT // 2 + 120, self.buy_item, (ITEM_TYPE.WALL,)),
             Button(f"Idk move our or something - 1,000c", WIDTH // 2, HEIGHT // 2 + 160, self.try_to_win_lmao, ()),
             Button(f"Exit Shop", WIDTH // 2, HEIGHT // 2 + 240, self.exit_shop, ()),
         ]

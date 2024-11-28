@@ -15,6 +15,7 @@ class Player:
     
     image: pygame.Surface
     current_image: pygame.Surface
+    flipped: bool
     
     animation_frame: int
     animation_timer: float
@@ -37,8 +38,9 @@ class Player:
         self.radius = r
         self.speed = 300 # Pixels per second
 
-        self.image = pygame.transform.scale(img := pygame.image.load(os.path.join("assets", "sprites", "player_normal.png")).convert_alpha(), (img.get_width() * 4, img.get_height() * 4))
+        self.image = pygame.transform.scale(img := pygame.image.load(os.path.join("assets", "sprites", "player_walk.png")).convert_alpha(), (img.get_width() * 4, img.get_height() * 4))
         self.current_image = None
+        self.flipped = False
         self.animation_frame = 0
         self.animation_timer = 0
 
@@ -118,6 +120,9 @@ class Player:
         add_floating_text_hint(self.slot_selection_floating_text)
     
     def update(self, movement_x: float, movement_y: float, farm: Map, delta: float):
+        if movement_x != 0.0:
+            self.flipped = movement_x < 0
+
         move = pygame.Vector2(movement_x, movement_y)
 
         if move.magnitude_squared() > 0:
@@ -125,7 +130,7 @@ class Player:
         if self.animation_timer >= 0.15:
             self.animation_timer -= 0.15
             self.animation_frame = (self.animation_frame + 1) % 4
-        self.current_image = self.image.subsurface((self.image.get_height() * self.animation_frame, 0, self.image.get_height(), self.image.get_height()))
+        self.current_image = self.image.subsurface((64 * self.animation_frame, 0, 64, 128))
 
         if move.magnitude() > 0:
             self.target_angle = 270 - math.degrees(math.atan2(move.y, move.x))
@@ -213,7 +218,7 @@ class Player:
         return [items for items in self.get_item_list() if not is_interactable(items[0])]
 
     def draw_player(self, win, camera_pos):
-        win.blit(t := pygame.transform.rotate(self.current_image, self.angle), (self.pos.x + WIDTH // 2 - t.get_width() // 2 - camera_pos.x, self.pos.y + HEIGHT // 2 - t.get_height() // 2 - camera_pos.y))
+        win.blit(t := pygame.transform.flip(self.current_image, self.flipped, False), (self.pos.x + WIDTH // 2 - t.get_width() // 2 - camera_pos.x, self.pos.y + HEIGHT // 2 - t.get_height() // 2 - camera_pos.y))
     
     def draw_ui(self, win):
         for i, (item, amount) in enumerate(self.get_non_interactable_items()):

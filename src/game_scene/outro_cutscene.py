@@ -25,14 +25,14 @@ class OutroCutsceneScene(GameScene):
     
     def enter(self: Self):
         for box in self.cutscene_text:
-            self.game.dialogue.queue_dialogue(box)
-        self.game.dialogue.on_confirm()
+            self.game.dialogue_manager.queue_dialogue(box)
+        self.game.dialogue_manager.on_confirm()
     
     def draw(self: Self, win: pygame.Surface):
         win.fill("#000000")
     
     def update(self: Self, inputs: Inputs, dt: float):
-        if len(self.game.dialogue.queue) == 0 and not self.game.dialogue.is_shown():
+        if len(self.game.dialogue_manager.queue) == 0 and not self.game.dialogue_manager.is_shown():
             # TODO: Better ending lol
             pygame.quit()
             print("You win!")

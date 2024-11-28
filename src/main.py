@@ -12,7 +12,7 @@ def main():
     
     # game.start(IntroCutsceneScene(game))
     # TEMPORARY
-    game.start(InShopScene(game))
+    game.start(PlayingGameScene(game))
 
     clock = pygame.time.Clock()
     while not game.should_quit_game:

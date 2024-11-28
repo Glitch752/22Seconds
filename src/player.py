@@ -53,13 +53,13 @@ class Player:
         self.items[ITEM_TYPE.SHOVEL] = 1
         self.items[ITEM_TYPE.WATERING_CAN_EMPTY] = 1
         # TEMPORARY
-        self.items[ITEM_TYPE.CARROT] = 25
+        self.items[ITEM_TYPE.CARROT] = 0
         self.items[ITEM_TYPE.ONION] = 0
         self.items[ITEM_TYPE.WHEAT] = 0
-        self.items[ITEM_TYPE.CARROT_SEEDS] = 30
+        self.items[ITEM_TYPE.CARROT_SEEDS] = 15
         self.items[ITEM_TYPE.ONION_SEEDS] = 0
         self.items[ITEM_TYPE.WHEAT_SEEDS] = 0
-        self.items[ITEM_TYPE.WALL] = 20
+        self.items[ITEM_TYPE.WALL] = 0
 
         self.sold_items = {}
         

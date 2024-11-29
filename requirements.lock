@@ -10,5 +10,7 @@
 #   universal: false
 
 -e file:.
+perlin-noise==1.13
+    # via farminggame
 pygame-ce==2.5.2
     # via farminggame

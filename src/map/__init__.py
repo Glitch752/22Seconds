@@ -1,3 +1,4 @@
+from perlin_noise import PerlinNoise
 import pygame
 import pygame.midi
 from audio import AudioManager
@@ -6,9 +7,7 @@ import random
 import math
 from constants import MAP_WIDTH, MAP_HEIGHT, MAP_UPDATE_RATE, RANDOM_TICK_PER_UPDATE_RATIO
 from typing import TYPE_CHECKING
-
-from items import ITEM_TYPE
-from map.tile import SoilStructure, Tile, TileType, tilemap_atlases
+from map.tile import Tile, TileType, tilemap_atlases
 
 if TYPE_CHECKING:
     from player import Player
@@ -19,10 +18,13 @@ class Map:
     
     def __init__(self):
         self.tiles = []
+        
+        noise = PerlinNoise(octaves=4, seed=100)
+        max_dim = max(MAP_WIDTH, MAP_HEIGHT)
         for x in range(MAP_WIDTH):
             for y in range(MAP_HEIGHT):
-                # TODO: Better generation
-                self.tiles.append(Tile(TileType.GRASS) if random.random() < 0.8 else Tile(TileType.SOIL))
+                val = noise.noise([x / max_dim, y / max_dim])
+                self.tiles.append(Tile(TileType.GRASS if val > 0 else TileType.TALL_GRASS))
         
         # Add a water pool
         self.tiles[(MAP_WIDTH // 2) * MAP_HEIGHT + 2] = Tile(TileType.WATER)

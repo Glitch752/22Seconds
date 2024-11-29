@@ -157,8 +157,9 @@ class TileType(IntEnum):
     WATER = auto()
     SOIL = auto()
     GRASS = auto()
+    TALL_GRASS = auto()
     
-    NUM_LAYERS = 3
+    NUM_LAYERS = 4
     
     @staticmethod
     def get_layer(tile_type: "TileType"):
@@ -167,7 +168,8 @@ class TileType(IntEnum):
 tilemap_image_paths = {
     TileType.WATER: "assets/tiles/water_tilemap.png",
     TileType.SOIL: "assets/tiles/dirt_tilemap.png",
-    TileType.GRASS: "assets/tiles/grass_tilemap.png"
+    TileType.GRASS: "assets/tiles/grass_tilemap.png",
+    TileType.TALL_GRASS: "assets/tiles/tall_grass_tilemap.png"
 }
 def load_tilemap_atlas(tile_type: TileType) -> list[pygame.Surface]:
     tilemap_image = pygame.image.load(tilemap_image_paths[tile_type]).convert_alpha()
@@ -250,7 +252,7 @@ class Tile:
         match (self.tile_type, item):
             case (TileType.SOIL, ITEM_TYPE.HOE):
                 return (lambda: self.tilled(tile_center_pos, audio_manager))
-            case (TileType.GRASS, ITEM_TYPE.SHOVEL):
+            case (TileType.GRASS | TileType.TALL_GRASS, ITEM_TYPE.SHOVEL):
                 return (lambda: self.shoveled(tile_center_pos, audio_manager))
             case (TileType.WATER, ITEM_TYPE.WATERING_CAN_EMPTY):
                 return (lambda: self.fill_watering_can(player, tile_center_pos, audio_manager))

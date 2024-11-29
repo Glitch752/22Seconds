@@ -32,10 +32,21 @@ class InputType(Enum):
     
     CANCEL = auto() # ESC for keyboard, B for controller
     
+    def get_slot_index(self, current_slot: int, slot_count: int) -> int:
+        if self == InputType.INVENTORY_SCROLL_UP:
+            return max(1, min(slot_count, current_slot - 1))
+        if self == InputType.INVENTORY_SCROLL_DOWN:
+            return max(1, min(slot_count, current_slot + 1))
+        
+        # This depends on the select slot input type being in order,
+        # which is a bit of a hack but it's fine for now
+        return max(1, min(slot_count, self.value - InputType.SELECT_SLOT_1.value + 1))
+    
     def is_slot_select(self) -> bool:
         return self in {
             InputType.SELECT_SLOT_1, InputType.SELECT_SLOT_2, InputType.SELECT_SLOT_3, InputType.SELECT_SLOT_4, InputType.SELECT_SLOT_5,
-            InputType.SELECT_SLOT_6, InputType.SELECT_SLOT_7, InputType.SELECT_SLOT_8, InputType.SELECT_SLOT_9, InputType.SELECT_SLOT_10
+            InputType.SELECT_SLOT_6, InputType.SELECT_SLOT_7, InputType.SELECT_SLOT_8, InputType.SELECT_SLOT_9, InputType.SELECT_SLOT_10,
+            InputType.INVENTORY_SCROLL_UP, InputType.INVENTORY_SCROLL_DOWN
         }
     
     @staticmethod

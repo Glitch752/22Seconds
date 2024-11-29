@@ -109,6 +109,14 @@ class Game:
             if input_type is not None:
                 self.current_scene.event_input(input_type)
             return
+        if event.type == pygame.MOUSEWHEEL:
+            if event.y > 0:
+                for _ in range(event.y):
+                    self.current_scene.event_input(InputType.INVENTORY_SCROLL_UP)
+            else:
+                for _ in range(-event.y):
+                    self.current_scene.event_input(InputType.INVENTORY_SCROLL_DOWN)
+            return
         
         #     elif event.type == pygame.MOUSEBUTTONDOWN:
         #         if event.button == 1:

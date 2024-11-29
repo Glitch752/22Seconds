@@ -1,12 +1,13 @@
 
 import math
+import random
 from typing import Self
 import pygame
 
 from constants import CROSSHAIR_COLOR, CROSSHAIR_ONLY_WITH_JOYSTICK, CROSSHAIR_SIZE, CROSSHAIR_THICKNESS, DAY_LENGTH, DUSK_DAWN_LENGTH, HEIGHT, MAP_HEIGHT, MAP_WIDTH, NIGHT_LENGTH, NIGHT_OPACITY, TILE_SIZE, WIDTH
 from game import Game
 from game_scene import GameScene
-from graphics import WHITE_IMAGE, big_font_render
+from graphics import WHITE_IMAGE, big_font_render, giant_font_render
 from graphics.floating_hint_text import draw_floating_hint_texts
 from graphics.particles import draw_particles, update_particles
 from inputs import InputType, Inputs
@@ -165,6 +166,16 @@ class PlayingGameScene(GameScene):
         draw_floating_hint_texts(win, self.camera_position)
         
         self.game.player.draw_ui(win)
+        
+        if self.get_daylight() == 0:
+            # It's night... spooky
+            time_remaining = NIGHT_LENGTH - (self.day_cycle_time - DAY_LENGTH)
+            shake_amount = int(2 / max(0.5, time_remaining / NIGHT_LENGTH) + 0.5)
+            # Only works for <60 second nights, whatever for now
+            win.blit(
+                font := giant_font_render(f"00:{str(int(time_remaining)).rjust(2, '0')}", "red"),
+                (WIDTH // 2 - font.get_width() // 2 + random.randint(-shake_amount, shake_amount), 15 + random.randint(-shake_amount,shake_amount))
+            )
         
         draw_currency(win, self.game.player)
         draw_time(win, self.day_cycle_time)

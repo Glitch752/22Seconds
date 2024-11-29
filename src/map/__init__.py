@@ -23,7 +23,6 @@ class Map:
             for y in range(MAP_HEIGHT):
                 # TODO: Better generation
                 self.tiles.append(Tile(TileType.GRASS) if random.random() < 0.8 else Tile(TileType.SOIL))
-                # self.tiles[-1].structure = SoilStructure(ITEM_TYPE.CARROT_SEEDS)
         
         # Add a water pool
         self.tiles[(MAP_WIDTH // 2) * MAP_HEIGHT + 2] = Tile(TileType.WATER)
@@ -47,19 +46,7 @@ class Map:
         if tile_index < 0 or tile_index >= len(self.tiles):
             return False
         return self.tiles[tile_index].is_collidable()
-     
-    # def swap_cans(self, tile_index, tile_center_pos, player: "Player", audio_manager: AudioManager):
-    #     player.items[ITEM_TYPE.WATERING_CAN_EMPTY] = 0
-    #     player.items[ITEM_TYPE.WATERING_CAN_FULL] = 5
-    #     audio_manager.play_sound(SoundType.PLANT) # TODO: water fill sound
-    #     add_floating_text_hint(FloatingHintText(f"Filled can!", tile_center_pos, "skyblue"))
     
-    # def make_wet(self, tile_index, tile_center_pos, player: "Player", audio_manager: AudioManager):
-    #     self.tiles[tile_index] = TILE_TYPE.WET_TILLED_SOIL
-    #     player.items[ITEM_TYPE.WATERING_CAN_FULL] -= 1
-    #     audio_manager.play_sound(SoundType.PLANT) # TODO: water sound
-    #     add_floating_text_hint(FloatingHintText(f"Watered!", tile_center_pos, "skyblue"))
-
     def get_interaction(self, tile_x, tile_y, item: int, player: "Player", audio_manager: AudioManager):
         """
         Returns a lambda that will execute the proper interaction based on the selected tile and item,
@@ -142,4 +129,5 @@ class Map:
         for (x, y, tile_x, tile_y) in filter(lambda pos: pos != None, tile_positions):
             idx = tile_x * MAP_HEIGHT + tile_y
             if idx >= 0 and idx < len(self.tiles):
-                self.tiles[idx].draw(win, x, y, delta)
+                tile_center_pos = (tile_x * TILE_SIZE + TILE_SIZE // 2, tile_y * TILE_SIZE + TILE_SIZE // 2)
+                self.tiles[idx].draw(win, x, y, tile_center_pos, delta)

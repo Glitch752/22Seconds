@@ -38,7 +38,10 @@ class Player:
         self.radius = r
         self.speed = 300 # Pixels per second
 
-        self.image = pygame.transform.scale(img := pygame.image.load(os.path.join("assets", "sprites", "player_walk.png")).convert_alpha(), (img.get_width() * 4, img.get_height() * 4))
+        self.image_horizontal = pygame.transform.scale(img := pygame.image.load(os.path.join("assets", "sprites", "player_walk.png")).convert_alpha(), (img.get_width() * 4, img.get_height() * 4))
+        self.image_down = pygame.transform.scale(img := pygame.image.load(os.path.join("assets", "sprites", "player_walk_down.png")).convert_alpha(), (img.get_width() * 4, img.get_height() * 4))
+        self.image_up = pygame.transform.scale(img := pygame.image.load(os.path.join("assets", "sprites", "player_walk_up.png")).convert_alpha(), (img.get_width() * 4, img.get_height() * 4))
+        self.dir_image = self.image_horizontal
         self.current_image = None
         self.flipped = False
         self.animation_frame = 0
@@ -119,20 +122,25 @@ class Player:
         )
         add_floating_text_hint(self.slot_selection_floating_text)
     
-    def update(self, movement_x: float, movement_y: float, farm: Map, delta: float):
-        if movement_x != 0.0:
-            self.flipped = movement_x < 0
-        
+    def update(self, movement_x: float, movement_y: float, farm: Map, delta: float):        
         move = pygame.Vector2(movement_x, movement_y)
 
         if move.magnitude_squared() > 0:
             self.animation_timer += delta * move.magnitude()
+            self.dir_image = self.image_horizontal
+            if movement_x != 0.0:
+                self.flipped = movement_x < 0
+            else:
+                if movement_y > 0:
+                    self.dir_image = self.image_down
+                elif movement_y < 0:
+                    self.dir_image = self.image_up
         else:
             self.animation_frame = 0
         if self.animation_timer >= 0.20:
             self.animation_timer -= 0.20
             self.animation_frame = (self.animation_frame + 1) % 4
-        self.current_image = self.image.subsurface((64 * self.animation_frame, 0, 64, 128))
+        self.current_image = self.dir_image.subsurface((64 * self.animation_frame, 0, 64, 128))
 
         if move.magnitude() > 0:
             self.target_angle = 270 - math.degrees(math.atan2(move.y, move.x))

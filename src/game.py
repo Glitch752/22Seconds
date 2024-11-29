@@ -51,7 +51,7 @@ class Game:
         for event in pygame.event.get():
             self.handle_event(event)
         
-        self.inputs.update()
+        self.inputs.update(self.current_scene.get_target_reference())
         self.dialogue_manager.update(delta)
         
         self.current_scene.update(self.inputs, delta)

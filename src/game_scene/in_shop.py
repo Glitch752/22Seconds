@@ -1,7 +1,7 @@
 import pygame
 import os
 from typing import Self
-from audio import SOUND_TYPE
+from audio import SoundType
 from game import Game
 from game_scene import GameScene
 from constants import HEIGHT, TILE_SIZE, WIDTH
@@ -29,18 +29,18 @@ class InShopScene(GameScene):
             player.currency -= price
             player.items[item] += received_quantity
             
-            self.game.audio_manager.play_sound(SOUND_TYPE.BUY_ITEM)
+            self.game.audio_manager.play_sound(SoundType.BUY_ITEM)
         else:
-            self.game.audio_manager.play_sound(SOUND_TYPE.NO_MONEY)
+            self.game.audio_manager.play_sound(SoundType.NO_MONEY)
 
     def try_to_win_lmao(self):
         from game_scene.outro_cutscene import OutroCutsceneScene
         player = self.game.player
         if player.currency >= 1000:
-            self.game.audio_manager.play_sound(SOUND_TYPE.BUY_ITEM)
+            self.game.audio_manager.play_sound(SoundType.BUY_ITEM)
             self.game.update_scene(OutroCutsceneScene(self.game))
         else:
-            self.game.audio_manager.play_sound(SOUND_TYPE.NO_MONEY)
+            self.game.audio_manager.play_sound(SoundType.NO_MONEY)
 
     def exit_shop(self):
         self.game.enter_playing_scene()
@@ -52,7 +52,7 @@ class InShopScene(GameScene):
         
         sounds = self.game.player.profit // 10 + 1
         for i in range(sounds):
-            self.game.audio_manager.play_sound(SOUND_TYPE.BUY_ITEM, i * 100)
+            self.game.audio_manager.play_sound(SoundType.BUY_ITEM, i * 100)
 
     def draw(self: Self, win: pygame.Surface):
         win.fill('#bbff70')

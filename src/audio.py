@@ -3,9 +3,12 @@ from typing import Self
 
 import pygame
 
-class SOUND_TYPE:
+class SoundType:
     BUY_ITEM = "chaChing.wav"
     NO_MONEY = "Aeeaahghgh.wav"
+    TILL_SOIL = "till.wav"
+    HARVEST_PLANT = "pickUp.wav"
+    PLANT = "plant.wav"
 
 class AudioManager:
     day_track: str = os.path.join("assets", "audio", "main_track.wav")
@@ -18,10 +21,10 @@ class AudioManager:
     sounds = {}
     
     def __init__(self: Self):
-        for sound in dir(SOUND_TYPE):
+        for sound in dir(SoundType):
             if sound.startswith("__"):
                 continue
-            sound_path = getattr(SOUND_TYPE, sound)
+            sound_path = getattr(SoundType, sound)
             sound_value = pygame.mixer.Sound(os.path.join("assets", "audio", sound_path))
             self.sounds[sound] = self.sounds[sound_path] = sound_value
     

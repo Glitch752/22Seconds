@@ -120,7 +120,7 @@ class Inputs:
         self.joysticks = [pygame.joystick.Joystick(i) for i in range(pygame.joystick.get_count())]
         self.using_keyboard_input = len(self.joysticks) == 0
     
-    def update(self: Self):
+    def update(self: Self, target_reference: pygame.Vector2 = pygame.Vector2(WIDTH // 2, HEIGHT // 2)):
         if self.using_keyboard_input:
             self.movement_x = 0
             self.movement_y = 0
@@ -135,8 +135,8 @@ class Inputs:
                 self.movement_x += 1
             
             mouse_x, mouse_y = pygame.mouse.get_pos()
-            self.target_x = mouse_x - WIDTH // 2
-            self.target_y = mouse_y - HEIGHT // 2
+            self.target_x = mouse_x - target_reference.x
+            self.target_y = mouse_y - target_reference.y
         else:
             joystick = self.joysticks[0]
             self.movement_x = deadzone(joystick.get_axis(pygame.CONTROLLER_AXIS_LEFTX))

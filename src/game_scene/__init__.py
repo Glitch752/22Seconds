@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from game import Game
 
+from constants import HEIGHT, WIDTH
 from inputs import InputType, Inputs
 
 class GameScene(ABC):
@@ -33,3 +34,6 @@ class GameScene(ABC):
 
     def exit(self: Self):
         pass
+    
+    def get_target_reference(self: Self) -> pygame.Vector2:
+        return pygame.Vector2(WIDTH // 2, HEIGHT // 2)

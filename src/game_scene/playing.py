@@ -52,6 +52,9 @@ class PlayingGameScene(GameScene):
     def enter(self: Self):
         self.game.audio_manager.play_day_track()
     
+    def get_target_reference(self: Self):
+        return self.game.player.pos - self.camera_position + pygame.Vector2(WIDTH // 2, HEIGHT // 2)
+    
     def update(self: Self, inputs: Inputs, dt: float):
         player = self.game.player
         player.update(inputs.movement_x, inputs.movement_y, self.farm, dt)
@@ -63,11 +66,11 @@ class PlayingGameScene(GameScene):
         else:
             selected_item = player.get_selected_item()[0]
             
-            self.selected_cell_x = math.floor((inputs.target_x + self.camera_position.x) // TILE_SIZE)
-            self.selected_cell_y = math.floor((inputs.target_y + self.camera_position.y) // TILE_SIZE)
+            self.selected_cell_x = math.floor((inputs.target_x + player.pos.x) // TILE_SIZE)
+            self.selected_cell_y = math.floor((inputs.target_y + player.pos.y) // TILE_SIZE)
             self.target_x = inputs.target_x
             self.target_y = inputs.target_y
-            interaction = self.farm.get_interaction(self.selected_cell_x, self.selected_cell_y, selected_item, player)
+            interaction = self.farm.get_interaction(self.selected_cell_x, self.selected_cell_y, selected_item, player, self.game.audio_manager)
             self.selection_color = INTERACTABLE_SELECTION_COLOR if interaction else NON_INTERACTABLE_SELECTION_COLOR
 
             if interaction != None:
@@ -81,7 +84,7 @@ class PlayingGameScene(GameScene):
         
         # General updates
         update_particles(dt)
-        self.farm.update()
+        self.farm.update(self.game.audio_manager)
         
         camera_target = player.pos.copy()
         camera_target.x = clamp(camera_target.x, WIDTH // 2, TILE_SIZE * MAP_WIDTH - WIDTH // 2)
@@ -137,8 +140,19 @@ class PlayingGameScene(GameScene):
         
         # Draw target crosshair
         if not CROSSHAIR_ONLY_WITH_JOYSTICK or not self.game.inputs.using_keyboard_input:
-            pygame.draw.line(win, CROSSHAIR_COLOR, (WIDTH // 2 + self.target_x - CROSSHAIR_SIZE, HEIGHT // 2 + self.target_y), (WIDTH // 2 + self.target_x + CROSSHAIR_SIZE, HEIGHT // 2 + self.target_y), width=CROSSHAIR_THICKNESS)
-            pygame.draw.line(win, CROSSHAIR_COLOR, (WIDTH // 2 + self.target_x, HEIGHT // 2 + self.target_y - CROSSHAIR_SIZE), (WIDTH // 2 + self.target_x, HEIGHT // 2 + self.target_y + CROSSHAIR_SIZE), width=CROSSHAIR_THICKNESS)
+            target_reference = self.get_target_reference()
+            pygame.draw.line(
+                win, CROSSHAIR_COLOR,
+                (target_reference.x + self.target_x - CROSSHAIR_SIZE, target_reference.y + self.target_y),
+                (target_reference.x + self.target_x + CROSSHAIR_SIZE, target_reference.y + self.target_y),
+                width=CROSSHAIR_THICKNESS
+            )
+            pygame.draw.line(
+                win, CROSSHAIR_COLOR,
+                (target_reference.x + self.target_x, target_reference.y + self.target_y - CROSSHAIR_SIZE),
+                (target_reference.x + self.target_x, target_reference.y + self.target_y + CROSSHAIR_SIZE),
+                width=CROSSHAIR_THICKNESS
+            )
         
         draw_particles(win, self.camera_position)
         self.game.player.draw_player(win, self.camera_position)

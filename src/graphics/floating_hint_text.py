@@ -10,7 +10,10 @@ class FloatingHintText:
     ):
         from graphics import small_font_render
         self.start_time = pygame.time.get_ticks() / 1000 # Seconds
-        self.surface = small_font_render(text, color)
+        sfr = small_font_render(text, color)
+        self.surface = pygame.Surface((sfr.get_width() + 2, sfr.get_height() + 2), pygame.SRCALPHA)
+        self.surface.blit(small_font_render(text, 'black'), (2, 2))
+        self.surface.blit(sfr, (0, 0))
         self.x = pos[0] # Pixels
         self.y = pos[1] # Pixels
         self.vertical_movement = vertical_movement # Pixels per second

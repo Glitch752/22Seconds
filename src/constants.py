@@ -1,9 +1,17 @@
 # Positive x is right, positive y is down
 # Tile grid is based on top left of tiles
 
+from utils import is_web
+
+
 GAME_NAME = "22 Seconds"
 
-DEFAULT_WIDTH, DEFAULT_HEIGHT = 1280, 720
+if is_web():
+    from platform import window
+    DEFAULT_WIDTH, DEFAULT_HEIGHT = window.innerWidth, window.innerHeight
+    # TODO: Resize when the window resizes
+else:
+    DEFAULT_WIDTH, DEFAULT_HEIGHT = 1280, 720
 
 TILE_SIZE = 80
 

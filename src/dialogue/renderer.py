@@ -4,20 +4,14 @@ from constants import SLOT_BACKGROUND
 from graphics import get_width, normal_font_render, small_font_render
 from items import ITEM_SLOT_BORDER_RADIUS
 
-
 class DialogueRenderer:
-    current_char: int
-    current_line: int
-    timer: float
-    done: bool
-    time_per_letter: float
-    
-    def __init__(self) -> None:
-        self.current_char = 0
-        self.current_line = 0
-        self.timer = 0
-        self.done = False
-        self.time_per_letter = 0.05
+    current_char: int = 0
+    current_line: int = 0
+    timer: float = 0
+    done: bool = False
+    time_per_letter: float = 1 / 60
+    talking_sound_counter: int = 0
+    letters_per_talking_sound: int = 3
     
     def reset(self):
         self.done = False
@@ -68,4 +62,7 @@ class DialogueRenderer:
                 
                 self.current_char = 0
             elif lines[self.current_line][self.current_char] != " ":
-                audio_manager.play_sound(SoundType.SPEAKING_SOUND)
+                if self.talking_sound_counter >= self.letters_per_talking_sound:
+                    audio_manager.play_sound(SoundType.SPEAKING_SOUND)
+                    self.talking_sound_counter = 0
+                self.talking_sound_counter += 1

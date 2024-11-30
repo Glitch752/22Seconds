@@ -69,7 +69,7 @@ wet_soil_image = pygame.transform.scale(
 )
 
 wall_images = [pygame.transform.scale(
-    pygame.image.load(get_asset("tiles", f"/wall{idx}.png")).convert_alpha(),
+    pygame.image.load(get_asset("tiles", f"wall{idx}.png")).convert_alpha(),
     (TILE_SIZE, TILE_SIZE)
 ) for idx in range(3)]
 

@@ -57,7 +57,10 @@ class PlayingGameScene(GameScene):
         self.farm.add_feature(Feature(MAP_WIDTH - 15, MAP_HEIGHT // 2 - 3, 1, 2, "shopkeeper.png", lambda: self.game.dialogue_manager.condition_state.add_event(WorldEvent.DialogueMrShopkeeper)))
     
     def enter(self: Self):
-        self.game.audio_manager.play_day_track()
+        if self.was_day:
+            self.game.audio_manager.play_day_track()
+        else:
+            self.game.audio_manager.play_night_track()
         self.game.dialogue_manager.condition_state.add_event(WorldEvent.GameStart)
     
     def get_target_reference(self: Self):
@@ -101,7 +104,7 @@ class PlayingGameScene(GameScene):
         camera_target.x = clamp(camera_target.x, get_width() // 2, TILE_SIZE * MAP_WIDTH - get_width() // 2)
         camera_target.y = clamp(camera_target.y, get_height() // 2, TILE_SIZE * MAP_HEIGHT - get_height() // 2)
         
-        self.camera_position = self.camera_position.lerp(camera_target, 0.05)
+        self.camera_position = self.camera_position.lerp(camera_target, 0.0000000005 ** dt)
 
         # Update day cycle
         cycle_length = DAY_LENGTH + NIGHT_LENGTH
@@ -118,12 +121,10 @@ class PlayingGameScene(GameScene):
 
     def day_transition(self: Self):
         """Called when the day starts"""
-        import game_scene.in_shop
         self.game.audio_manager.play_day_track()
 
     def night_transition(self: Self):
         """Called when the night starts"""
-        # TODO: Sound effects
         self.game.audio_manager.play_night_track()
 
     def get_daylight(self: Self):

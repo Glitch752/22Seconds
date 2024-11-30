@@ -365,7 +365,7 @@ class DialogueManager:
                     QueueLinesAndWaitAction("You", "I can’t wait to get out of that place…", "At last, I can relax with some simple farming!"),
                     QueueLinesAndWaitAction("You", "Oh, Doctor Whom!"),
                 ),
-                ForcePlayerWalkAction(MAP_WIDTH * TILE_SIZE // 2, MAP_HEIGHT * TILE_SIZE // 2)
+                ForcePlayerWalkAction(MAP_WIDTH * TILE_SIZE * 0.75, MAP_HEIGHT * TILE_SIZE // 2)
             ),
             WaitAction(1),
             QueueLinesAndWaitAction("Dr. Whom", "And whom might you be?", "Wait, I remember you!", "You're...     you."),

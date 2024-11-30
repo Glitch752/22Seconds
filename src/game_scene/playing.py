@@ -196,13 +196,8 @@ class PlayingGameScene(GameScene):
             player.select_slot(player_slots - slot)
             return
         
-        if type.from_mouse_input(pygame.BUTTON_LEFT, True) and self.game.player.over_ui(*pygame.mouse.get_pos()):
-            player = self.game.player
-            player_slots = len(player.get_interactable_items())
-            for i in range(player_slots):
-                if pygame.Rect(get_slot_bounds(i, 0, True, True)).collidepoint(pygame.mouse.get_pos()):
-                    player.select_slot(i)
-                    return
+        if type == InputType.CLICK_DOWN:
+            self.game.player.mouse_down()
         
         if type == InputType.INTERACT_DOWN:
             interaction = self.farm.check_proximity_interaction(self.game.player)

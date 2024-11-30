@@ -1,5 +1,5 @@
 from abc import ABC
-from enum import IntEnum, auto
+from enum import Enum, IntEnum, auto
 import random
 from typing import Optional, TYPE_CHECKING
 
@@ -140,64 +140,63 @@ class SoilStructure(Structure):
                 Item.ONION_SEEDS: "purple"
             }
             spawn_particles_in_square(tile_center_pos[0], tile_center_pos[1], plant_particle_colors[self.item], TILE_SIZE//2, 1)
-        
 
-class TileType(IntEnum):
+class TileType(Enum):
     """
-    Tiles are stacked in the order they're defined here, with later tiles being drawn on top of earlier ones.
+    Tiles with a higher layer are drawn on top of earlier ones.
     """
-    WATER = auto()
-    SOIL = auto()
-    GRASS = auto()
-    TALL_GRASS = auto()
+    WATER = "assets/tiles/water_tilemap.png", 0
+    OUTSIDE_FARM_DIRT = "assets/tiles/outside_farm_dirt_tilemap.png", 1
+    SOIL = "assets/tiles/dirt_tilemap.png", 2
+    GRASS = "assets/tiles/grass_tilemap.png", 3
+    TALL_GRASS = "assets/tiles/tall_grass_tilemap.png", 4
     
-    NUM_LAYERS = 4
-    
-    @staticmethod
-    def get_layer(tile_type: "TileType"):
-        return tile_type.value - 1
+    path: str
+    atlas: list[pygame.Surface]
+    layer: int
 
-tilemap_image_paths = {
-    TileType.WATER: "assets/tiles/water_tilemap.png",
-    TileType.SOIL: "assets/tiles/dirt_tilemap.png",
-    TileType.GRASS: "assets/tiles/grass_tilemap.png",
-    TileType.TALL_GRASS: "assets/tiles/tall_grass_tilemap.png"
-}
-def load_tilemap_atlas(tile_type: TileType) -> list[pygame.Surface]:
-    tilemap_image = pygame.image.load(tilemap_image_paths[tile_type]).convert_alpha()
-    tilemap_atlas = []
-    # For each of the 16 possible combinations of yes/no for the 4 corners of a tile,
-    # we fill the tilemap atlas position 0b(top left)(top right)(bottom left)(bottom right)
-    image_size = tilemap_image.get_width()
-    # There are definitely more efficient ways to calculate this,
-    # but this was easy to copy...
-    atlas_positions = {
-        (True, True, True, True): (2, 1),     # All corners
-        (False, False, False, True): (1, 3),  # Outer bottom-right corner
-        (False, False, True, False): (0, 0),  # Outer bottom-left corner
-        (False, True, False, False): (0, 2),  # Outer top-right corner
-        (True, False, False, False): (3, 3),  # Outer top-left corner
-        (False, True, False, True): (1, 0),   # Right edge
-        (True, False, True, False): (3, 2),   # Left edge
-        (False, False, True, True): (3, 0),   # Bottom edge
-        (True, True, False, False): (1, 2),   # Top edge
-        (False, True, True, True): (1, 1),    # Inner bottom-right corner
-        (True, False, True, True): (2, 0),    # Inner bottom-left corner
-        (True, True, False, True): (2, 2),    # Inner top-right corner
-        (True, True, True, False): (3, 1),    # Inner top-left corner
-        (False, True, True, False): (2, 3),   # Bottom-left top-right corners
-        (True, False, False, True): (0, 1),   # Top-left down-right corners
-		(False, False, False, False): (0, 3), # No corners
-    }
-    for i in range(16):
-        corner_values = [(i & (1 << j)) != 0 for j in range(4)]
-        pos = atlas_positions[(*corner_values,)]
+    def __new__(cls, *args, **kwds):
+        value = len(cls.__members__) + 1
+        obj = object.__new__(cls)
+        obj._value_ = value
+        return obj
+    def __init__(self, path: str, layer: int):
+        self.path = path
+        self.layer = layer
         
-        atlas_image = tilemap_image.subsurface(pos[0] * image_size // 4, pos[1] * image_size // 4, image_size // 4, image_size // 4)
-        atlas_image = pygame.transform.scale(atlas_image, (TILE_SIZE, TILE_SIZE))
-        tilemap_atlas.append(atlas_image)
-    return tilemap_atlas
-tilemap_atlases = {tile_type: load_tilemap_atlas(tile_type) for tile_type in TileType}
+        tilemap_image = pygame.image.load(self.path).convert_alpha()
+        tilemap_atlas = []
+        # For each of the 16 possible combinations of yes/no for the 4 corners of a tile,
+        # we fill the tilemap atlas position 0b(top left)(top right)(bottom left)(bottom right)
+        image_size = tilemap_image.get_width()
+        # There are definitely more efficient ways to calculate this,
+        # but this was easy to copy...
+        atlas_positions = {
+            (True, True, True, True): (2, 1),     # All corners
+            (False, False, False, True): (1, 3),  # Outer bottom-right corner
+            (False, False, True, False): (0, 0),  # Outer bottom-left corner
+            (False, True, False, False): (0, 2),  # Outer top-right corner
+            (True, False, False, False): (3, 3),  # Outer top-left corner
+            (False, True, False, True): (1, 0),   # Right edge
+            (True, False, True, False): (3, 2),   # Left edge
+            (False, False, True, True): (3, 0),   # Bottom edge
+            (True, True, False, False): (1, 2),   # Top edge
+            (False, True, True, True): (1, 1),    # Inner bottom-right corner
+            (True, False, True, True): (2, 0),    # Inner bottom-left corner
+            (True, True, False, True): (2, 2),    # Inner top-right corner
+            (True, True, True, False): (3, 1),    # Inner top-left corner
+            (False, True, True, False): (2, 3),   # Bottom-left top-right corners
+            (True, False, False, True): (0, 1),   # Top-left down-right corners
+            (False, False, False, False): (0, 3), # No corners
+        }
+        for i in range(16):
+            corner_values = [(i & (1 << j)) != 0 for j in range(4)]
+            pos = atlas_positions[(*corner_values,)]
+            
+            atlas_image = tilemap_image.subsurface(pos[0] * image_size // 4, pos[1] * image_size // 4, image_size // 4, image_size // 4)
+            atlas_image = pygame.transform.scale(atlas_image, (TILE_SIZE, TILE_SIZE))
+            tilemap_atlas.append(atlas_image)
+        self.atlas = tilemap_atlas
 
 class Tile:
     structure: Optional[Structure]

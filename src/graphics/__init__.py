@@ -1,13 +1,20 @@
 from functools import cache
 import pygame, os
 from graphics.floating_hint_text import draw_floating_hint_texts, add_floating_text_hint, FloatingHintText # Make draw_floating_hint_texts available in this module
-from constants import WIDTH, HEIGHT, TILE_SIZE
+from constants import DEFAULT_WIDTH, DEFAULT_HEIGHT, TILE_SIZE
 
 GIANT_FONT = pygame.font.Font(os.path.join("assets", "NotoSans-SemiBold.ttf"), 96)
 BIG_FONT = pygame.font.SysFont("Consolas", 30)
 FONT = pygame.font.SysFont("Consolas", 24)
 SMALL_FONT = pygame.font.SysFont("Consolas", 20)
-WIN = pygame.display.set_mode((WIDTH, HEIGHT))
+WIN = pygame.display.set_mode((DEFAULT_WIDTH, DEFAULT_HEIGHT), pygame.RESIZABLE, vsync=1)
+
+def get_width():
+    """Get the current width of the window."""
+    return WIN.get_width()
+def get_height():
+    """Get the current height of the window."""
+    return WIN.get_height()
 
 WHITE_IMAGE = pygame.Surface((TILE_SIZE, TILE_SIZE), pygame.SRCALPHA)
 WHITE_IMAGE.fill('white')
@@ -55,13 +62,13 @@ def draw_tooltip(win: pygame.Surface, pos: tuple[int, int], text: list[TextLine]
     x = pos[0] + TOOLTIP_PADDING
     y = pos[1] + TOOLTIP_PADDING
     # Direct toward the center of the screen
-    if pos[0] > WIDTH // 2:
+    if pos[0] > get_width() // 2:
         x -= max_width + TOOLTIP_PADDING * 2
-    if pos[1] > HEIGHT // 2:
+    if pos[1] > get_height() // 2:
         y -= text_height + TOOLTIP_PADDING * 2
     
-    tooltip_x = min(max(TOOLTIP_WINDOW_MARGIN, x), WIDTH - max_width - TOOLTIP_WINDOW_MARGIN)
-    tooltip_y = min(max(TOOLTIP_WINDOW_MARGIN, y), HEIGHT - text_height - TOOLTIP_WINDOW_MARGIN)
+    tooltip_x = min(max(TOOLTIP_WINDOW_MARGIN, x), get_width() - max_width - TOOLTIP_WINDOW_MARGIN)
+    tooltip_y = min(max(TOOLTIP_WINDOW_MARGIN, y), get_height() - text_height - TOOLTIP_WINDOW_MARGIN)
     
     width = max_width + TOOLTIP_PADDING * 2
     height = text_height + TOOLTIP_PADDING * 2

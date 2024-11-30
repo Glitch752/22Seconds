@@ -9,8 +9,9 @@ from enum import StrEnum
 from typing import Callable, TYPE_CHECKING
 import pygame
 from audio import AudioManager
-from constants import HEIGHT, ITEM_SLOT_ITEM_SIZE, ITEM_SLOT_MARGIN, ITEM_SLOT_PADDING, WIDTH
+from constants import ITEM_SLOT_ITEM_SIZE, ITEM_SLOT_MARGIN, ITEM_SLOT_PADDING, MAP_HEIGHT, MAP_WIDTH, TILE_SIZE
 from dialogue.renderer import DialogueRenderer
+from graphics import get_height, get_width
 from graphics.floating_hint_text import FloatingHintText, add_floating_text_hint
 from items import Item
 
@@ -18,10 +19,19 @@ if TYPE_CHECKING:
     from player import Player
 
 class WorldEvent(StrEnum):
+    """
+    World events are essentially flags that can be set to trigger dialogue or other events.
+    Some of them are cleared after being triggered, and others are persistent.
+    """
+    # "Game stage"-related events
     GameStart = "game_start"
     DrWhomShopkeeper = "dr_whom_shopkeeper"
     AfterFirstShopInteraction = "after_first_shop_interaction"
     StartFarming = "start_farming"
+    
+    # Dialogue interaction events
+    DialogueDrWhom = "dialogue_dr_whom"
+    DialogueMrShopkeeper = "dialogue_mr_shopkeeper"
 
 class ConditionState:
     # Maps WorldEvent to the time it was triggered
@@ -32,6 +42,8 @@ class ConditionState:
     
     def add_event(self, event: WorldEvent):
         self.world_events[event] = pygame.time.get_ticks()
+    def clear_event(self, event: WorldEvent):
+        self.world_events[event] = None
     
     def time_since_event(self, event: WorldEvent) -> int | None:
         if event not in self.world_events or self.world_events[event] == None:
@@ -48,20 +60,20 @@ class DialogueCondition(ABC):
 class AndCondition(DialogueCondition):
     conditions: list[DialogueCondition]
 
-    def __init__(self, conditions: list[DialogueCondition]) -> None:
+    def __init__(self, *conditions: list[DialogueCondition]) -> None:
         self.conditions = conditions
 
     def check(self, condition_state: ConditionState) -> bool:
-        return all(c.check() for c in self.conditions)
+        return all(c.check(condition_state) for c in self.conditions)
 
 class OrCondition(DialogueCondition):
     conditions: list[DialogueCondition]
 
-    def __init__(self, conditions: list[DialogueCondition]) -> None:
+    def __init__(self, *conditions: list[DialogueCondition]) -> None:
         self.conditions = conditions
 
     def check(self, condition_state: ConditionState) -> bool:
-        return any(c.check() for c in self.conditions)
+        return any(c.check(condition_state) for c in self.conditions)
 
 class BeforeEventCondition(DialogueCondition):
     event: WorldEvent
@@ -70,7 +82,7 @@ class BeforeEventCondition(DialogueCondition):
         self.event = event
 
     def check(self, condition_state: ConditionState) -> bool:
-        return not condition_state.has_event(self.event)
+        return condition_state.time_since_event(self.event) == None
 
 class AfterEventCondition(DialogueCondition):
     event: WorldEvent
@@ -126,7 +138,7 @@ class DialogueAction(ABC):
         pass
     def end(self, action_context: DialogueActionContext) -> None:
         pass
-    def is_finished(self, dialogue_manager: "DialogueManager") -> bool:
+    def is_finished(self, action_context: DialogueActionContext) -> bool:
         return True
 
 class ParallelAction(DialogueAction):
@@ -142,8 +154,8 @@ class ParallelAction(DialogueAction):
     def end(self, action_context: DialogueActionContext) -> None:
         for action in self.actions:
             action.end(action_context)
-    def is_finished(self, dialogue_manager: "DialogueManager") -> bool:
-        return all(action.is_finished(dialogue_manager) for action in self.actions)
+    def is_finished(self, action_context: DialogueActionContext) -> bool:
+        return all(action.is_finished(action_context) for action in self.actions)
 
 class SequenceAction(DialogueAction):
     actions: list[DialogueAction]
@@ -156,15 +168,16 @@ class SequenceAction(DialogueAction):
     def update(self, action_context: DialogueActionContext, delta: float) -> None:
         if self.current_action < len(self.actions):
             self.actions[self.current_action].update(action_context, delta)
-        if self.actions[self.current_action].is_finished(action_context.dialogue_manager):
-            self.actions[self.current_action].end(action_context)
-            self.current_action += 1
-            if self.current_action < len(self.actions):
-                self.actions[self.current_action].start(action_context)
+            
+            if self.actions[self.current_action].is_finished(action_context):
+                self.actions[self.current_action].end(action_context)
+                self.current_action += 1
+                if self.current_action < len(self.actions):
+                    self.actions[self.current_action].start(action_context)
     def end(self, action_context: DialogueActionContext) -> None:
         if self.current_action < len(self.actions):
             self.actions[self.current_action].end(action_context)
-    def is_finished(self, dialogue_manager: "DialogueManager") -> bool:
+    def is_finished(self, action_context: DialogueActionContext) -> bool:
         return self.current_action == len(self.actions)
 
 class RaceAction(DialogueAction):
@@ -180,8 +193,8 @@ class RaceAction(DialogueAction):
     def end(self, action_context: DialogueActionContext) -> None:
         for action in self.actions:
             action.end(action_context)
-    def is_finished(self, dialogue_manager: "DialogueManager") -> bool:
-        return any(action.is_finished(dialogue_manager) for action in self.actions)
+    def is_finished(self, action_context: DialogueActionContext) -> bool:
+        return any(action.is_finished(action_context) for action in self.actions)
 
 class RepeatAction(DialogueAction):
     action: DialogueAction
@@ -195,14 +208,14 @@ class RepeatAction(DialogueAction):
         self.action.start(action_context)
     def update(self, action_context: DialogueActionContext, delta: float) -> None:
         self.action.update(action_context, delta)
-        if self.action.is_finished(action_context.dialogue_manager):
+        if self.action.is_finished(action_context):
             self.action.end(action_context)
             self.current_time += 1
             if self.current_time < self.times:
                 self.action.start(action_context)
     def end(self, action_context: DialogueActionContext) -> None:
         self.action.end(action_context)
-    def is_finished(self, dialogue_manager: "DialogueManager") -> bool:
+    def is_finished(self, action_context: DialogueActionContext) -> bool:
         return self.current_time >= self.times
 
 class WaitAction(DialogueAction):
@@ -214,15 +227,15 @@ class WaitAction(DialogueAction):
         self.current_time = 0
     def update(self, action_context: DialogueActionContext, delta: float) -> None:
         self.current_time += delta
-    def is_finished(self, dialogue_manager: "DialogueManager") -> bool:
+    def is_finished(self, action_context: DialogueActionContext) -> bool:
         return self.current_time >= self.time
 
 class ConditionalWaitAction(DialogueAction):
     condition: DialogueCondition
     def __init__(self, condition: DialogueCondition) -> None:
         self.condition = condition
-    def is_finished(self, dialogue_manager: "DialogueManager") -> bool:
-        return self.condition.check(dialogue_manager.condition_state)
+    def is_finished(self, action_context: DialogueActionContext) -> bool:
+        return self.condition.check(action_context.dialogue_manager.condition_state)
 
 class SetEventAction(DialogueAction):
     event: WorldEvent
@@ -231,6 +244,13 @@ class SetEventAction(DialogueAction):
     def start(self, action_context: DialogueActionContext) -> None:
         action_context.dialogue_manager.condition_state.add_event(self.event)
 
+class ClearEventAction(DialogueAction):
+    event: WorldEvent
+    def __init__(self, event: WorldEvent) -> None:
+        self.event = event
+    def start(self, action_context: DialogueActionContext) -> None:
+        action_context.dialogue_manager.condition_state.clear_event(self.event)
+
 class LambdaAction(DialogueAction):
     func: Callable[["DialogueActionContext"], None]
     def __init__(self, func: Callable[["DialogueActionContext"], None]) -> None:
@@ -238,12 +258,14 @@ class LambdaAction(DialogueAction):
     def start(self, action_context: DialogueActionContext) -> None:
         self.func(action_context)
 
-class QueueLinesAction(DialogueAction):
+class QueueLinesAndWaitAction(DialogueAction):
     lines: list[str]
     def __init__(self, *lines: list[str]) -> None:
         self.lines = list(lines)
     def start(self, action_context: DialogueActionContext) -> None:
         action_context.dialogue_manager.queue_dialogue(self.lines)
+    def is_finished(self, action_context: DialogueActionContext) -> bool:
+        return not action_context.dialogue_manager.is_shown()
 
 class PrintConsoleAction(DialogueAction):
     text: str
@@ -273,12 +295,33 @@ class GiveItemsAction(DialogueAction):
                 items[item] = quantity
             add_floating_text_hint(FloatingHintText(
                 f"Received {quantity} {item.item_name}",
-                (WIDTH - 20, HEIGHT - ITEM_SLOT_ITEM_SIZE - ITEM_SLOT_PADDING*2 - ITEM_SLOT_MARGIN*2 - 30 - offset),
+                (get_width() - 20, get_height() - ITEM_SLOT_ITEM_SIZE - ITEM_SLOT_PADDING*2 - ITEM_SLOT_MARGIN*2 - 30 - offset),
                 "green", -5, 1.5, 0.25,
                 fixed_in_world=False,
                 alignment="right"
             ))
             offset += 25
+
+class SetPlayerPositionAction(DialogueAction):
+    x: float
+    y: float
+    def __init__(self, x: float, y: float) -> None:
+        self.x = x
+        self.y = y
+    def start(self, action_context: DialogueActionContext) -> None:
+        action_context.player.pos.x = self.x
+        action_context.player.pos.y = self.y
+
+class ForcePlayerWalkAction(DialogueAction):
+    x: float
+    y: float
+    def __init__(self, x: float, y: float) -> None:
+        self.x = x
+        self.y = y
+    def start(self, action_context: DialogueActionContext) -> None:
+        action_context.player.force_walk_toward(self.x, self.y)
+    def is_finished(self, action_context: DialogueActionContext) -> bool:
+        return action_context.player.force_walking_toward == None
 
 # Triggers
 
@@ -316,32 +359,83 @@ class DialogueManager:
     
     dialogue_triggers: list[DialogueTrigger] = [
         DialogueTrigger(AfterEventCondition(WorldEvent.GameStart), SequenceAction(
-            QueueLinesAction("You", "I can’t wait to get out of that place…", "At last, I can relax with some simple farming!"),
-            QueueLinesAction("You", "Oh, Doctor Whom!"),
+            SetPlayerPositionAction(MAP_WIDTH * TILE_SIZE, MAP_HEIGHT * TILE_SIZE // 2),
+            ParallelAction(
+                SequenceAction(
+                    QueueLinesAndWaitAction("You", "I can’t wait to get out of that place…", "At last, I can relax with some simple farming!"),
+                    QueueLinesAndWaitAction("You", "Oh, Doctor Whom!"),
+                ),
+                ForcePlayerWalkAction(MAP_WIDTH * TILE_SIZE // 2, MAP_HEIGHT * TILE_SIZE // 2)
+            ),
             WaitAction(1),
-            QueueLinesAction("Dr. Whom", "And whom might you be?", "Wait, I remember you!", "You're...     you."),
-            QueueLinesAction("Dr. Whom", "Well, anyways…", "What are you doing in these far-out lands?", "This seems uncharacteristic of you."),
-            QueueLinesAction("You", "Oh, I just wanted to relax for a bit!", "Get away from corporate life, right?", "     Haha."),
-            QueueLinesAction("Dr. Whom", "Huh. Well, I can show you the ropes around here!"),
-            QueueLinesAction("You", "I mean… I know how to walk with WASD or", "left joystick! And farming should be", "as simple as Left click or A!"),
-            QueueLinesAction("Dr. Whom", "What the #*!$?", "What are you even talking about?"),
+            QueueLinesAndWaitAction("Dr. Whom", "And whom might you be?", "Wait, I remember you!", "You're...     you."),
+            QueueLinesAndWaitAction("Dr. Whom", "Well, anyways…", "What are you doing in these far-out lands?", "This seems uncharacteristic of you."),
+            QueueLinesAndWaitAction("You", "Oh, I just wanted to relax for a bit!", "Get away from corporate life, right?", "     Haha."),
+            QueueLinesAndWaitAction("Dr. Whom", "Huh. Well, I can show you the ropes around here!"),
+            QueueLinesAndWaitAction("You", "I mean… I know how to walk with WASD or", "left joystick! And farming should be", "as simple as Left click or A!"),
+            QueueLinesAndWaitAction("Dr. Whom", "What the #*!$?", "What are you even talking about?"),
             WaitAction(1),
-            QueueLinesAction("You", "Oh… anyway.", "What else do I need to know about farming?"),
-            QueueLinesAction("Dr. Whom", "Well, not much!", "You uproot the grass to find fertile soil,", "till it, put some seeds in, and wait!"),
-            QueueLinesAction("Dr. Whom", "I’m sure Mr. Shopkeeper over here would be", "happy to show you what he has to offer!"),
+            QueueLinesAndWaitAction("You", "Oh… anyway.", "What else do I need to know about farming?"),
+            QueueLinesAndWaitAction("Dr. Whom", "Well, not much!", "You uproot the grass to find fertile soil,", "till it, put some seeds in, and wait!"),
+            QueueLinesAndWaitAction("Dr. Whom", "I’m sure Mr. Shopkeeper over here would be", "happy to show you what he has to offer!"),
             SetEventAction(WorldEvent.DrWhomShopkeeper)
         ), True),
-        DialogueTrigger(AfterEventCondition(WorldEvent.AfterFirstShopInteraction), SequenceAction(
-            QueueLinesAction("Dr. Whom", "So...", "I see you're not doing too well financially, huh?"),
-            QueueLinesAction("You", "No, no! I'm wealthier than your wildest dreams!"),
+        DialogueTrigger(AndCondition(
+            AfterEventCondition(WorldEvent.DrWhomShopkeeper),
+            BeforeEventCondition(WorldEvent.AfterFirstShopInteraction),
+            
+            AfterEventCondition(WorldEvent.DialogueDrWhom)
+        ), SequenceAction(
+            QueueLinesAndWaitAction("Dr. Whom", "Go talk to the shopkeeper over there!"),
+            ClearEventAction(WorldEvent.DialogueDrWhom)
+        )),
+        
+        DialogueTrigger(AndCondition(
+            AfterEventCondition(WorldEvent.DrWhomShopkeeper),
+            BeforeEventCondition(WorldEvent.AfterFirstShopInteraction),
+            
+            AfterEventCondition(WorldEvent.DialogueMrShopkeeper)
+        ), SequenceAction(
+            QueueLinesAndWaitAction("Mr. Shopkeeper", "Hey. Take a look."),
+            ClearEventAction(WorldEvent.DialogueMrShopkeeper)
+        )),
+        DialogueTrigger(AndCondition(
+            AfterEventCondition(WorldEvent.AfterFirstShopInteraction),
+            # BeforeEventCondition(...) todo when adding more dialogue
+            
+            AfterEventCondition(WorldEvent.DialogueMrShopkeeper)
+        ), SequenceAction(
+            QueueLinesAndWaitAction("Mr. Shopkeeper", "Hey."),
+            ClearEventAction(WorldEvent.DialogueMrShopkeeper)
+        )),
+
+        DialogueTrigger(AndCondition(
+            AfterEventCondition(WorldEvent.AfterFirstShopInteraction),
+            BeforeEventCondition(WorldEvent.StartFarming),
+            
+            AfterEventCondition(WorldEvent.DialogueDrWhom)
+        ), SequenceAction(
+            QueueLinesAndWaitAction("Dr. Whom", "So...", "I see you're not doing too well financially, huh?"),
+            QueueLinesAndWaitAction("You", "No, no! I'm wealthier than your wildest dreams!"),
             WaitAction(0.5),
-            QueueLinesAction("Dr. Whom", "Well, I suppose you don’t need these", "seeds and tools, then?"),
-            QueueLinesAction("You", "Well, those would be quite helpful…", "Not that I couldn’t buy them myself, of course."),
+            QueueLinesAndWaitAction("Dr. Whom", "Well, I suppose you don’t need these", "seeds and tools, then?"),
+            QueueLinesAndWaitAction("You", "Well, those would be quite helpful…", "Not that I couldn’t buy them myself, of course."),
             WaitAction(0.5),
             GiveItemsAction(((Item.CARROT_SEEDS, 10), (Item.SHOVEL, 1), (Item.HOE, 1), (Item.AXE, 1), (Item.WATERING_CAN_EMPTY, 1))),
             WaitAction(0.5),
-            SetEventAction(WorldEvent.StartFarming)
-        ))
+            SetEventAction(WorldEvent.StartFarming),
+            ClearEventAction(WorldEvent.DialogueDrWhom)
+        )),
+        
+        DialogueTrigger(AndCondition(
+            AfterEventCondition(WorldEvent.StartFarming),
+            # BeforeEventCondition(...) todo when adding more dialogue
+            
+            AfterEventCondition(WorldEvent.DialogueDrWhom)
+        ), SequenceAction(
+            QueueLinesAndWaitAction("Dr. Whom", "Go out there and get farming!"),
+            ClearEventAction(WorldEvent.DialogueDrWhom)
+        )),
     ]
     running_actions: list[DialogueAction] = []
 
@@ -367,18 +461,16 @@ class DialogueManager:
         return len(self.current_lines) != 0 and not self.renderer.done
     
     def update(self, delta: float, audio_manager: AudioManager, player: "Player"):
-        if not self.is_shown():
-            action_context = DialogueActionContext(self, audio_manager, player)
-            for trigger in self.dialogue_triggers:
-                if trigger.check(self.condition_state):
-                    trigger.action.start(action_context)
-                    self.running_actions.append(trigger.action)
-            for action in self.running_actions:
-                action.update(action_context, delta)
-                if action.is_finished(self):
-                    action.end(action_context)
-                    self.running_actions.remove(action)
-            return
+        action_context = DialogueActionContext(self, audio_manager, player)
+        for trigger in self.dialogue_triggers:
+            if trigger.check(self.condition_state):
+                trigger.action.start(action_context)
+                self.running_actions.append(trigger.action)
+        for action in self.running_actions:
+            action.update(action_context, delta)
+            if action.is_finished(action_context):
+                action.end(action_context)
+                self.running_actions.remove(action)
         
         if self.is_active():
             self.renderer.update(self.current_lines, delta, audio_manager)

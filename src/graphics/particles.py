@@ -1,6 +1,6 @@
 import pygame
 import random
-from graphics import WIDTH, HEIGHT
+from graphics import get_height, get_width
 
 class Particle:
     def __init__(self, x, y, color):
@@ -20,7 +20,7 @@ class Particle:
         s.set_alpha(255 * (1 - (self.timer / self.lifetime)))
         s = pygame.transform.rotate(s, self.angle)
 
-        p = self.pos + pygame.Vector2(WIDTH//2, HEIGHT//2) - offset
+        p = self.pos + pygame.Vector2(get_width()//2, get_height()//2) - offset
 
         win.blit(s, p)
     

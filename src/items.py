@@ -2,7 +2,8 @@ from enum import Enum
 from typing import Optional
 import pygame
 import graphics
-from constants import ITEM_SLOT_BORDER_RADIUS, ITEM_SLOT_ITEM_SIZE, ITEM_SLOT_MARGIN, ITEM_SLOT_PADDING, SLOT_BACKGROUND, SLOT_BACKGROUND_SELECTED, WIDTH, HEIGHT
+from graphics import get_width, get_height
+from constants import ITEM_SLOT_BORDER_RADIUS, ITEM_SLOT_ITEM_SIZE, ITEM_SLOT_MARGIN, ITEM_SLOT_PADDING, SLOT_BACKGROUND, SLOT_BACKGROUND_SELECTED
 import os
 
 class ItemShopData:
@@ -76,9 +77,9 @@ def get_slot_bounds(slot_x, slot_y, anchor_bottom, anchor_right):
     x = slot_x * total_slot_size + ITEM_SLOT_MARGIN
     y = slot_y * total_slot_size + ITEM_SLOT_MARGIN
     if anchor_bottom:
-        y = HEIGHT - y - slot_size
+        y = get_height() - y - slot_size
     if anchor_right:
-        x = WIDTH - x - slot_size
+        x = get_width() - x - slot_size
     
     return (x, y, total_slot_size, total_slot_size)
 

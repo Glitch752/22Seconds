@@ -1,8 +1,9 @@
+from typing import Optional
 import pygame
-from constants import WIDTH, HEIGHT, TILE_SIZE
+from constants import TILE_SIZE
 from map import MAP_WIDTH, MAP_HEIGHT, Map
 from items import Item, render_item_slot, get_slot_bounds
-from graphics import add_floating_text_hint, FloatingHintText
+from graphics import add_floating_text_hint, FloatingHintText, get_height, get_width
 import os
 import math
 
@@ -13,25 +14,32 @@ class Player:
     radius: int
     speed: int
     
-    image: pygame.Surface
-    current_image: pygame.Surface
-    flipped: bool
+    image_horizontal: pygame.Surface
+    image_down: pygame.Surface
+    image_up: pygame.Surface
+    dir_image: pygame.Surface
+    current_image: Optional[pygame.Surface] = None
+    flipped: bool = False
     
-    animation_frame: int
-    animation_timer: float
-    target_angle: float
-    angle: float
+    animation_frame: int = 0
+    animation_timer: float = 0
+    target_angle: float = 0
+    angle: float = 0
     
-    items: dict[Item, int]
-    sold_items: dict
+    items: dict[Item, int] = {}
+    sold_items: dict = {}
     
-    selected_slot: int
-    slot_selection_floating_text: FloatingHintText
+    selected_slot: int = 0
+    slot_selection_floating_text: FloatingHintText = None
     
-    profit: int
-    currency: int
+    profit: int = 0
+    currency: int = 5000
     
-    wait_for_mouseup: bool
+    # Set after running out of an item so the player doesn't
+    # accidentally start using the next item available.
+    wait_for_mouseup: bool = False
+    
+    force_walking_toward: Optional[pygame.Vector2] = None
     
     def __init__(self, x, y, r=16):
         self.pos = pygame.Vector2(x, y)
@@ -42,40 +50,6 @@ class Player:
         self.image_down = pygame.transform.scale(img := pygame.image.load(os.path.join("assets", "sprites", "player_walk_down.png")).convert_alpha(), (img.get_width() * 4, img.get_height() * 4))
         self.image_up = pygame.transform.scale(img := pygame.image.load(os.path.join("assets", "sprites", "player_walk_up.png")).convert_alpha(), (img.get_width() * 4, img.get_height() * 4))
         self.dir_image = self.image_horizontal
-        self.current_image = None
-        self.flipped = False
-        self.animation_frame = 0
-        self.animation_timer = 0
-
-        self.target_angle = 0
-        self.angle = 0
-
-        self.items = {}
-        # self.items[Item.HOE] = 1
-        # self.items[Item.AXE] = 1
-        # self.items[Item.SHOVEL] = 1
-        # self.items[Item.WATERING_CAN_EMPTY] = 1
-        
-        # # TEMPORARY
-        # self.items[Item.CARROT] = 10
-        # self.items[Item.ONION] = 10
-        # self.items[Item.WHEAT] = 10
-        # self.items[Item.CARROT_SEEDS] = 15
-        # self.items[Item.ONION_SEEDS] = 15
-        # self.items[Item.WHEAT_SEEDS] = 15
-        # self.items[Item.WALL] = 20
-
-        self.sold_items = {}
-        
-        self.selected_slot = 0
-        self.slot_selection_floating_text = None
-
-        self.profit = 0
-        self.currency = 5000
-        
-        # Set after running out of an item so the player doesn't
-        # accidentally start using the next item available.
-        self.wait_for_mouseup = False
     
     def sell_items(self):
         self.sold_items = {}
@@ -112,29 +86,42 @@ class Player:
         if slot == self.selected_slot:
             return
         self.selected_slot = slot
+        self.wait_for_mouseup = False
         
         if self.slot_selection_floating_text != None:
             self.slot_selection_floating_text.manually_finished = True
         self.slot_selection_floating_text = FloatingHintText(
             self.get_selected_item().item_name,
-            (WIDTH // 2, HEIGHT - 150),
+            (get_width() // 2, get_height() - 150),
             "white",
             -5, 1.5, 0.25, False
         )
         add_floating_text_hint(self.slot_selection_floating_text)
     
-    def update(self, movement_x: float, movement_y: float, farm: Map, delta: float):        
-        move = pygame.Vector2(movement_x, movement_y)
+    def force_walk_toward(self, x, y):
+        self.force_walking_toward = pygame.Vector2(x, y)
+    def stop_force_walk(self):
+        self.force_walking_toward = None
+    
+    def update(self, movement_x: float, movement_y: float, farm: Map, delta: float):
+        if self.force_walking_toward != None:
+            move = self.force_walking_toward - self.pos
+            if move.magnitude() < self.speed * delta * 1.5:
+                self.force_walking_toward = None
+            else:
+                move = move.normalize()
+        else:
+            move = pygame.Vector2(movement_x, movement_y)
 
         if move.magnitude_squared() > 0:
             self.animation_timer += delta * move.magnitude()
             self.dir_image = self.image_horizontal
-            if movement_x != 0.0:
-                self.flipped = movement_x < 0
+            if move.x != 0.0:
+                self.flipped = move.x < 0
             else:
-                if movement_y > 0:
+                if move.y > 0:
                     self.dir_image = self.image_down
-                elif movement_y < 0:
+                elif move.y < 0:
                     self.dir_image = self.image_up
         else:
             self.animation_frame = 0
@@ -235,7 +222,7 @@ class Player:
 
     def draw_player(self, win, camera_pos):
         if self.current_image != None:
-            win.blit(t := pygame.transform.flip(self.current_image, self.flipped, False), (self.pos.x + WIDTH // 2 - t.get_width() // 2 - camera_pos.x, self.pos.y + HEIGHT // 2 - t.get_height() // 2 - camera_pos.y - self.radius))
+            win.blit(t := pygame.transform.flip(self.current_image, self.flipped, False), (self.pos.x + get_width() // 2 - t.get_width() // 2 - camera_pos.x, self.pos.y + get_height() // 2 - t.get_height() // 2 - camera_pos.y - self.radius))
     
     def draw_ui(self, win):
         for i, (item, amount) in enumerate(self.get_non_interactable_items()):

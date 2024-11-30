@@ -9,6 +9,7 @@ from constants import MAP_WIDTH, MAP_HEIGHT, MAP_UPDATE_RATE, RANDOM_TICK_PER_UP
 from typing import TYPE_CHECKING
 from graphics import get_height, get_width
 from items import Item
+from map.feature import Feature
 from map.tile import Tile, TileType
 
 if TYPE_CHECKING:
@@ -17,6 +18,7 @@ if TYPE_CHECKING:
 class Map:
     last_map_update: float = 0
     tiles: list[Tile]
+    features: list[Feature]
     
     def __init__(self):
         self.tiles = []
@@ -36,6 +38,13 @@ class Map:
         for x in range(WATER_POOL_START[0], WATER_POOL_END[0]):
             for y in range(WATER_POOL_START[1], WATER_POOL_END[1]):
                 self.tiles[x * MAP_HEIGHT + y] = Tile(TileType.WATER)
+        
+        self.features = []
+        self.add_feature(Feature(MAP_WIDTH - 20, MAP_HEIGHT // 2 - 10, 8, 8, "house.png", False))
+    
+    def add_feature(self, feature: Feature):
+        self.features.append(feature)
+        feature.add_collision_to_world(self)
     
     def update(self, audio_manager: AudioManager):
         current_time = pygame.time.get_ticks()
@@ -137,3 +146,7 @@ class Map:
             if idx >= 0 and idx < len(self.tiles):
                 tile_center_pos = (tile_x * TILE_SIZE + TILE_SIZE // 2, tile_y * TILE_SIZE + TILE_SIZE // 2)
                 self.tiles[idx].draw(win, x, y, tile_center_pos, delta)
+        
+        # Draw features
+        for feature in self.features:
+            feature.draw(win, camera_position)

@@ -201,10 +201,15 @@ class TileType(Enum):
 class Tile:
     structure: Optional[Structure]
     tile_type: TileType
+    collidable: bool = False
     
     def __init__(self, tile_type: TileType):
         self.structure = None
         self.tile_type = tile_type
+        self.collidable = self.tile_type in [TileType.WATER]
+
+    def is_collidable(self):
+        return self.collidable
     
     def draw(self, win: pygame.Surface, x: int, y: int, tile_center_pos: tuple[int, int], delta: float):
         """
@@ -255,6 +260,3 @@ class Tile:
     def random_tick(self, audio_manager: AudioManager):
         if self.structure:
             self.structure.random_tick(audio_manager)
-
-    def is_collidable(self):
-        return self.tile_type in [TileType.WATER]

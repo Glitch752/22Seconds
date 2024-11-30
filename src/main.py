@@ -27,6 +27,7 @@ def main():
     while not game.should_quit_game:
         current_monitor_refresh_rate = pygame.display.get_current_refresh_rate()
         delta = clock.tick_busy_loop(current_monitor_refresh_rate) / 1000 # Fixes stuttering for some reason
+        delta = min(delta, 1 / 30) # Prevents weird issues if, for example, the window is moved and the main thread is blocked
 
         if delta:
             pygame.display.set_caption(f"{constants.GAME_NAME} | {(1.0 / delta):.2f}fps")

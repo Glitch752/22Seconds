@@ -172,7 +172,7 @@ class Player:
             self.selected_slot = interactable_items - 1
 
     def is_colliding(self, map):
-        min_x, min_y, max_x, max_y = self.pos.x - self.radius, self.pos.y - self.radius * 2, self.pos.x + self.radius, self.pos.y + self.radius * 1.25
+        min_x, min_y, max_x, max_y = self.pos.x - self.radius, self.pos.y - self.radius * 0.6, self.pos.x + self.radius, self.pos.y + self.radius * 1.25
         min_tile_x = int(min_x // TILE_SIZE)
         min_tile_y = int(min_y // TILE_SIZE)
         max_tile_x = int(max_x // TILE_SIZE)

@@ -4,21 +4,19 @@ import random
 from typing import Self
 import pygame
 
-from constants import CROSSHAIR_COLOR, CROSSHAIR_ONLY_WITH_JOYSTICK, CROSSHAIR_SIZE, CROSSHAIR_THICKNESS, DAY_LENGTH, DUSK_DAWN_LENGTH, MAP_HEIGHT, MAP_WIDTH, NIGHT_LENGTH, NIGHT_OPACITY, TILE_SIZE
+from constants import CROSSHAIR_COLOR, CROSSHAIR_ONLY_WITH_JOYSTICK, CROSSHAIR_SIZE, CROSSHAIR_THICKNESS,\
+    DAY_LENGTH, DUSK_DAWN_LENGTH, INTERACTABLE_SELECTION_COLOR, MAP_HEIGHT, MAP_WIDTH, NIGHT_LENGTH, NIGHT_OPACITY,\
+    NON_INTERACTABLE_SELECTION_COLOR, NOTHING_SELECTION_COLOR, TILE_SIZE
 from dialogue import WorldEvent
 from game import Game
 from game_scene import GameScene
-from graphics import WHITE_IMAGE, big_font_render, get_height, get_width, giant_font_render
+from graphics import big_font_render, get_height, get_width, giant_font_render
 from graphics.floating_hint_text import draw_floating_hint_texts
 from graphics.particles import draw_particles, update_particles
 from inputs import InputType, Inputs
 from map import Map
 from player import Player
 from utils import clamp, ease
-
-NON_INTERACTABLE_SELECTION_COLOR = 'yellow'
-INTERACTABLE_SELECTION_COLOR = 'green'
-NOTHING_SELECTION_COLOR = 'gray'
 
 def draw_currency(win: pygame.Surface, player: Player):
     win.blit(big_font_render(f"Currency: {player.currency}c", 'black'), (17, 17))
@@ -133,16 +131,10 @@ class PlayingGameScene(GameScene):
         else:
             return 0
     
-    def draw(self: Self, win: pygame.Surface):
+    def draw(self: Self, win: pygame.Surface, inputs: Inputs):
         win.fill("#000000")
         
-        self.farm.draw(win, self.camera_position)
-        
-        # Draw outline
-        x = self.selected_cell_x * TILE_SIZE - self.camera_position.x + get_width() // 2
-        y = self.selected_cell_y * TILE_SIZE - self.camera_position.y + get_height() // 2
-        win.blit(WHITE_IMAGE, (x, y))
-        pygame.draw.rect(win, self.selection_color, (x, y, TILE_SIZE, TILE_SIZE), 1)
+        self.farm.draw(win, self.camera_position, self.selected_cell_x, self.selected_cell_y, self.selection_color, inputs.interaction)
         
         # Draw target crosshair
         if not CROSSHAIR_ONLY_WITH_JOYSTICK or not self.game.inputs.using_keyboard_input:

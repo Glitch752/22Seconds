@@ -16,10 +16,6 @@ def get_height():
     """Get the current height of the window."""
     return WIN.get_height()
 
-WHITE_IMAGE = pygame.Surface((TILE_SIZE, TILE_SIZE), pygame.SRCALPHA)
-WHITE_IMAGE.fill('white')
-WHITE_IMAGE.set_alpha(64)
-
 @cache
 def small_font_render(text, color='white'):
     return SMALL_FONT.render(text, True, color)

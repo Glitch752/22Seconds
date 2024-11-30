@@ -6,7 +6,7 @@ import constants
 from game import Game
 from game_scene import GameScene, IntroCutsceneScene
 from graphics import GIANT_FONT, SMALL_FONT, get_height, get_width
-from inputs import InputType
+from inputs import InputType, Inputs
 
 class MainMenuScene(GameScene):
     def __init__(self: Self, game: Game):
@@ -15,7 +15,7 @@ class MainMenuScene(GameScene):
     def enter(self: Self):
         self.game.music.play_day_track()
     
-    def draw(self: Self, win: pygame.Surface):
+    def draw(self: Self, win: pygame.Surface, inputs: Inputs):
         win.fill("#bbff70")
         
         t = pygame.time.get_ticks() // 50

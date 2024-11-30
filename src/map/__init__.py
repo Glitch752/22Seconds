@@ -2,7 +2,7 @@ from perlin_noise import PerlinNoise
 import pygame
 import pygame.midi
 from audio import AudioManager
-from constants import FARMABLE_MAP_END, FARMABLE_MAP_START, TILE_SIZE
+from constants import FARMABLE_MAP_END, FARMABLE_MAP_START, INTERACTABLE_SELECTION_COLOR, NON_INTERACTABLE_SELECTION_COLOR, NOTHING_SELECTION_COLOR, TILE_SIZE
 import random
 import math
 from constants import MAP_WIDTH, MAP_HEIGHT, MAP_UPDATE_RATE, RANDOM_TICK_PER_UPDATE_RATIO
@@ -20,8 +20,16 @@ class Map:
     tiles: list[Tile]
     features: list[Feature]
     
+    selection_images: dict[str, pygame.Surface] = {}
+    
     def __init__(self):
         self.tiles = []
+        
+        for color in [NON_INTERACTABLE_SELECTION_COLOR, INTERACTABLE_SELECTION_COLOR, NOTHING_SELECTION_COLOR]:
+            for variant in ["0", "1"]:
+                image = pygame.image.load(f"assets/ui/selector_{color}_{variant}.png").convert_alpha()
+                image = pygame.transform.scale(image, (TILE_SIZE, TILE_SIZE))
+                self.selection_images[f"{color}_{variant}"] = image
         
         noise = PerlinNoise(octaves=4, seed=100)
         max_dim = max(MAP_WIDTH, MAP_HEIGHT)
@@ -80,7 +88,7 @@ class Map:
         return self.tiles[tile_index].get_interaction(item, player, audio_manager, tile_center_pos)
 
     last_draw_time = 0
-    def draw(self, win: pygame.Surface, camera_position: pygame.Vector2):
+    def draw(self, win: pygame.Surface, camera_position: pygame.Vector2, selected_cell_x: int, selected_cell_y: int, selection_color: str, interacting: bool):
         current_time = pygame.time.get_ticks()
         delta = (current_time - self.last_draw_time) / 1000
         self.last_draw_time = current_time
@@ -151,3 +159,8 @@ class Map:
         # Draw features
         for feature in self.features:
             feature.draw(win, camera_position)
+        
+        # Draw selection
+        x = selected_cell_x * TILE_SIZE - camera_position.x + get_width() // 2
+        y = selected_cell_y * TILE_SIZE - camera_position.y + get_height() // 2
+        win.blit(self.selection_images[selection_color + "_" + ("1" if interacting else "0")], (x, y))

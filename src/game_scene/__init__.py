@@ -24,7 +24,7 @@ class GameScene(ABC):
         pass
 
     @abstractmethod # Must be implemented
-    def draw(self: Self, win: pygame.Surface):
+    def draw(self: Self, win: pygame.Surface, inputs: Inputs):
         pass
     
     def event_input(self: Self, type: InputType):

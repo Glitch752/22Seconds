@@ -44,3 +44,8 @@ TOOLTIP_PADDING = 5
 TOOLTIP_WINDOW_MARGIN = 20
 TOOLTIP_BORDER_RADIUS = 8
 TOOLTIP_LINE_SPACING = -2
+
+# Must match the assets in assets/ui... a bit hacky, but it works for now
+NON_INTERACTABLE_SELECTION_COLOR = 'yellow'
+INTERACTABLE_SELECTION_COLOR = 'green'
+NOTHING_SELECTION_COLOR = 'gray'

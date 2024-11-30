@@ -36,7 +36,7 @@ class IntroCutsceneScene(GameScene):
         for box in self.cutscene_text:
             self.game.dialogue_manager.queue_dialogue(box)
     
-    def draw(self: Self, win: pygame.Surface):
+    def draw(self: Self, win: pygame.Surface, inputs: Inputs):
         win.fill("#000000")
     
     def update(self: Self, inputs: Inputs, dt: float):

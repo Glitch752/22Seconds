@@ -74,7 +74,7 @@ class PlayingGameScene(GameScene):
             if selected_item == None:
                 interaction = None
             else:
-                interaction = self.farm.get_interaction(self.selected_cell_x, self.selected_cell_y, selected_item, player, self.game.audio_manager)
+                interaction = self.farm.get_interaction(self.selected_cell_x, self.selected_cell_y, selected_item, player, self.game.audio_manager, inputs.interaction_rising_edge)
             self.selection_color = INTERACTABLE_SELECTION_COLOR if interaction else NON_INTERACTABLE_SELECTION_COLOR
 
             if interaction != None:
@@ -187,13 +187,4 @@ class PlayingGameScene(GameScene):
             player_slots = len(player.get_interactable_items())
             slot = type.get_slot_index(player_slots - player.selected_slot, player_slots)
             player.select_slot(player_slots - slot)
-            return
-
-        if type == InputType.CLICK_DOWN or pygame.mouse.get_pressed(3)[0]:
-            self.game.player.mouse_down()
-            self.game.inputs.interaction = True
-            return
-
-        if type == InputType.CLICK_UP or not pygame.mouse.get_pressed(3)[0]:
-            self.game.inputs.interaction = False
             return

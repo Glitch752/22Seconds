@@ -122,11 +122,18 @@ class Inputs:
     target_x: float
     target_y: float
 
-    interaction: bool
+    interaction: bool = False
+    interaction_rising_edge: bool = False
     
     def __init__(self):
         self.joystick_update()
-        self.interaction = False
+    
+    def input_event(self, input_type: InputType):
+        if input_type == InputType.CLICK_DOWN:
+            self.interaction = True
+        elif input_type == InputType.CLICK_UP:
+            self.interaction = False
+            self.interaction_rising_edge = True
     
     def joystick_update(self):
         self.joysticks = [pygame.joystick.Joystick(i) for i in range(pygame.joystick.get_count())]
@@ -164,4 +171,6 @@ class Inputs:
         movement_mag = math.sqrt(self.movement_x ** 2 + self.movement_y ** 2)
         self.movement_x = self.movement_x / movement_mag if movement_mag > 1 else self.movement_x
         self.movement_y = self.movement_y / movement_mag if movement_mag > 1 else self.movement_y
-        pass
+        
+        if self.interaction_rising_edge and self.interaction:
+            self.interaction_rising_edge = False

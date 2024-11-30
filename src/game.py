@@ -48,10 +48,11 @@ class Game:
         self.current_scene.enter()
     
     def run(self, delta: float):
+        self.inputs.update(self.current_scene.get_target_reference())
+        
         for event in pygame.event.get():
             self.handle_event(event)
         
-        self.inputs.update(self.current_scene.get_target_reference())
         self.dialogue_manager.update(delta, self.audio_manager, self.player)
         
         self.current_scene.update(self.inputs, delta)
@@ -81,33 +82,39 @@ class Game:
             input_type = InputType.from_keyboard_input(event.key, True)
             if input_type is not None:
                 self.current_scene.event_input(input_type)
+                self.inputs.input_event(input_type)
             return
         if event.type == pygame.KEYUP:
             input_type = InputType.from_keyboard_input(event.key, False)
             if input_type is not None:
                 self.current_scene.event_input(input_type)
+                self.inputs.input_event(input_type)
             return
         
         if event.type == pygame.JOYBUTTONDOWN:
             input_type = InputType.from_controller_input(event.button, True)
             if input_type is not None:
                 self.current_scene.event_input(input_type)
+                self.inputs.input_event(input_type)
             return
         if event.type == pygame.JOYBUTTONUP:
             input_type = InputType.from_controller_input(event.button, False)
             if input_type is not None:
                 self.current_scene.event_input(input_type)
+                self.inputs.input_event(input_type)
             return
         
         if event.type == pygame.MOUSEBUTTONDOWN:
             input_type = InputType.from_mouse_input(event.button, True)
             if input_type is not None:
                 self.current_scene.event_input(input_type)
+                self.inputs.input_event(input_type)
             return
         if event.type == pygame.MOUSEBUTTONUP:
             input_type = InputType.from_mouse_input(event.button, False)
             if input_type is not None:
                 self.current_scene.event_input(input_type)
+                self.inputs.input_event(input_type)
             return
         if event.type == pygame.MOUSEWHEEL:
             if event.y > 0:

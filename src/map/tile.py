@@ -15,13 +15,18 @@ if TYPE_CHECKING:
     from player import Player
 
 class Structure(ABC):
+    should_destroy: bool = False
+    
     def __init__(self):
         pass
+    
+    def destroy(self):
+        self.should_destroy = True
     
     def random_tick(self, audio_manager: AudioManager):
         pass
     
-    def get_interaction(self, item: Item, player: "Player", audio_manager: AudioManager, tile_center_pos: tuple[int, int]):
+    def get_interaction(self, item: Item, player: "Player", audio_manager: AudioManager, tile_center_pos: tuple[int, int], rising_edge: bool):
         """
         Returns a lambda that will execute the proper interaction based on the selected tile and item,
         or None if no interaction should occur.
@@ -60,6 +65,11 @@ wet_soil_image = pygame.transform.scale(
     pygame.image.load("assets/tiles/wet_farmland.png").convert_alpha(),
     (TILE_SIZE, TILE_SIZE)
 )
+
+wall_images = [pygame.transform.scale(
+    pygame.image.load(f"assets/tiles/wall{idx}.png").convert_alpha(),
+    (TILE_SIZE, TILE_SIZE)
+) for idx in range(3)]
 
 class SoilStructure(Structure):
     """
@@ -116,7 +126,7 @@ class SoilStructure(Structure):
         audio_manager.play_sound(SoundType.WATER)
         add_floating_text_hint(FloatingHintText(f"Watered!", tile_center_pos, "skyblue"))
     
-    def get_interaction(self, item: Item, player: "Player", audio_manager: AudioManager, tile_center_pos: tuple[int, int]):
+    def get_interaction(self, item: Item, player: "Player", audio_manager: AudioManager, tile_center_pos: tuple[int, int], rising_edge: bool):
         if item in {Item.CARROT_SEEDS, Item.WHEAT_SEEDS, Item.ONION_SEEDS} and self.item == None:
             return lambda: self.put_seed(item, player, audio_manager, tile_center_pos)
         
@@ -140,6 +150,34 @@ class SoilStructure(Structure):
                 Item.ONION_SEEDS: "purple"
             }
             spawn_particles_in_square(tile_center_pos[0], tile_center_pos[1], plant_particle_colors[self.item], TILE_SIZE//2, 1)
+
+class WallStructure(Structure):
+    """
+    A wall that progressively gets damaged. Can be destroyed with an axe.
+    """
+    
+    damage: int = 0
+    
+    def destroy(self, player: "Player", audio_manager: AudioManager, tile_center_pos: tuple[int, int]):
+        self.damage += 1
+        audio_manager.play_sound(SoundType.CRUNCH) # TODO: Better sound
+        tile_center_pos = (tile_center_pos[0], tile_center_pos[1] - TILE_SIZE)
+        
+        if self.damage == 3:
+            add_floating_text_hint(FloatingHintText(f"Wall destroyed!", tile_center_pos, "white"))
+            super().destroy()
+        else:
+            add_floating_text_hint(FloatingHintText(f"Wall damaged!", tile_center_pos, "white"))
+        
+        spawn_particles_in_square(tile_center_pos[0], tile_center_pos[1], "gray", TILE_SIZE//2, 20)
+    
+    def get_interaction(self, item: Item, player: "Player", audio_manager: AudioManager, tile_center_pos: tuple[int, int], rising_edge: bool):
+        if item == Item.AXE and rising_edge:
+            return lambda: self.destroy(player, audio_manager, tile_center_pos)
+        return None
+    
+    def draw(self, win: pygame.Surface, x: int, y: int, tile_center_pos: tuple[int, int], delta: float):
+        win.blit(wall_images[self.damage], (x, y))
 
 class TileType(Enum):
     """
@@ -217,11 +255,23 @@ class Tile:
         Tile rendering uses a dual-grid system, so it's handled at the map level.
         x and y are screen coordinates, while tile_center_pos is the center of the tile in world coordinates.
         """
-        if self.structure:
+        if self.structure and not self.structure.should_destroy:
             self.structure.draw(win, x, y, tile_center_pos, delta)
     
+    def set_structure(self, structure: Structure):
+        if self.structure and not self.structure.should_destroy:
+            self.structure.destroy()
+        
+        self.structure = structure
+    
+    def wall_placed(self, player: "Player", tile_center_pos: tuple[int, int], audio_manager: AudioManager):
+        self.set_structure(WallStructure())
+        audio_manager.play_sound(SoundType.PLANT) # TODO: Wall place sound
+        player.decrement_selected_item_quantity()
+        add_floating_text_hint(FloatingHintText(f"Wall placed!", tile_center_pos, "white"))    
+    
     def tilled(self, tile_center_pos: tuple[int, int], audio_manager: AudioManager):
-        self.structure = SoilStructure(None)
+        self.set_structure(SoilStructure(None))
         audio_manager.play_sound(SoundType.TILL_SOIL)
         add_floating_text_hint(FloatingHintText(f"Tilled soil!", tile_center_pos, "white"))
     
@@ -236,14 +286,16 @@ class Tile:
         audio_manager.play_sound(SoundType.WATER) # TODO: water fill sound
         add_floating_text_hint(FloatingHintText(f"Filled can!", tile_center_pos, "skyblue"))
     
-    def get_interaction(self, item: Item, player: "Player", audio_manager: AudioManager, tile_center_pos: tuple[int, int]):
+    def get_interaction(self, item: Item, player: "Player", audio_manager: AudioManager, tile_center_pos: tuple[int, int], rising_edge: bool):
         """
         Returns a lambda that will execute the proper interaction based on the selected tile and item,
         or None if no interaction should occur.
         """
         
+        if self.structure and self.structure.should_destroy:
+            self.structure = None
         if self.structure:
-            return self.structure.get_interaction(item, player, audio_manager, tile_center_pos)
+            return self.structure.get_interaction(item, player, audio_manager, tile_center_pos, rising_edge)
         
         match (self.tile_type, item):
             case (TileType.SOIL, Item.HOE):
@@ -252,6 +304,8 @@ class Tile:
                 return (lambda: self.shoveled(tile_center_pos, audio_manager))
             case (TileType.WATER, Item.WATERING_CAN_EMPTY):
                 return (lambda: self.fill_watering_can(player, tile_center_pos, audio_manager))
+            case (TileType.SOIL | TileType.GRASS | TileType.TALL_GRASS, Item.WALL):
+                return (lambda: self.wall_placed(player, tile_center_pos, audio_manager))
             case _:
                 pass
         

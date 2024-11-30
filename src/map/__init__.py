@@ -72,7 +72,7 @@ class Map:
             return False
         return self.tiles[tile_index].is_collidable()
     
-    def get_interaction(self, tile_x: int, tile_y: int, item: Item, player: "Player", audio_manager: AudioManager):
+    def get_interaction(self, tile_x: int, tile_y: int, item: Item, player: "Player", audio_manager: AudioManager, rising_edge: bool):
         """
         Returns a lambda that will execute the proper interaction based on the selected tile and item,
         or None if no interaction should occur.
@@ -81,11 +81,8 @@ class Map:
         if tile_index < 0 or tile_index >= len(self.tiles):
             return
 
-        tile_center_pos = (
-            tile_x * TILE_SIZE + TILE_SIZE // 2 + get_width() // 2,
-            tile_y * TILE_SIZE + TILE_SIZE // 2 + get_height() // 2
-        )
-        return self.tiles[tile_index].get_interaction(item, player, audio_manager, tile_center_pos)
+        tile_center_pos = (tile_x * TILE_SIZE + TILE_SIZE // 2, tile_y * TILE_SIZE + TILE_SIZE // 2)
+        return self.tiles[tile_index].get_interaction(item, player, audio_manager, tile_center_pos, rising_edge)
 
     last_draw_time = 0
     def draw(self, win: pygame.Surface, camera_position: pygame.Vector2, selected_cell_x: int, selected_cell_y: int, selection_color: str, interacting: bool):

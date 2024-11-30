@@ -4,6 +4,8 @@ import random
 from typing import Self
 import pygame
 
+from items import get_slot_bounds
+
 from constants import CROSSHAIR_COLOR, CROSSHAIR_ONLY_WITH_JOYSTICK, CROSSHAIR_SIZE, CROSSHAIR_THICKNESS,\
     DAY_LENGTH, DUSK_DAWN_LENGTH, INTERACTABLE_SELECTION_COLOR, MAP_HEIGHT, MAP_WIDTH, NIGHT_LENGTH, NIGHT_OPACITY,\
     NON_INTERACTABLE_SELECTION_COLOR, NOTHING_SELECTION_COLOR, TILE_SIZE
@@ -188,3 +190,10 @@ class PlayingGameScene(GameScene):
             slot = type.get_slot_index(player_slots - player.selected_slot, player_slots)
             player.select_slot(player_slots - slot)
             return
+        elif type.from_mouse_input(pygame.BUTTON_LEFT, True) and self.game.player.over_ui(*pygame.mouse.get_pos()):
+            player = self.game.player
+            player_slots = len(player.get_interactable_items())
+            for i in range(player_slots):
+                if pygame.Rect(get_slot_bounds(i, 0, True, True)).collidepoint(pygame.mouse.get_pos()):
+                    player.select_slot(i)
+                    return

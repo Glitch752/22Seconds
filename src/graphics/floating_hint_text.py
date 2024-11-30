@@ -1,12 +1,24 @@
+from typing import Literal
 import pygame
 
 class FloatingHintText:
+    start_time: float
+    surface: pygame.Surface
+    x: int
+    y: int
+    vertical_movement: int
+    stay_time: float
+    fade_time: float
+    fixed_in_world: bool
+    manually_finished: bool
+    alignment: Literal["left", "center", "right"]
     def __init__(
         self,
         text, pos, color = "white",
         vertical_movement = -30,
         stay_time = 0.5, fade_time = 0.5,
-        fixed_in_world=True
+        fixed_in_world=True,
+        alignment="center"
     ):
         from graphics import small_font_render
         self.start_time = pygame.time.get_ticks() / 1000 # Seconds
@@ -21,6 +33,7 @@ class FloatingHintText:
         self.fade_time = fade_time # Seconds
         self.fixed_in_world = fixed_in_world
         self.manually_finished = False
+        self.alignment = alignment
     def is_complete(self):
         if self.manually_finished:
             return True
@@ -30,7 +43,12 @@ class FloatingHintText:
     def draw(self, win: pygame.Surface, player_pos):
         time = pygame.time.get_ticks() / 1000
         elapsed = time - self.start_time
-        x_position = self.x - self.surface.get_width() // 2
+        offset = 0
+        if self.alignment == "center":
+            offset = self.surface.get_width() // 2
+        elif self.alignment == "right":
+            offset = self.surface.get_width()
+        x_position = self.x - offset
         y_position = self.y + elapsed * self.vertical_movement
         if self.fixed_in_world:
             x_position -= player_pos[0]

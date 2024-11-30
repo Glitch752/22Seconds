@@ -33,7 +33,7 @@ class DialogueRenderer:
         pygame.draw.rect(
             win,
             SLOT_BACKGROUND,
-            pygame.Rect(WIDTH // 2 - 300, 20, 600, len(lines) * 30 + 20),
+            pygame.Rect(WIDTH // 2 - 300, 20, 600, len(lines) * 30 + 30),
             border_radius=ITEM_SLOT_BORDER_RADIUS
         )
 

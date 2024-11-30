@@ -26,7 +26,6 @@ class OutroCutsceneScene(GameScene):
     def enter(self: Self):
         for box in self.cutscene_text:
             self.game.dialogue_manager.queue_dialogue(box)
-        self.game.dialogue_manager.on_confirm()
     
     def draw(self: Self, win: pygame.Surface):
         win.fill("#000000")

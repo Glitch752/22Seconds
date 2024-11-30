@@ -52,7 +52,7 @@ class Game:
             self.handle_event(event)
         
         self.inputs.update(self.current_scene.get_target_reference())
-        self.dialogue_manager.update(delta, self.audio_manager)
+        self.dialogue_manager.update(delta, self.audio_manager, self.player)
         
         self.current_scene.update(self.inputs, delta)
         self.audio_manager.update()

@@ -5,6 +5,7 @@ from typing import Self
 import pygame
 
 from constants import CROSSHAIR_COLOR, CROSSHAIR_ONLY_WITH_JOYSTICK, CROSSHAIR_SIZE, CROSSHAIR_THICKNESS, DAY_LENGTH, DUSK_DAWN_LENGTH, HEIGHT, MAP_HEIGHT, MAP_WIDTH, NIGHT_LENGTH, NIGHT_OPACITY, TILE_SIZE, WIDTH
+from dialogue import WorldEvent
 from game import Game
 from game_scene import GameScene
 from graphics import WHITE_IMAGE, big_font_render, giant_font_render
@@ -52,6 +53,7 @@ class PlayingGameScene(GameScene):
     
     def enter(self: Self):
         self.game.audio_manager.play_day_track()
+        self.game.dialogue_manager.condition_state.add_event(WorldEvent.GameStart)
     
     def get_target_reference(self: Self):
         return self.game.player.pos - self.camera_position + pygame.Vector2(WIDTH // 2, HEIGHT // 2)
@@ -65,13 +67,16 @@ class PlayingGameScene(GameScene):
         if player.over_ui(mx, my):
             self.selection_color = NOTHING_SELECTION_COLOR
         else:
-            selected_item = player.get_selected_item()[0]
+            selected_item = player.get_selected_item()
             
             self.selected_cell_x = math.floor((inputs.target_x + player.pos.x) // TILE_SIZE)
             self.selected_cell_y = math.floor((inputs.target_y + player.pos.y) // TILE_SIZE)
             self.target_x = inputs.target_x
             self.target_y = inputs.target_y
-            interaction = self.farm.get_interaction(self.selected_cell_x, self.selected_cell_y, selected_item, player, self.game.audio_manager)
+            if selected_item == None:
+                interaction = None
+            else:
+                interaction = self.farm.get_interaction(self.selected_cell_x, self.selected_cell_y, selected_item, player, self.game.audio_manager)
             self.selection_color = INTERACTABLE_SELECTION_COLOR if interaction else NON_INTERACTABLE_SELECTION_COLOR
 
             if interaction != None:

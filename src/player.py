@@ -51,19 +51,19 @@ class Player:
         self.angle = 0
 
         self.items = {}
-        self.items[Item.HOE] = 1
-        self.items[Item.AXE] = 1
-        self.items[Item.SHOVEL] = 1
-        self.items[Item.WATERING_CAN_EMPTY] = 1
+        # self.items[Item.HOE] = 1
+        # self.items[Item.AXE] = 1
+        # self.items[Item.SHOVEL] = 1
+        # self.items[Item.WATERING_CAN_EMPTY] = 1
         
-        # TEMPORARY
-        self.items[Item.CARROT] = 10
-        self.items[Item.ONION] = 10
-        self.items[Item.WHEAT] = 10
-        self.items[Item.CARROT_SEEDS] = 15
-        self.items[Item.ONION_SEEDS] = 15
-        self.items[Item.WHEAT_SEEDS] = 15
-        self.items[Item.WALL] = 20
+        # # TEMPORARY
+        # self.items[Item.CARROT] = 10
+        # self.items[Item.ONION] = 10
+        # self.items[Item.WHEAT] = 10
+        # self.items[Item.CARROT_SEEDS] = 15
+        # self.items[Item.ONION_SEEDS] = 15
+        # self.items[Item.WHEAT_SEEDS] = 15
+        # self.items[Item.WALL] = 20
 
         self.sold_items = {}
         
@@ -116,7 +116,7 @@ class Player:
         if self.slot_selection_floating_text != None:
             self.slot_selection_floating_text.manually_finished = True
         self.slot_selection_floating_text = FloatingHintText(
-            self.get_selected_item()[0].item_name,
+            self.get_selected_item().item_name,
             (WIDTH // 2, HEIGHT - 150),
             "white",
             -5, 1.5, 0.25, False
@@ -214,12 +214,17 @@ class Player:
         
         return False
 
-    def get_item_list(self) -> list[(Item, int)]:
+    def get_item_list(self) -> list[tuple[Item, int]]:
         return list(filter(lambda val: val[1] > 0, sorted(self.items.items(), key=lambda x: x[0].name)))
-    def get_selected_item(self):
-        return self.get_interactable_items()[self.selected_slot]
+    def get_selected_item(self) -> Item:
+        if len(self.get_interactable_items()) == 0:
+            return None
+        return self.get_interactable_items()[self.selected_slot][0]
     def decrement_selected_item_quantity(self):
-        item = self.get_selected_item()[0]
+        item = self.get_selected_item()
+        if item == None:
+            return
+        
         self.items[item] -= 1
         if self.items[item] == 0:
             self.wait_for_mouseup = True

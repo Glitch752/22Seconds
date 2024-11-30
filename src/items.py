@@ -2,13 +2,8 @@ from enum import Enum
 from typing import Optional
 import pygame
 import graphics
-from constants import SLOT_BACKGROUND, SLOT_BACKGROUND_SELECTED, WIDTH, HEIGHT
+from constants import ITEM_SLOT_BORDER_RADIUS, ITEM_SLOT_ITEM_SIZE, ITEM_SLOT_MARGIN, ITEM_SLOT_PADDING, SLOT_BACKGROUND, SLOT_BACKGROUND_SELECTED, WIDTH, HEIGHT
 import os
-
-ITEM_SLOT_ITEM_SIZE = 64
-ITEM_SLOT_PADDING = 8
-ITEM_SLOT_MARGIN = 8
-ITEM_SLOT_BORDER_RADIUS = 8
 
 class ItemShopData:
     buy_price: Optional[int]

@@ -19,9 +19,9 @@ game = Game()
 def main():
     global game
     
-    game.start(IntroCutsceneScene(game))
+    # game.start(IntroCutsceneScene(game))
     # TEMPORARY
-    # game.start(PlayingGameScene(game))
+    game.start(PlayingGameScene(game))
 
     clock = pygame.time.Clock()
     while not game.should_quit_game:

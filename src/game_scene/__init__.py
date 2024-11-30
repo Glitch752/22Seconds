@@ -17,8 +17,11 @@ class GameScene(ABC):
     The exception is PlayingGameScene, which is instantiated once and reused throughout the game.
     """
     
-    def __init__(self: Self, game: "Game"):
+    name: str
+    
+    def __init__(self: Self, game: "Game", name: str):
         self.game = game
+        self.name = name
 
     def update(self: Self, inputs: Inputs, dt: float):
         pass

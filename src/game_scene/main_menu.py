@@ -10,7 +10,7 @@ from inputs import InputType, Inputs
 
 class MainMenuScene(GameScene):
     def __init__(self: Self, game: Game):
-        super().__init__(game)
+        super().__init__(game, "main_menu")
     
     def enter(self: Self):
         self.game.music.play_day_track()

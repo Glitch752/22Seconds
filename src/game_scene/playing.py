@@ -15,6 +15,7 @@ from graphics.floating_hint_text import draw_floating_hint_texts
 from graphics.particles import draw_particles, update_particles
 from inputs import InputType, Inputs
 from map import Map
+from map.feature import Feature
 from player import Player
 from utils import clamp, ease
 
@@ -44,10 +45,14 @@ class PlayingGameScene(GameScene):
     day_fade_surface = pygame.Surface((get_width(), get_height()), pygame.SRCALPHA)
     
     def __init__(self: Self, game: Game):
-        super().__init__(game)
+        super().__init__(game, "playing")
         self.camera_position = game.player.pos.copy()
         
         self.day_fade_surface.fill((0, 0, 15))
+        
+        self.farm.add_feature(Feature(MAP_WIDTH - 20, MAP_HEIGHT // 2 - 10, 8, 8, "house.png", None))
+        self.farm.add_feature(Feature(MAP_WIDTH - 18, MAP_HEIGHT // 2 - 3, 1, 2, "drWhom.png", lambda: self.game.dialogue_manager.condition_state.add_event(WorldEvent.DialogueDrWhom)))
+        self.farm.add_feature(Feature(MAP_WIDTH - 15, MAP_HEIGHT // 2 - 3, 1, 2, "shopkeeper.png", lambda: self.game.dialogue_manager.condition_state.add_event(WorldEvent.DialogueMrShopkeeper)))
     
     def enter(self: Self):
         self.game.audio_manager.play_day_track()
@@ -74,11 +79,11 @@ class PlayingGameScene(GameScene):
             if selected_item == None:
                 interaction = None
             else:
-                interaction = self.farm.get_interaction(self.selected_cell_x, self.selected_cell_y, selected_item, player, self.game.audio_manager, inputs.interaction_rising_edge)
+                interaction = self.farm.get_interaction(self.selected_cell_x, self.selected_cell_y, selected_item, player, self.game.audio_manager, inputs.click_rising_edge)
             self.selection_color = INTERACTABLE_SELECTION_COLOR if interaction else NON_INTERACTABLE_SELECTION_COLOR
 
             if interaction != None:
-                if inputs.interaction:
+                if inputs.clicking:
                     if not player.wait_for_mouseup:
                         result = interaction()
                         if result == -1:
@@ -134,7 +139,7 @@ class PlayingGameScene(GameScene):
     def draw(self: Self, win: pygame.Surface, inputs: Inputs):
         win.fill("#000000")
         
-        self.farm.draw(win, self.camera_position, self.selected_cell_x, self.selected_cell_y, self.selection_color, inputs.interaction)
+        self.farm.draw(win, self.camera_position, self.game.player, self.selected_cell_x, self.selected_cell_y, self.selection_color, inputs.clicking, inputs.interacting)
         
         # Draw target crosshair
         if not CROSSHAIR_ONLY_WITH_JOYSTICK or not self.game.inputs.using_keyboard_input:
@@ -188,3 +193,8 @@ class PlayingGameScene(GameScene):
             slot = type.get_slot_index(player_slots - player.selected_slot, player_slots)
             player.select_slot(player_slots - slot)
             return
+        
+        if type == InputType.INTERACT_DOWN:
+            interaction = self.farm.check_proximity_interaction(self.game.player)
+            if interaction:
+                interaction()

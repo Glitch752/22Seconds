@@ -36,9 +36,16 @@ class WorldEvent(StrEnum):
 class ConditionState:
     # Maps WorldEvent to the time it was triggered
     world_events: dict[WorldEvent, int | None]
+    """
+    The list of events that the game sends to the dialogue system. These are currently just strings.
+    This could be an enum... or we could restructure this to not need it at all... but I'm
+    lazy and don't have enough time to mess with refactors.
+    """
+    game_messages: set[str]
 
     def __init__(self) -> None:
         self.world_events = {}
+        self.game_messages = set()
     
     def add_event(self, event: WorldEvent):
         self.world_events[event] = pygame.time.get_ticks()
@@ -120,16 +127,32 @@ class LambdaCondition(DialogueCondition):
     def check(self, condition_state: ConditionState) -> bool:
         return self.func(condition_state)
 
+class GameMessagesContainCondition(DialogueCondition):
+    message: str
+
+    def __init__(self, message: str) -> None:
+        self.message = message
+
+    def check(self, condition_state: ConditionState) -> bool:
+        return self.message in condition_state.game_messages
+
 # Actions
 
 class DialogueActionContext:
     dialogue_manager: "DialogueManager"
     audio_manager: "AudioManager"
     player: "Player"
+    """
+    The list of queued game actions. These are currently just scene names to switch to.
+    This could be an enum... or we could restructure this to not need it at all... but I'm
+    lazy and don't have enough time to mess with refactors.
+    """
+    queued_game_actions: list[str]
     def __init__(self, dialogue_manager: "DialogueManager", audio_manager: "AudioManager", player: "Player"):
         self.dialogue_manager = dialogue_manager
         self.audio_manager = audio_manager
         self.player = player
+        self.queued_game_actions = []
 
 class DialogueAction(ABC):
     def start(self, action_context: DialogueActionContext) -> None:
@@ -218,6 +241,24 @@ class RepeatAction(DialogueAction):
     def is_finished(self, action_context: DialogueActionContext) -> bool:
         return self.current_time >= self.times
 
+class RepeatWhileAction(DialogueAction):
+    action: DialogueAction
+    condition: DialogueCondition
+    def __init__(self, action: DialogueAction, condition: DialogueCondition) -> None:
+        self.action = action
+        self.condition = condition
+    def start(self, action_context: DialogueActionContext) -> None:
+        self.action.start(action_context)
+    def update(self, action_context: DialogueActionContext, delta: float) -> None:
+        self.action.update(action_context, delta)
+        if self.condition.check(action_context.dialogue_manager.condition_state):
+            self.action.end(action_context)
+            self.action.start(action_context)
+    def end(self, action_context: DialogueActionContext) -> None:
+        self.action.end(action_context)
+    def is_finished(self, action_context: DialogueActionContext) -> bool:
+        return not self.condition.check(action_context.dialogue_manager.condition_state)
+
 class WaitAction(DialogueAction):
     time: float
     current_time: float = 0
@@ -266,6 +307,20 @@ class QueueLinesAndWaitAction(DialogueAction):
         action_context.dialogue_manager.queue_dialogue(self.lines)
     def is_finished(self, action_context: DialogueActionContext) -> bool:
         return not action_context.dialogue_manager.is_shown()
+
+class QueueGameActionAction(DialogueAction):
+    action: str
+    def __init__(self, scene: str) -> None:
+        self.action = scene
+    def start(self, action_context: DialogueActionContext) -> None:
+        action_context.queued_game_actions.append(self.action)
+
+class ClearGameMessageAction(DialogueAction):
+    message: str
+    def __init__(self, message: str) -> None:
+        self.message = message
+    def start(self, action_context: DialogueActionContext) -> None:
+        action_context.dialogue_manager.condition_state.game_messages.remove(self.message)
 
 class PrintConsoleAction(DialogueAction):
     text: str
@@ -367,14 +422,14 @@ class DialogueManager:
                 ),
                 ForcePlayerWalkAction(MAP_WIDTH * TILE_SIZE * 0.75, MAP_HEIGHT * TILE_SIZE // 2)
             ),
-            WaitAction(1),
+            # WaitAction(0.25),
             QueueLinesAndWaitAction("Dr. Whom", "And whom might you be?", "Wait, I remember you!", "You're...     you."),
             QueueLinesAndWaitAction("Dr. Whom", "Well, anyways…", "What are you doing in these far-out lands?", "This seems uncharacteristic of you."),
             QueueLinesAndWaitAction("You", "Oh, I just wanted to relax for a bit!", "Get away from corporate life, right?", "     Haha."),
             QueueLinesAndWaitAction("Dr. Whom", "Huh. Well, I can show you the ropes around here!"),
             QueueLinesAndWaitAction("You", "I mean… I know how to walk with WASD or", "left joystick! And farming should be", "as simple as Left click or A!"),
             QueueLinesAndWaitAction("Dr. Whom", "What the #*!$?", "What are you even talking about?"),
-            WaitAction(1),
+            # WaitAction(0.25),
             QueueLinesAndWaitAction("You", "Oh… anyway.", "What else do I need to know about farming?"),
             QueueLinesAndWaitAction("Dr. Whom", "Well, not much!", "You uproot the grass to find fertile soil,", "till it, put some seeds in, and wait!"),
             QueueLinesAndWaitAction("Dr. Whom", "I’m sure Mr. Shopkeeper over here would be", "happy to show you what he has to offer!"),
@@ -386,8 +441,8 @@ class DialogueManager:
             
             AfterEventCondition(WorldEvent.DialogueDrWhom)
         ), SequenceAction(
-            QueueLinesAndWaitAction("Dr. Whom", "Go talk to the shopkeeper over there!"),
-            ClearEventAction(WorldEvent.DialogueDrWhom)
+            ClearEventAction(WorldEvent.DialogueDrWhom),
+            QueueLinesAndWaitAction("Dr. Whom", "Go talk to the shopkeeper over there!")
         )),
         
         DialogueTrigger(AndCondition(
@@ -396,8 +451,12 @@ class DialogueManager:
             
             AfterEventCondition(WorldEvent.DialogueMrShopkeeper)
         ), SequenceAction(
+            ClearEventAction(WorldEvent.DialogueMrShopkeeper),
+            QueueGameActionAction("scene:shop"),
             QueueLinesAndWaitAction("Mr. Shopkeeper", "Hey. Take a look."),
-            ClearEventAction(WorldEvent.DialogueMrShopkeeper)
+            ConditionalWaitAction(GameMessagesContainCondition("exit:shop")),
+            ClearGameMessageAction("exit:shop"),
+            SetEventAction(WorldEvent.AfterFirstShopInteraction)
         )),
         DialogueTrigger(AndCondition(
             AfterEventCondition(WorldEvent.AfterFirstShopInteraction),
@@ -405,8 +464,9 @@ class DialogueManager:
             
             AfterEventCondition(WorldEvent.DialogueMrShopkeeper)
         ), SequenceAction(
+            ClearEventAction(WorldEvent.DialogueMrShopkeeper),
+            QueueGameActionAction("scene:shop"),
             QueueLinesAndWaitAction("Mr. Shopkeeper", "Hey."),
-            ClearEventAction(WorldEvent.DialogueMrShopkeeper)
         )),
 
         DialogueTrigger(AndCondition(
@@ -415,6 +475,7 @@ class DialogueManager:
             
             AfterEventCondition(WorldEvent.DialogueDrWhom)
         ), SequenceAction(
+            ClearEventAction(WorldEvent.DialogueDrWhom),
             QueueLinesAndWaitAction("Dr. Whom", "So...", "I see you're not doing too well financially, huh?"),
             QueueLinesAndWaitAction("You", "No, no! I'm wealthier than your wildest dreams!"),
             WaitAction(0.5),
@@ -423,8 +484,7 @@ class DialogueManager:
             WaitAction(0.5),
             GiveItemsAction(((Item.CARROT_SEEDS, 10), (Item.SHOVEL, 1), (Item.HOE, 1), (Item.AXE, 1), (Item.WATERING_CAN_EMPTY, 1))),
             WaitAction(0.5),
-            SetEventAction(WorldEvent.StartFarming),
-            ClearEventAction(WorldEvent.DialogueDrWhom)
+            SetEventAction(WorldEvent.StartFarming)
         )),
         
         DialogueTrigger(AndCondition(
@@ -433,15 +493,15 @@ class DialogueManager:
             
             AfterEventCondition(WorldEvent.DialogueDrWhom)
         ), SequenceAction(
+            ClearEventAction(WorldEvent.DialogueDrWhom),
             QueueLinesAndWaitAction("Dr. Whom", "Go out there and get farming!"),
-            ClearEventAction(WorldEvent.DialogueDrWhom)
         )),
     ]
     running_actions: list[DialogueAction] = []
 
     def queue_dialogue(self, lines: list[str]):
-        self.queue.append(lines)
-        if not self.is_active():
+        self.queue.append(list(lines)) # Copy the list to prevent modification of the original
+        if not self.is_shown():
             self.renderer.reset()
             self.current_lines = self.queue.pop(0)
     
@@ -460,7 +520,12 @@ class DialogueManager:
     def is_active(self):
         return len(self.current_lines) != 0 and not self.renderer.done
     
-    def update(self, delta: float, audio_manager: AudioManager, player: "Player"):
+    def update(self, delta: float, audio_manager: AudioManager, player: "Player") -> list[str]:
+        """
+        Returns a list of queued game actions. These are currently just scene names to switch to.
+        This could be an enum... or we could restructure this to not need it at all... but I'm
+        lazy and don't have enough time to mess with refactors.
+        """
         action_context = DialogueActionContext(self, audio_manager, player)
         for trigger in self.dialogue_triggers:
             if trigger.check(self.condition_state):
@@ -474,6 +539,16 @@ class DialogueManager:
         
         if self.is_active():
             self.renderer.update(self.current_lines, delta, audio_manager)
+        
+        return action_context.queued_game_actions
+
+    def add_game_message(self, message: str):
+        """
+        Adds a message to the list of events that the game sends to the dialogue system. These are currently just strings.
+        This could be an enum... or we could restructure this to not need it at all... but I'm lazy and don't have enough
+        time to mess with refactors.
+        """
+        self.condition_state.game_messages.add(message)
     
     def draw(self, win: pygame.Surface):
         if len(self.current_lines):

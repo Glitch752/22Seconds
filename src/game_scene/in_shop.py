@@ -13,7 +13,7 @@ from items import Item
 
 class InShopScene(GameScene):
     def __init__(self: Self, game: Game):
-        super().__init__(game)
+        super().__init__(game, "shop")
         self.shop_buttons = [
             Button(f"Buy Carrot Seed - {Item.CARROT_SEEDS.shop_data.buy_price}c", get_width() // 2, get_height() // 2, self.buy_item, (Item.CARROT_SEEDS,)),
             Button(f"Buy Onion Seed - {Item.ONION_SEEDS.shop_data.buy_price}c", get_width() // 2, get_height() // 2 + 40, self.buy_item, (Item.ONION_SEEDS,)),

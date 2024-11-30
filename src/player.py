@@ -54,11 +54,6 @@ class Player:
 
         for item in Item:
             self.items[item] = 0
-
-        self.items[Item.SHOVEL] = 1
-        self.items[Item.HOE] = 1
-        self.items[Item.WATERING_CAN_EMPTY] = 1
-        self.items[Item.CARROT_SEEDS] = 25
     
     def sell_items(self):
         self.sold_items = {}
@@ -180,8 +175,11 @@ class Player:
         if self.selected_slot >= interactable_items:
             self.selected_slot = interactable_items - 1
 
+    def get_collision_rect(self) -> tuple[int, int, int, int]:
+        return (self.pos.x - self.radius, self.pos.y - self.radius * 0.6, self.pos.x + self.radius, self.pos.y + self.radius * 1.25)
+
     def is_colliding(self, map):
-        min_x, min_y, max_x, max_y = self.pos.x - self.radius, self.pos.y - self.radius * 0.6, self.pos.x + self.radius, self.pos.y + self.radius * 1.25
+        min_x, min_y, max_x, max_y = self.get_collision_rect()
         min_tile_x = int(min_x // TILE_SIZE)
         min_tile_y = int(min_y // TILE_SIZE)
         max_tile_x = int(max_x // TILE_SIZE)

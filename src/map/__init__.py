@@ -6,7 +6,7 @@ from constants import FARMABLE_MAP_END, FARMABLE_MAP_START, INTERACTABLE_SELECTI
 import random
 import math
 from constants import MAP_WIDTH, MAP_HEIGHT, MAP_UPDATE_RATE, RANDOM_TICK_PER_UPDATE_RATIO
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Callable
 from graphics import get_height, get_width
 from items import Item
 from map.feature import Feature
@@ -28,7 +28,7 @@ class Map:
         for color in [NON_INTERACTABLE_SELECTION_COLOR, INTERACTABLE_SELECTION_COLOR, NOTHING_SELECTION_COLOR]:
             for variant in ["0", "1"]:
                 image = pygame.image.load(f"assets/ui/selector_{color}_{variant}.png").convert_alpha()
-                image = pygame.transform.scale(image, (TILE_SIZE, TILE_SIZE))
+                image = pygame.transform.scale(image, (TILE_SIZE, TILE_SIZE * 17 // 16))
                 self.selection_images[f"{color}_{variant}"] = image
         
         noise = PerlinNoise(octaves=4, seed=100)
@@ -48,8 +48,6 @@ class Map:
                 self.tiles[x * MAP_HEIGHT + y] = Tile(TileType.WATER)
         
         self.features = []
-        self.add_feature(Feature(MAP_WIDTH - 20, MAP_HEIGHT // 2 - 10, 8, 8, "house.png", False))
-        self.add_feature(Feature(MAP_WIDTH - 18, MAP_HEIGHT // 2 - 3, 1, 2, "drWhom.png", True))
     
     def add_feature(self, feature: Feature):
         self.features.append(feature)
@@ -72,7 +70,7 @@ class Map:
             return False
         return self.tiles[tile_index].is_collidable()
     
-    def get_interaction(self, tile_x: int, tile_y: int, item: Item, player: "Player", audio_manager: AudioManager, rising_edge: bool):
+    def get_interaction(self, tile_x: int, tile_y: int, item: Item, player: "Player", audio_manager: AudioManager, rising_edge: bool) -> Callable[[], None]:
         """
         Returns a lambda that will execute the proper interaction based on the selected tile and item,
         or None if no interaction should occur.
@@ -80,12 +78,25 @@ class Map:
         tile_index = tile_x * MAP_HEIGHT + tile_y
         if tile_index < 0 or tile_index >= len(self.tiles):
             return
+        
+        if rising_edge:
+            for feature in self.features:
+                interaction = feature.get_interaction(tile_x, tile_y)
+                if interaction:
+                    return interaction
 
         tile_center_pos = (tile_x * TILE_SIZE + TILE_SIZE // 2, tile_y * TILE_SIZE + TILE_SIZE // 2)
         return self.tiles[tile_index].get_interaction(item, player, audio_manager, tile_center_pos, rising_edge)
 
+    def check_proximity_interaction(self, player: "Player") -> Callable[[], None]:
+        for feature in self.features:
+            interaction = feature.check_proximity_interaction(player)
+            if interaction:
+                return interaction
+        return None
+
     last_draw_time = 0
-    def draw(self, win: pygame.Surface, camera_position: pygame.Vector2, selected_cell_x: int, selected_cell_y: int, selection_color: str, interacting: bool):
+    def draw(self, win: pygame.Surface, camera_position: pygame.Vector2, player: "Player", selected_cell_x: int, selected_cell_y: int, selection_color: str, clicking: bool, interacting: bool):
         current_time = pygame.time.get_ticks()
         delta = (current_time - self.last_draw_time) / 1000
         self.last_draw_time = current_time
@@ -155,9 +166,9 @@ class Map:
         
         # Draw features
         for feature in self.features:
-            feature.draw(win, camera_position)
+            feature.draw(win, camera_position, player, self.selection_images["green_1"] if interacting else self.selection_images["green_0"])
         
         # Draw selection
         x = selected_cell_x * TILE_SIZE - camera_position.x + get_width() // 2
         y = selected_cell_y * TILE_SIZE - camera_position.y + get_height() // 2
-        win.blit(self.selection_images[selection_color + "_" + ("1" if interacting else "0")], (x, y))
+        win.blit(self.selection_images[selection_color + "_" + ("1" if clicking else "0")], (x, y))

@@ -39,6 +39,9 @@ class Game:
         self.current_scene.exit()
         self.current_scene = new_scene
         self.current_scene.enter()
+        
+        self.dialogue_manager.add_game_message("exit:" + self.current_scene.name)
+        self.dialogue_manager.add_game_message("enter:" + new_scene.name)
 
     def enter_playing_scene(self):
         self.update_scene(self.playing_game_scene)
@@ -53,7 +56,14 @@ class Game:
         for event in pygame.event.get():
             self.handle_event(event)
         
-        self.dialogue_manager.update(delta, self.audio_manager, self.player)
+        queued_game_actions = self.dialogue_manager.update(delta, self.audio_manager, self.player)
+        for action in queued_game_actions:
+            match action:
+                case "scene:shop":
+                    from game_scene.in_shop import InShopScene
+                    self.update_scene(InShopScene(self))
+                case _:
+                    print(f"Unknown queued game action: {action}")
         
         self.current_scene.update(self.inputs, delta)
         self.audio_manager.update()

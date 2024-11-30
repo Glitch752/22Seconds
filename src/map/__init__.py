@@ -41,6 +41,7 @@ class Map:
         
         self.features = []
         self.add_feature(Feature(MAP_WIDTH - 20, MAP_HEIGHT // 2 - 10, 8, 8, "house.png", False))
+        self.add_feature(Feature(MAP_WIDTH - 18, MAP_HEIGHT // 2 - 3, 1, 2, "drWhom.png", True))
     
     def add_feature(self, feature: Feature):
         self.features.append(feature)

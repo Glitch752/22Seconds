@@ -4,11 +4,11 @@ import random
 from typing import Self
 import pygame
 
-from constants import CROSSHAIR_COLOR, CROSSHAIR_ONLY_WITH_JOYSTICK, CROSSHAIR_SIZE, CROSSHAIR_THICKNESS, DAY_LENGTH, DUSK_DAWN_LENGTH, HEIGHT, MAP_HEIGHT, MAP_WIDTH, NIGHT_LENGTH, NIGHT_OPACITY, TILE_SIZE, WIDTH
+from constants import CROSSHAIR_COLOR, CROSSHAIR_ONLY_WITH_JOYSTICK, CROSSHAIR_SIZE, CROSSHAIR_THICKNESS, DAY_LENGTH, DUSK_DAWN_LENGTH, MAP_HEIGHT, MAP_WIDTH, NIGHT_LENGTH, NIGHT_OPACITY, TILE_SIZE
 from dialogue import WorldEvent
 from game import Game
 from game_scene import GameScene
-from graphics import WHITE_IMAGE, big_font_render, giant_font_render
+from graphics import WHITE_IMAGE, big_font_render, get_height, get_width, giant_font_render
 from graphics.floating_hint_text import draw_floating_hint_texts
 from graphics.particles import draw_particles, update_particles
 from inputs import InputType, Inputs
@@ -27,8 +27,8 @@ def draw_time(win: pygame.Surface, day_cycle_time: float):
     t = day_cycle_time / (DAY_LENGTH + NIGHT_LENGTH) * 24
     time = f"{str(int(t)).rjust(2, '0')}:{str(int((t % 1) * 60)).rjust(2, '0')}"
     
-    win.blit(surface := big_font_render(time, 'black'), (17, HEIGHT - 15 - surface.get_height()))
-    win.blit(surface := big_font_render(time, 'green'), (15, HEIGHT - 17 - surface.get_height()))
+    win.blit(surface := big_font_render(time, 'black'), (17, get_height() - 15 - surface.get_height()))
+    win.blit(surface := big_font_render(time, 'green'), (15, get_height() - 17 - surface.get_height()))
 
 # TODO: Only instantiate once and convert day cycle to a class stored here
 class PlayingGameScene(GameScene):
@@ -43,7 +43,7 @@ class PlayingGameScene(GameScene):
     
     day_cycle_time: float = 0
     was_day: bool = True
-    day_fade_surface = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
+    day_fade_surface = pygame.Surface((get_width(), get_height()), pygame.SRCALPHA)
     
     def __init__(self: Self, game: Game):
         super().__init__(game)
@@ -56,7 +56,7 @@ class PlayingGameScene(GameScene):
         self.game.dialogue_manager.condition_state.add_event(WorldEvent.GameStart)
     
     def get_target_reference(self: Self):
-        return self.game.player.pos - self.camera_position + pygame.Vector2(WIDTH // 2, HEIGHT // 2)
+        return self.game.player.pos - self.camera_position + pygame.Vector2(get_width() // 2, get_height() // 2)
     
     def update(self: Self, inputs: Inputs, dt: float):
         player = self.game.player
@@ -93,8 +93,8 @@ class PlayingGameScene(GameScene):
         self.farm.update(self.game.audio_manager)
         
         camera_target = player.pos.copy()
-        camera_target.x = clamp(camera_target.x, WIDTH // 2, TILE_SIZE * MAP_WIDTH - WIDTH // 2)
-        camera_target.y = clamp(camera_target.y, HEIGHT // 2, TILE_SIZE * MAP_HEIGHT - HEIGHT // 2)
+        camera_target.x = clamp(camera_target.x, get_width() // 2, TILE_SIZE * MAP_WIDTH - get_width() // 2)
+        camera_target.y = clamp(camera_target.y, get_height() // 2, TILE_SIZE * MAP_HEIGHT - get_height() // 2)
         
         self.camera_position = self.camera_position.lerp(camera_target, 0.05)
 
@@ -139,8 +139,8 @@ class PlayingGameScene(GameScene):
         self.farm.draw(win, self.camera_position)
         
         # Draw outline
-        x = self.selected_cell_x * TILE_SIZE - self.camera_position.x + WIDTH // 2
-        y = self.selected_cell_y * TILE_SIZE - self.camera_position.y + HEIGHT // 2
+        x = self.selected_cell_x * TILE_SIZE - self.camera_position.x + get_width() // 2
+        y = self.selected_cell_y * TILE_SIZE - self.camera_position.y + get_height() // 2
         win.blit(WHITE_IMAGE, (x, y))
         pygame.draw.rect(win, self.selection_color, (x, y, TILE_SIZE, TILE_SIZE), 1)
         
@@ -164,6 +164,10 @@ class PlayingGameScene(GameScene):
         self.game.player.draw_player(win, self.camera_position)
         
         # Draw day fading
+        if self.day_fade_surface.get_size() != (get_width(), get_height()):
+            self.day_fade_surface = pygame.Surface((get_width(), get_height()), pygame.SRCALPHA)
+            self.day_fade_surface.fill((0, 0, 15))
+        
         brightness = self.get_daylight()
         self.day_fade_surface.set_alpha(int((1 - brightness) * NIGHT_OPACITY))
         win.blit(self.day_fade_surface, (0, 0))
@@ -179,7 +183,7 @@ class PlayingGameScene(GameScene):
             # Only works for <60 second nights, whatever for now
             win.blit(
                 font := giant_font_render(f"00:{str(int(time_remaining)).rjust(2, '0')}", "red"),
-                (WIDTH // 2 - font.get_width() // 2 + random.randint(-shake_amount, shake_amount), 15 + random.randint(-shake_amount,shake_amount))
+                (get_width() // 2 - font.get_width() // 2 + random.randint(-shake_amount, shake_amount), 15 + random.randint(-shake_amount,shake_amount))
             )
         
         draw_currency(win, self.game.player)

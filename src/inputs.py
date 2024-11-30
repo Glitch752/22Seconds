@@ -3,7 +3,8 @@ from enum import Enum, auto
 import pygame
 import math
 
-from constants import HEIGHT, TARGET_RADIUS, WIDTH
+from constants import TARGET_RADIUS
+from graphics import get_height, get_width
 
 def deadzone(x, z=0.1):
     if abs(x) >= z:
@@ -131,7 +132,7 @@ class Inputs:
         self.joysticks = [pygame.joystick.Joystick(i) for i in range(pygame.joystick.get_count())]
         self.using_keyboard_input = len(self.joysticks) == 0
     
-    def update(self: Self, target_reference: pygame.Vector2 = pygame.Vector2(WIDTH // 2, HEIGHT // 2)):
+    def update(self: Self, target_reference: pygame.Vector2 = pygame.Vector2(get_width() // 2, get_height() // 2)):
         if self.using_keyboard_input:
             self.movement_x = 0
             self.movement_y = 0

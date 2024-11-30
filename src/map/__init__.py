@@ -2,13 +2,14 @@ from perlin_noise import PerlinNoise
 import pygame
 import pygame.midi
 from audio import AudioManager
-from constants import TILE_SIZE, WIDTH, HEIGHT
+from constants import FARMABLE_MAP_END, FARMABLE_MAP_START, TILE_SIZE
 import random
 import math
 from constants import MAP_WIDTH, MAP_HEIGHT, MAP_UPDATE_RATE, RANDOM_TICK_PER_UPDATE_RATIO
 from typing import TYPE_CHECKING
+from graphics import get_height, get_width
 from items import Item
-from map.tile import Tile, TileType, tilemap_atlases
+from map.tile import Tile, TileType
 
 if TYPE_CHECKING:
     from player import Player
@@ -24,14 +25,17 @@ class Map:
         max_dim = max(MAP_WIDTH, MAP_HEIGHT)
         for x in range(MAP_WIDTH):
             for y in range(MAP_HEIGHT):
-                val = noise.noise([x / max_dim, y / max_dim])
-                self.tiles.append(Tile(TileType.GRASS if val > 0 else TileType.TALL_GRASS))
-        
-        # Add a water pool
-        self.tiles[(MAP_WIDTH // 2) * MAP_HEIGHT + 2] = Tile(TileType.WATER)
-        self.tiles[(MAP_WIDTH // 2) * MAP_HEIGHT + 3] = Tile(TileType.WATER)
-        self.tiles[(MAP_WIDTH // 2 + 1) * MAP_HEIGHT + 2] = Tile(TileType.WATER)
-        self.tiles[(MAP_WIDTH // 2 + 1) * MAP_HEIGHT + 3] = Tile(TileType.WATER)
+                if x >= FARMABLE_MAP_START[0] and x < FARMABLE_MAP_END[0] and y >= FARMABLE_MAP_START[1] and y < FARMABLE_MAP_END[1]:
+                    val = noise.noise([x / max_dim, y / max_dim])
+                    self.tiles.append(Tile(TileType.GRASS if val > 0 else TileType.TALL_GRASS))
+                else:
+                    self.tiles.append(Tile(TileType.OUTSIDE_FARM_DIRT))
+
+        WATER_POOL_START = (MAP_WIDTH // 4 - 2, MAP_HEIGHT // 2 - 2)
+        WATER_POOL_END = (MAP_WIDTH // 4 + 2, MAP_HEIGHT // 2 + 2)
+        for x in range(WATER_POOL_START[0], WATER_POOL_END[0]):
+            for y in range(WATER_POOL_START[1], WATER_POOL_END[1]):
+                self.tiles[x * MAP_HEIGHT + y] = Tile(TileType.WATER)
     
     def update(self, audio_manager: AudioManager):
         current_time = pygame.time.get_ticks()
@@ -60,8 +64,8 @@ class Map:
             return
 
         tile_center_pos = (
-            tile_x * TILE_SIZE + TILE_SIZE // 2 + WIDTH // 2,
-            tile_y * TILE_SIZE + TILE_SIZE // 2 + HEIGHT // 2
+            tile_x * TILE_SIZE + TILE_SIZE // 2 + get_width() // 2,
+            tile_y * TILE_SIZE + TILE_SIZE // 2 + get_height() // 2
         )
         return self.tiles[tile_index].get_interaction(item, player, audio_manager, tile_center_pos)
 
@@ -71,19 +75,19 @@ class Map:
         delta = (current_time - self.last_draw_time) / 1000
         self.last_draw_time = current_time
         
-        x_start = math.floor((camera_position.x - WIDTH / 2) / TILE_SIZE) - 1
-        x_end = math.ceil((camera_position.x + WIDTH / 2) / TILE_SIZE)
-        y_start = math.floor((camera_position.y - HEIGHT / 2) / TILE_SIZE) - 1
-        y_end = math.ceil((camera_position.y + HEIGHT / 2) / TILE_SIZE)
+        x_start = math.floor((camera_position.x - get_width() / 2) / TILE_SIZE) - 1
+        x_end = math.ceil((camera_position.x + get_width() / 2) / TILE_SIZE)
+        y_start = math.floor((camera_position.y - get_height() / 2) / TILE_SIZE) - 1
+        y_end = math.ceil((camera_position.y + get_height() / 2) / TILE_SIZE)
         
         tile_positions = [(
-            x * TILE_SIZE - camera_position.x + WIDTH // 2,
-            y * TILE_SIZE - camera_position.y + HEIGHT // 2,
+            x * TILE_SIZE - camera_position.x + get_width() // 2,
+            y * TILE_SIZE - camera_position.y + get_height() // 2,
             x, y
         ) for x in range(x_start, x_end) for y in range(y_start, y_end)]
         
         # Draw the main tile grid
-        blit_layers: list[list[tuple[pygame.Surface, tuple[int, int]]]] = [[] for _ in range(TileType.NUM_LAYERS)]
+        blit_layers: list[list[tuple[pygame.Surface, tuple[int, int]]]] = [[] for _ in range(len(TileType))]
         blank_tile = Tile(TileType.SOIL)
         for (x, y, tile_x, tile_y) in tile_positions:
             # Since this is a dual-grid system, we perform the following steps:
@@ -105,23 +109,22 @@ class Map:
             ))
             
             # Separate the tiles into a bitmask per tile type
-            bitmasks = {}
+            bitmasks: dict[TileType, int] = {}
             for (tile, i) in zip(corner_tiles, range(4)):
                 if tile.tile_type not in bitmasks:
                     bitmasks[tile.tile_type] = 0
                 bitmasks[tile.tile_type] |= 1 << i
             
-            bitmask_layers = [(tile_type, bitmask, TileType.get_layer(tile_type)) for (tile_type, bitmask) in bitmasks.items()]
-            lowest_layer = min(map(lambda layer: layer[2], bitmask_layers))
+            lowest_layer = min(map(lambda tile: tile.layer, bitmasks))
 
             # Draw the tile based on the bitmask
             dual_grid_pos = (x + TILE_SIZE // 2, y + TILE_SIZE // 2)
-            for (tile_type, bitmask, layer) in bitmask_layers:
-                if layer == lowest_layer:
+            for tile_type, bitmask in bitmasks.items():
+                if tile_type.layer == lowest_layer:
                     bitmask = 0b1111
                 
-                atlas: pygame.Surface = tilemap_atlases[tile_type][bitmask]
-                blit_layers[layer].append((atlas, dual_grid_pos))
+                atlas: pygame.Surface = tile_type.atlas[bitmask]
+                blit_layers[tile_type.layer].append((atlas, dual_grid_pos))
         
         for blits in blit_layers:
             if len(blits) == 0:

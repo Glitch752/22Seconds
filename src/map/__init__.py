@@ -7,6 +7,7 @@ import random
 import math
 from constants import MAP_WIDTH, MAP_HEIGHT, MAP_UPDATE_RATE, RANDOM_TICK_PER_UPDATE_RATIO
 from typing import TYPE_CHECKING
+from items import Item
 from map.tile import Tile, TileType, tilemap_atlases
 
 if TYPE_CHECKING:
@@ -49,7 +50,7 @@ class Map:
             return False
         return self.tiles[tile_index].is_collidable()
     
-    def get_interaction(self, tile_x, tile_y, item: int, player: "Player", audio_manager: AudioManager):
+    def get_interaction(self, tile_x: int, tile_y: int, item: Item, player: "Player", audio_manager: AudioManager):
         """
         Returns a lambda that will execute the proper interaction based on the selected tile and item,
         or None if no interaction should occur.

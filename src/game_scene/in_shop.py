@@ -9,23 +9,23 @@ from game_scene.playing import draw_currency
 from graphics import big_font_render, normal_font_render
 from inputs import InputType, Inputs
 from ui import Button
-from items import item_prices, ITEM_TYPE
+from items import Item
 
 class InShopScene(GameScene):
     def __init__(self: Self, game: Game):
         super().__init__(game)
         self.shop_buttons = [
-            Button(f"Buy Carrot Seed - {item_prices[ITEM_TYPE.CARROT_SEEDS]}c", WIDTH // 2, HEIGHT // 2, self.buy_item, (ITEM_TYPE.CARROT_SEEDS,)),
-            Button(f"Buy Onion Seed - {item_prices[ITEM_TYPE.ONION_SEEDS]}c", WIDTH // 2, HEIGHT // 2 + 40, self.buy_item, (ITEM_TYPE.ONION_SEEDS,)),
-            Button(f"Buy Wheat Seed - {item_prices[ITEM_TYPE.WHEAT_SEEDS]}c", WIDTH // 2, HEIGHT // 2 + 80, self.buy_item, (ITEM_TYPE.WHEAT_SEEDS,)),
-            Button(f"Buy 5 Walls - {item_prices[ITEM_TYPE.WALL]}c", WIDTH // 2, HEIGHT // 2 + 120, self.buy_item, (ITEM_TYPE.WALL,)),
+            Button(f"Buy Carrot Seed - {Item.CARROT_SEEDS.shop_data.buy_price}c", WIDTH // 2, HEIGHT // 2, self.buy_item, (Item.CARROT_SEEDS,)),
+            Button(f"Buy Onion Seed - {Item.ONION_SEEDS.shop_data.buy_price}c", WIDTH // 2, HEIGHT // 2 + 40, self.buy_item, (Item.ONION_SEEDS,)),
+            Button(f"Buy Wheat Seed - {Item.WHEAT_SEEDS.shop_data.buy_price}c", WIDTH // 2, HEIGHT // 2 + 80, self.buy_item, (Item.WHEAT_SEEDS,)),
+            Button(f"Buy 5 Walls - {Item.WALL.shop_data.buy_price}c", WIDTH // 2, HEIGHT // 2 + 120, self.buy_item, (Item.WALL,)),
             Button(f"Idk move our or something - 1,000c", WIDTH // 2, HEIGHT // 2 + 160, self.try_to_win_lmao, ()),
             Button(f"Exit Shop", WIDTH // 2, HEIGHT // 2 + 240, self.exit_shop, ()),
         ]
     
-    def buy_item(self, item, received_quantity=1):
+    def buy_item(self, item: Item, received_quantity=1):
         player = self.game.player
-        if player.currency >= (price := item_prices[item]):
+        if player.currency >= (price := item.shop_data.buy_price):
             player.currency -= price
             player.items[item] += received_quantity
             
@@ -67,11 +67,11 @@ class InShopScene(GameScene):
         player = self.game.player
         win.blit(t := big_font_render("Shop", 'black'), (WIDTH // 2 - t.get_width() // 2, 25))
         y = 85
-        win.blit(t := normal_font_render(f"Carrots Sold ({item_prices[ITEM_TYPE.CARROT]}c per): {player.get_sold(ITEM_TYPE.CARROT)}", 'black'), (WIDTH // 2 - t.get_width() // 2, y))
+        win.blit(t := normal_font_render(f"Carrots Sold ({Item.CARROT.shop_data.sell_price}c per): {player.get_sold(Item.CARROT)}", 'black'), (WIDTH // 2 - t.get_width() // 2, y))
         y += t.get_height()
-        win.blit(t := normal_font_render(f"Onions Sold ({item_prices[ITEM_TYPE.ONION]}c per): {player.get_sold(ITEM_TYPE.ONION)}", 'black'), (WIDTH // 2 - t.get_width() // 2, y))
+        win.blit(t := normal_font_render(f"Onions Sold ({Item.ONION.shop_data.sell_price}c per): {player.get_sold(Item.ONION)}", 'black'), (WIDTH // 2 - t.get_width() // 2, y))
         y += t.get_height()
-        win.blit(t := normal_font_render(f"Wheat Sold ({item_prices[ITEM_TYPE.WHEAT]}c per): {player.get_sold(ITEM_TYPE.WHEAT)}", 'black'), (WIDTH // 2 - t.get_width() // 2, y))
+        win.blit(t := normal_font_render(f"Wheat Sold ({Item.WHEAT.shop_data.sell_price}c per): {player.get_sold(Item.WHEAT)}", 'black'), (WIDTH // 2 - t.get_width() // 2, y))
         y += t.get_height()
         win.blit(t := normal_font_render(f"Profit: {player.profit}", 'black'), (WIDTH // 2 - t.get_width() // 2, y))
         

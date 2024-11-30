@@ -1,7 +1,7 @@
 import pygame
 from constants import WIDTH, HEIGHT, TILE_SIZE
 from map import MAP_WIDTH, MAP_HEIGHT, Map
-from items import ITEM_NAMES, ITEM_TYPE, render_item_slot, is_interactable, get_slot_bounds, item_prices
+from items import Item, render_item_slot, get_slot_bounds
 from graphics import add_floating_text_hint, FloatingHintText
 import os
 import math
@@ -22,7 +22,7 @@ class Player:
     target_angle: float
     angle: float
     
-    items: dict
+    items: dict[Item, int]
     sold_items: dict
     
     selected_slot: int
@@ -51,18 +51,19 @@ class Player:
         self.angle = 0
 
         self.items = {}
-        self.items[ITEM_TYPE.HOE] = 1
-        self.items[ITEM_TYPE.AXE] = 1
-        self.items[ITEM_TYPE.SHOVEL] = 1
-        self.items[ITEM_TYPE.WATERING_CAN_EMPTY] = 1
+        self.items[Item.HOE] = 1
+        self.items[Item.AXE] = 1
+        self.items[Item.SHOVEL] = 1
+        self.items[Item.WATERING_CAN_EMPTY] = 1
+        
         # TEMPORARY
-        self.items[ITEM_TYPE.CARROT] = 0
-        self.items[ITEM_TYPE.ONION] = 0
-        self.items[ITEM_TYPE.WHEAT] = 0
-        self.items[ITEM_TYPE.CARROT_SEEDS] = 15
-        self.items[ITEM_TYPE.ONION_SEEDS] = 0
-        self.items[ITEM_TYPE.WHEAT_SEEDS] = 0
-        self.items[ITEM_TYPE.WALL] = 0
+        self.items[Item.CARROT] = 10
+        self.items[Item.ONION] = 10
+        self.items[Item.WHEAT] = 10
+        self.items[Item.CARROT_SEEDS] = 15
+        self.items[Item.ONION_SEEDS] = 15
+        self.items[Item.WHEAT_SEEDS] = 15
+        self.items[Item.WALL] = 20
 
         self.sold_items = {}
         
@@ -70,7 +71,7 @@ class Player:
         self.slot_selection_floating_text = None
 
         self.profit = 0
-        self.currency = 0
+        self.currency = 5000
         
         # Set after running out of an item so the player doesn't
         # accidentally start using the next item available.
@@ -82,15 +83,15 @@ class Player:
         self.profit = 0
 
         # TODO: Wtf
-        self.profit += item_prices[ITEM_TYPE.CARROT] * self.items[ITEM_TYPE.CARROT]
-        self.sold_items[ITEM_TYPE.CARROT] = self.items[ITEM_TYPE.CARROT] if ITEM_TYPE.CARROT in self.items else 0
-        self.items[ITEM_TYPE.CARROT] = 0
-        self.profit += item_prices[ITEM_TYPE.ONION] * self.items[ITEM_TYPE.ONION]
-        self.sold_items[ITEM_TYPE.ONION] = self.items[ITEM_TYPE.ONION] if ITEM_TYPE.ONION in self.items else 0
-        self.items[ITEM_TYPE.ONION] = 0
-        self.profit += item_prices[ITEM_TYPE.WHEAT] * self.items[ITEM_TYPE.WHEAT]
-        self.sold_items[ITEM_TYPE.WHEAT] = self.items[ITEM_TYPE.WHEAT] if ITEM_TYPE.WHEAT in self.items else 0
-        self.items[ITEM_TYPE.WHEAT] = 0
+        self.profit += Item.CARROT.shop_data.sell_price * self.items[Item.CARROT]
+        self.sold_items[Item.CARROT] = self.items[Item.CARROT] if Item.CARROT in self.items else 0
+        self.items[Item.CARROT] = 0
+        self.profit += Item.ONION.shop_data.sell_price * self.items[Item.ONION]
+        self.sold_items[Item.ONION] = self.items[Item.ONION] if Item.ONION in self.items else 0
+        self.items[Item.ONION] = 0
+        self.profit += Item.WHEAT.shop_data.sell_price * self.items[Item.WHEAT]
+        self.sold_items[Item.WHEAT] = self.items[Item.WHEAT] if Item.WHEAT in self.items else 0
+        self.items[Item.WHEAT] = 0
 
         self.currency += self.profit
     def get_sold(self, item_type):
@@ -115,7 +116,7 @@ class Player:
         if self.slot_selection_floating_text != None:
             self.slot_selection_floating_text.manually_finished = True
         self.slot_selection_floating_text = FloatingHintText(
-            ITEM_NAMES[self.get_selected_item()[0]],
+            self.get_selected_item()[0].item_name,
             (WIDTH // 2, HEIGHT - 150),
             "white",
             -5, 1.5, 0.25, False
@@ -213,8 +214,8 @@ class Player:
         
         return False
 
-    def get_item_list(self):
-        return list(filter(lambda val: val[1] > 0, sorted(self.items.items())))
+    def get_item_list(self) -> list[(Item, int)]:
+        return list(filter(lambda val: val[1] > 0, sorted(self.items.items(), key=lambda x: x[0].name)))
     def get_selected_item(self):
         return self.get_interactable_items()[self.selected_slot]
     def decrement_selected_item_quantity(self):
@@ -223,12 +224,13 @@ class Player:
         if self.items[item] == 0:
             self.wait_for_mouseup = True
     def get_interactable_items(self):
-        return [item for item in self.get_item_list() if is_interactable(item[0])]
+        return [item for item in self.get_item_list() if item[0].interactable]
     def get_non_interactable_items(self):
-        return [items for items in self.get_item_list() if not is_interactable(items[0])]
+        return [items for items in self.get_item_list() if not items[0].interactable]
 
     def draw_player(self, win, camera_pos):
-        win.blit(t := pygame.transform.flip(self.current_image, self.flipped, False), (self.pos.x + WIDTH // 2 - t.get_width() // 2 - camera_pos.x, self.pos.y + HEIGHT // 2 - t.get_height() // 2 - camera_pos.y - self.radius))
+        if self.current_image != None:
+            win.blit(t := pygame.transform.flip(self.current_image, self.flipped, False), (self.pos.x + WIDTH // 2 - t.get_width() // 2 - camera_pos.x, self.pos.y + HEIGHT // 2 - t.get_height() // 2 - camera_pos.y - self.radius))
     
     def draw_ui(self, win):
         for i, (item, amount) in enumerate(self.get_non_interactable_items()):

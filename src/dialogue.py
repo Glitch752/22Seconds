@@ -1,11 +1,19 @@
 import pygame
+from audio import AudioManager, SoundType
 from constants import WIDTH
 from graphics import small_font_render, normal_font_render
 from items import ITEM_SLOT_BORDER_RADIUS, SLOT_BACKGROUND
-import os
-import random
 
 class DialogueManager:
+    queue: list[list[str]]
+    lines: list[str]
+    
+    current_char: int
+    current_line: int
+    timer: float
+    done: bool
+    time_per_letter: float
+    
     def __init__(self) -> None:
         self.queue = []
         self.lines = []
@@ -14,13 +22,11 @@ class DialogueManager:
         self.timer = 0
         self.done = False
         self.time_per_letter = 0.05
-        self.speaking_sounds = [pygame.mixer.Sound(os.path.join("assets", "audio", f"speak_{str(sound).rjust(2, '0')}.wav")) for sound in range(1, 15)]
 
-    def queue_dialogue(self, lines):
+    def queue_dialogue(self, lines: list[str]):
         self.queue.append(lines)
     
     def on_confirm(self):
-        # TODO: If still speaking, finish the line instead of skipping it.
         if not self.done and len(self.lines):
             self.current_line = len(self.lines) - 1
             self.current_char = len(self.lines[self.current_line])
@@ -39,7 +45,7 @@ class DialogueManager:
     def is_active(self):
         return len(self.lines) and not self.done
     
-    def update(self, delta):
+    def update(self, delta: float, audio_manager: AudioManager):
         if not self.is_active():
             return
         
@@ -60,9 +66,9 @@ class DialogueManager:
                 
                 self.current_char = 0
             elif self.lines[self.current_line][self.current_char] != " ":
-                self.speaking_sounds[random.randint(0, len(self.speaking_sounds) - 1)].play()
+                audio_manager.play_sound(SoundType.SPEAKING_SOUND)
 
-    def draw(self, win):
+    def draw(self, win: pygame.Surface):
         if len(self.lines):
             pygame.draw.rect(
                 win,

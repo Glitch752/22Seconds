@@ -1,14 +1,29 @@
+from enum import Enum
 import os
+import random
 from typing import Self
 
 import pygame
 
-class SoundType:
+class SoundType(Enum):
+    """Enum for all the sound types in the game. If a sound's value is a list of strings, the sound will randomly play one of the sounds in the list."""
     BUY_ITEM = "chaChing.wav"
     NO_MONEY = "Aeeaahghgh.wav"
     TILL_SOIL = "till.wav"
     HARVEST_PLANT = "pickUp.wav"
     PLANT = "plant.wav"
+    WATER = "water.wav"
+    SPEAKING_SOUND = [f"speak_{str(idx).rjust(2, '0')}.wav" for idx in range(1, 15)]
+    
+    def __init__(self, paths: str | list[str]):
+        if isinstance(paths, str):
+            paths = [paths]
+        
+        self.paths = paths
+        self.sounds = [pygame.mixer.Sound(os.path.join("assets", "audio", path)) for path in paths]
+    
+    def get_sound(self: Self):
+        return self.sounds[random.randint(0, len(self.sounds) - 1)]
 
 class AudioManager:
     day_track: str = os.path.join("assets", "audio", "main_track.wav")
@@ -17,16 +32,6 @@ class AudioManager:
     current_track: str = ""
     
     queued_sounds: list[tuple[int, pygame.mixer.Sound]] = []
-    
-    sounds = {}
-    
-    def __init__(self: Self):
-        for sound in dir(SoundType):
-            if sound.startswith("__"):
-                continue
-            sound_path = getattr(SoundType, sound)
-            sound_value = pygame.mixer.Sound(os.path.join("assets", "audio", sound_path))
-            self.sounds[sound] = self.sounds[sound_path] = sound_value
     
     def play_day_track(self: Self):
         if self.current_track == self.day_track:
@@ -62,5 +67,5 @@ class AudioManager:
                 i -= 1
             i += 1
     
-    def play_sound(self: Self, sound: str, delay: int = 0):
-        self.queued_sounds.append((pygame.time.get_ticks() + delay, self.sounds[sound]))
+    def play_sound(self: Self, sound: SoundType, delay_ms: int = 0):
+        self.queued_sounds.append((pygame.time.get_ticks() + delay_ms, sound.get_sound()))

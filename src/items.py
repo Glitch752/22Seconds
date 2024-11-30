@@ -1,6 +1,8 @@
+from enum import Enum
+from typing import Optional
 import pygame
 import graphics
-from constants import WIDTH, HEIGHT
+from constants import SLOT_BACKGROUND, SLOT_BACKGROUND_SELECTED, WIDTH, HEIGHT
 import os
 
 ITEM_SLOT_ITEM_SIZE = 64
@@ -8,58 +10,69 @@ ITEM_SLOT_PADDING = 8
 ITEM_SLOT_MARGIN = 8
 ITEM_SLOT_BORDER_RADIUS = 8
 
-class ITEM_TYPE:
-    HOE = 0
-    CARROT_SEEDS = 1
-    WHEAT_SEEDS = 2
-    ONION_SEEDS = 3
-    CARROT = 4
-    WHEAT = 5
-    ONION = 6
-    WALL = 7
-    AXE = 8
-    SHOVEL = 9
-    WATERING_CAN_EMPTY = 10
-    WATERING_CAN_FULL = 11
+class ItemShopData:
+    buy_price: Optional[int]
+    sell_price: Optional[int]
+    def __init__(self, buy_price: Optional[int], sell_price: Optional[int] = -1):
+        self.buy_price = buy_price
+        self.sell_price = sell_price if sell_price != -1 else buy_price
 
-item_prices = {
-    ITEM_TYPE.CARROT: 6, # sell
-    ITEM_TYPE.ONION: 12, # sell
-    ITEM_TYPE.WHEAT: 18, # sell
-    ITEM_TYPE.CARROT_SEEDS: 10, # buy
-    ITEM_TYPE.ONION_SEEDS: 15, # buy
-    ITEM_TYPE.WHEAT_SEEDS: 20, # buy
-    ITEM_TYPE.WALL: 25 # buy
-}
+class ItemHarvestData:
+    grown_particle_color: str
+    harvest_item: "Item"
+    name: str
+    def __init__(self, grown_particle_color: str, harvest_item: "Item"):
+        self.grown_particle_color = grown_particle_color
+        self.harvest_item = harvest_item
+        self.name = harvest_item.item_name
 
-SLOT_BACKGROUND = (48, 29, 29) # TODO: Refactor out of items since we use this for other UI
-SLOT_BACKGROUND_SELECTED = (88, 59, 59)
+class Item(Enum):
+    HOE =                ("hoe_sprite.png",               "Hoe",          True,  None,                   "Can be used to till soil and\npick up fully-grown crops.")
+    CARROT_SEEDS =       ("carrot_seeds.png",             "Carrot seeds", True,  ItemShopData(25),       "Used to plant carrots.")
+    WHEAT_SEEDS =        ("wheat_seeds.png",              "Wheat seeds",  True,  ItemShopData(25),       "Used to plant wheat.")
+    ONION_SEEDS =        ("onion_seeds.png",              "Onion seeds",  True,  ItemShopData(25),       "Used to plant onions.")
+    CARROT =             ("carrot_sprite.png",            "Carrot",       False, ItemShopData(None, 25), "A delicious orange vegetable.\nCan be sold for currency.")
+    WHEAT =              ("wheat_sprite.png",             "Wheat",        False, ItemShopData(None, 25), "A yellow grain.\nCan be sold for currency.")
+    ONION =              ("onion_sprite.png",             "Onion",        False, ItemShopData(None, 25), "A purple vegetable.\nCan be sold for currency.")
+    WALL =               ("wall_sprite.png",              "Wall",         True,  ItemShopData(25),       "Can be placed to block movement...\nWhy would you need this?")
+    AXE =                ("axe_sprite.png",               "Axe",          True,  None,                   "Can be used to destroy placed walls.")
+    SHOVEL =             ("shovel_sprite.png",            "Shovel",       True,  None,                   "Can turn grass into fertile soil.")
+    WATERING_CAN_EMPTY = ("watering_can_sprite.png",      "Watering Can", True,  None,                   "Can be used to water crops when\nfilled with water.")
+    WATERING_CAN_FULL =  ("watering_can_full_sprite.png", "Watering Can", True,  None,                   "Can be used to water crops.")
+    
+    image: pygame.Surface
+    path: str
+    item_name: str
+    interactable: bool
+    shop_data: Optional[ItemShopData]
+    harvest_data: Optional[ItemHarvestData]
+    description: str
+    
+    def __new__(cls, *args, **kwds):
+        value = len(cls.__members__) + 1
+        obj = object.__new__(cls)
+        obj._value_ = value
+        return obj
+    def __init__(self, path: str, item_name: str, interactable: bool, shop_data: Optional[ItemShopData], description: str):
+        self.path = path
+        original_image = pygame.image.load(os.path.join("assets", "sprites", path)).convert_alpha()
+        image = pygame.transform.scale(original_image, (ITEM_SLOT_ITEM_SIZE, ITEM_SLOT_ITEM_SIZE))
+        self.image = image
+        
+        self.item_name = item_name
+        self.interactable = interactable
+        self.shop_data = shop_data
+        self.harvest_data = None
+        
+        self.description = description
+    
+    @staticmethod
+    def add_harvest_data(item: "Item", harvest_data: ItemHarvestData):
+        item.harvest_data = harvest_data
 
-ITEM_IMAGES = {}
-INTERACTABLE_ITEMS = {}
-ITEM_NAMES = {}
-def add_item_data(item, path, name, interactable):
-    original_image = pygame.image.load(os.path.join("assets", "sprites", path)).convert_alpha()
-    image = pygame.transform.scale(original_image, (ITEM_SLOT_ITEM_SIZE, ITEM_SLOT_ITEM_SIZE))
-    ITEM_IMAGES[item] = image
-    INTERACTABLE_ITEMS[item] = interactable
-    ITEM_NAMES[item] = name
-
-add_item_data(ITEM_TYPE.HOE, "hoe_sprite.png", "Hoe", True)
-add_item_data(ITEM_TYPE.CARROT_SEEDS, "carrot_seeds.png", "Carrot seeds", True)
-add_item_data(ITEM_TYPE.WHEAT_SEEDS, "wheat_seeds.png", "Wheat seeds", True)
-add_item_data(ITEM_TYPE.ONION_SEEDS, "onion_seeds.png", "Onion seeds", True)
-add_item_data(ITEM_TYPE.CARROT, "carrot_sprite.png", "Carrot", False)
-add_item_data(ITEM_TYPE.WHEAT, "wheat_sprite.png", "Wheat", False)
-add_item_data(ITEM_TYPE.ONION, "onion_sprite.png", "Onion", False)
-add_item_data(ITEM_TYPE.WALL, "wall_sprite.png", "Wall", True)
-add_item_data(ITEM_TYPE.AXE, "axe_sprite.png", "Axe", True)
-add_item_data(ITEM_TYPE.SHOVEL, "shovel_sprite.png", "Shovel", True)
-add_item_data(ITEM_TYPE.WATERING_CAN_EMPTY, "watering_can_sprite.png", "Watering Can", True)
-add_item_data(ITEM_TYPE.WATERING_CAN_FULL, "watering_can_full_sprite.png", "Watering Can", True)
-
-def is_interactable(item):
-    return INTERACTABLE_ITEMS[item]
+Item.add_harvest_data(Item.CARROT_SEEDS, ItemHarvestData("orange", Item.CARROT))
+Item.add_harvest_data(Item.WHEAT_SEEDS, ItemHarvestData("yellow", Item.WHEAT))
+Item.add_harvest_data(Item.ONION_SEEDS, ItemHarvestData("purple", Item.ONION))
 
 def get_slot_bounds(slot_x, slot_y, anchor_bottom, anchor_right):
     total_slot_size = ITEM_SLOT_ITEM_SIZE + ITEM_SLOT_PADDING * 2 + ITEM_SLOT_MARGIN
@@ -74,7 +87,7 @@ def get_slot_bounds(slot_x, slot_y, anchor_bottom, anchor_right):
     
     return (x, y, total_slot_size, total_slot_size)
 
-def render_item_slot(win: pygame.Surface, item, quantity, selected, slot_x, slot_y, anchor_bottom = False, anchor_right = False):
+def render_item_slot(win: pygame.Surface, item: Item, quantity: int, selected: bool, slot_x: int, slot_y: int, anchor_bottom = False, anchor_right = False):
     bounds = get_slot_bounds(slot_x, slot_y, anchor_bottom, anchor_right)
     (x, y, _, _) = bounds
     slot_size = ITEM_SLOT_ITEM_SIZE + ITEM_SLOT_PADDING * 2
@@ -86,8 +99,7 @@ def render_item_slot(win: pygame.Surface, item, quantity, selected, slot_x, slot
         border_radius=ITEM_SLOT_BORDER_RADIUS
     )
 
-    item_image = ITEM_IMAGES[item]
-    win.blit(item_image, (x + ITEM_SLOT_PADDING, y + ITEM_SLOT_PADDING))
+    win.blit(item.image, (x + ITEM_SLOT_PADDING, y + ITEM_SLOT_PADDING))
 
     if quantity != 1:
         win.blit(
@@ -97,4 +109,13 @@ def render_item_slot(win: pygame.Surface, item, quantity, selected, slot_x, slot
 
     mouse_pos = pygame.mouse.get_pos()
     if pygame.Rect(bounds).collidepoint(mouse_pos):
-        graphics.draw_deferred(lambda: graphics.draw_tooltip(win, mouse_pos, ITEM_NAMES[item]))
+        tooltip_lines = [item.item_name]
+        for description_line in item.description.split('\n'):
+            tooltip_lines.append((description_line, 'gray'))
+        # tooltip_lines.append((f"Quantity: {quantity}", "#ccaa88"))
+        if item.shop_data != None:
+            if item.shop_data.buy_price != None:
+                tooltip_lines.append((f"Buy price: {item.shop_data.buy_price}c", "#88cc88"))
+            if item.shop_data.sell_price != None:
+                tooltip_lines.append((f"Sell price: {item.shop_data.sell_price}c", "#cc8888"))
+        graphics.draw_deferred(lambda: graphics.draw_tooltip(win, mouse_pos, tooltip_lines))

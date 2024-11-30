@@ -1,8 +1,17 @@
+import platform
 import pygame
+
+if platform.system() == "Windows":
+    import ctypes
+    ctypes.windll.user32.SetProcessDPIAware()
+
+pygame.mixer.pre_init(44100, -16, 2, 512)
+pygame.init()
+
 import constants
 from game import Game
+from game_scene.intro_cutscene import IntroCutsceneScene
 from game_scene.playing import PlayingGameScene
-from game_scene.in_shop import InShopScene
 from ui import *
 
 game = Game()
@@ -10,9 +19,9 @@ game = Game()
 def main():
     global game
     
-    # game.start(IntroCutsceneScene(game))
+    game.start(IntroCutsceneScene(game))
     # TEMPORARY
-    game.start(PlayingGameScene(game))
+    # game.start(PlayingGameScene(game))
 
     clock = pygame.time.Clock()
     while not game.should_quit_game:

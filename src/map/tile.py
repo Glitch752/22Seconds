@@ -9,7 +9,7 @@ from audio import AudioManager, SoundType
 from constants import PARTICLES_PER_TILE_SECOND, TILE_SIZE
 from graphics.floating_hint_text import FloatingHintText, add_floating_text_hint
 from graphics.particles import spawn_particles_in_square
-from items import ITEM_TYPE
+from items import Item, ItemHarvestData
 
 if TYPE_CHECKING:
     from player import Player
@@ -21,7 +21,7 @@ class Structure(ABC):
     def random_tick(self, audio_manager: AudioManager):
         pass
     
-    def get_interaction(self, item: int, player: "Player", audio_manager: AudioManager, tile_center_pos: tuple[int, int]):
+    def get_interaction(self, item: Item, player: "Player", audio_manager: AudioManager, tile_center_pos: tuple[int, int]):
         """
         Returns a lambda that will execute the proper interaction based on the selected tile and item,
         or None if no interaction should occur.
@@ -35,17 +35,17 @@ class Structure(ABC):
         pass
 
 plant_images = {
-    ITEM_TYPE.CARROT_SEEDS: [],
-    ITEM_TYPE.WHEAT_SEEDS: [],
-    ITEM_TYPE.ONION_SEEDS: []
+    Item.CARROT_SEEDS: [],
+    Item.WHEAT_SEEDS: [],
+    Item.ONION_SEEDS: []
 }
 
 MAX_PLANT_GROWTH_STAGE = 2
 for plant_type in plant_images:
     plant_names = {
-        ITEM_TYPE.CARROT_SEEDS: "carrot",
-        ITEM_TYPE.WHEAT_SEEDS: "wheat",
-        ITEM_TYPE.ONION_SEEDS: "onion"
+        Item.CARROT_SEEDS: "carrot",
+        Item.WHEAT_SEEDS: "wheat",
+        Item.ONION_SEEDS: "onion"
     }
     for i in range(MAX_PLANT_GROWTH_STAGE + 1):
         image = pygame.image.load(f"assets/tiles/planted_{plant_names[plant_type]}_{i}.png").convert_alpha()
@@ -61,21 +61,15 @@ wet_soil_image = pygame.transform.scale(
     (TILE_SIZE, TILE_SIZE)
 )
 
-harvest_data = {
-    ITEM_TYPE.CARROT_SEEDS: (ITEM_TYPE.CARROT, "orange", "Carrot"),
-    ITEM_TYPE.ONION_SEEDS: (ITEM_TYPE.ONION, "purple", "Onion"),
-    ITEM_TYPE.WHEAT_SEEDS: (ITEM_TYPE.WHEAT, "yellow", "Wheat")
-}
-
 class SoilStructure(Structure):
     """
     Soil structures can have plants growing on them.
     """
-    item: Optional[ITEM_TYPE]
+    item: Optional[Item]
     growth_stage: int = 0
     wet: bool = False
     
-    def __init__(self, item: Optional[ITEM_TYPE]):
+    def __init__(self, item: Optional[Item]):
         self.item = item
     
     def random_tick(self, audio_manager: AudioManager):
@@ -83,15 +77,14 @@ class SoilStructure(Structure):
             self.growth_stage += 1
             # audio_manager.play_sound(SoundType.PLANT) # TODO: Better growth sound
     
-    def put_seed(self, item: int, player: "Player", audio_manager: AudioManager, tile_center_pos: tuple[int, int]):
+    def put_seed(self, item: Item, player: "Player", audio_manager: AudioManager, tile_center_pos: tuple[int, int]):
         player.decrement_selected_item_quantity()
         self.item = item
         self.growth_stage = 0
         audio_manager.play_sound(SoundType.PLANT)
         
         tile_center_pos = (tile_center_pos[0], tile_center_pos[1] - TILE_SIZE)
-        item_type, color, name = harvest_data[item]
-        add_floating_text_hint(FloatingHintText(f"-1 {name}", tile_center_pos, "orange"))
+        add_floating_text_hint(FloatingHintText(f"-1 {item.harvest_data.name}", tile_center_pos, "orange"))
     
     def harvest(self, player: "Player", audio_manager: AudioManager, tile_center_pos: tuple[int, int]):
         audio_manager.play_sound(SoundType.HARVEST_PLANT)
@@ -107,31 +100,30 @@ class SoilStructure(Structure):
             # 10% chance of harvesting 3
             r = 3
         
-        item_type, color, name = harvest_data[self.item]
-        
+        harvest_data: ItemHarvestData = self.item.harvest_data
         tile_center_pos = (tile_center_pos[0], tile_center_pos[1] - TILE_SIZE)
-        add_floating_text_hint(FloatingHintText(f"+{r} {name}", tile_center_pos, color))
-        player.items[item_type] += r
+        add_floating_text_hint(FloatingHintText(f"+{r} {harvest_data.name}", tile_center_pos, harvest_data.grown_particle_color))
+        player.items[harvest_data.harvest_item] += r
         
         self.item = None
         self.growth_stage = 0
     
     def make_wet(self, tile_center_pos, player: "Player", audio_manager: AudioManager):
         self.wet = True
-        player.items[ITEM_TYPE.WATERING_CAN_FULL] -= 1
-        if player.items[ITEM_TYPE.WATERING_CAN_FULL] == 0:
-            player.items[ITEM_TYPE.WATERING_CAN_EMPTY] = 1
-        audio_manager.play_sound(SoundType.PLANT) # TODO: water sound
+        player.items[Item.WATERING_CAN_FULL] -= 1
+        if player.items[Item.WATERING_CAN_FULL] == 0:
+            player.items[Item.WATERING_CAN_EMPTY] = 1
+        audio_manager.play_sound(SoundType.WATER)
         add_floating_text_hint(FloatingHintText(f"Watered!", tile_center_pos, "skyblue"))
     
-    def get_interaction(self, item: int, player: "Player", audio_manager: AudioManager, tile_center_pos: tuple[int, int]):
-        if item in {ITEM_TYPE.CARROT_SEEDS, ITEM_TYPE.WHEAT_SEEDS, ITEM_TYPE.ONION_SEEDS} and self.item == None:
+    def get_interaction(self, item: Item, player: "Player", audio_manager: AudioManager, tile_center_pos: tuple[int, int]):
+        if item in {Item.CARROT_SEEDS, Item.WHEAT_SEEDS, Item.ONION_SEEDS} and self.item == None:
             return lambda: self.put_seed(item, player, audio_manager, tile_center_pos)
         
-        if item == ITEM_TYPE.HOE and self.item != None and self.growth_stage == MAX_PLANT_GROWTH_STAGE:
+        if item == Item.HOE and self.item != None and self.growth_stage == MAX_PLANT_GROWTH_STAGE:
             return lambda: self.harvest(player, audio_manager, tile_center_pos)
         
-        if item == ITEM_TYPE.WATERING_CAN_FULL and not self.wet:
+        if item == Item.WATERING_CAN_FULL and not self.wet:
             return lambda: self.make_wet(tile_center_pos, player, audio_manager)
         
         return None
@@ -143,9 +135,9 @@ class SoilStructure(Structure):
         
         if self.item != None and self.growth_stage == MAX_PLANT_GROWTH_STAGE and random.random() < delta * PARTICLES_PER_TILE_SECOND:
             plant_particle_colors = {
-                ITEM_TYPE.CARROT_SEEDS: "orange",
-                ITEM_TYPE.WHEAT_SEEDS: "yellow",
-                ITEM_TYPE.ONION_SEEDS: "purple"
+                Item.CARROT_SEEDS: "orange",
+                Item.WHEAT_SEEDS: "yellow",
+                Item.ONION_SEEDS: "purple"
             }
             spawn_particles_in_square(tile_center_pos[0], tile_center_pos[1], plant_particle_colors[self.item], TILE_SIZE//2, 1)
         
@@ -235,12 +227,12 @@ class Tile:
         add_floating_text_hint(FloatingHintText(f"Shoveled ground!", tile_center_pos, "white"))
     
     def fill_watering_can(self, player: "Player", tile_center_pos: tuple[int, int], audio_manager: AudioManager):
-        player.items[ITEM_TYPE.WATERING_CAN_EMPTY] = 0
-        player.items[ITEM_TYPE.WATERING_CAN_FULL] = 5
-        audio_manager.play_sound(SoundType.PLANT) # TODO: water fill sound
+        player.items[Item.WATERING_CAN_EMPTY] = 0
+        player.items[Item.WATERING_CAN_FULL] = 5
+        audio_manager.play_sound(SoundType.WATER) # TODO: water fill sound
         add_floating_text_hint(FloatingHintText(f"Filled can!", tile_center_pos, "skyblue"))
     
-    def get_interaction(self, item: int, player: "Player", audio_manager: AudioManager, tile_center_pos: tuple[int, int]):
+    def get_interaction(self, item: Item, player: "Player", audio_manager: AudioManager, tile_center_pos: tuple[int, int]):
         """
         Returns a lambda that will execute the proper interaction based on the selected tile and item,
         or None if no interaction should occur.
@@ -250,11 +242,11 @@ class Tile:
             return self.structure.get_interaction(item, player, audio_manager, tile_center_pos)
         
         match (self.tile_type, item):
-            case (TileType.SOIL, ITEM_TYPE.HOE):
+            case (TileType.SOIL, Item.HOE):
                 return (lambda: self.tilled(tile_center_pos, audio_manager))
-            case (TileType.GRASS | TileType.TALL_GRASS, ITEM_TYPE.SHOVEL):
+            case (TileType.GRASS | TileType.TALL_GRASS, Item.SHOVEL):
                 return (lambda: self.shoveled(tile_center_pos, audio_manager))
-            case (TileType.WATER, ITEM_TYPE.WATERING_CAN_EMPTY):
+            case (TileType.WATER, Item.WATERING_CAN_EMPTY):
                 return (lambda: self.fill_watering_can(player, tile_center_pos, audio_manager))
             case _:
                 pass

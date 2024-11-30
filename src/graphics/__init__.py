@@ -1,12 +1,17 @@
 from functools import cache
-import pygame, os
-from constants import DEFAULT_WIDTH, DEFAULT_HEIGHT, TILE_SIZE, TOOLTIP_BACKGROUND_COLOR, TOOLTIP_BORDER_RADIUS, TOOLTIP_LINE_SPACING, TOOLTIP_PADDING, TOOLTIP_WINDOW_MARGIN
+import pygame
+from constants import DEFAULT_WIDTH, DEFAULT_HEIGHT, TOOLTIP_BACKGROUND_COLOR, TOOLTIP_BORDER_RADIUS, TOOLTIP_LINE_SPACING, TOOLTIP_PADDING, TOOLTIP_WINDOW_MARGIN
+from utils import get_asset, is_web
 
-GIANT_FONT = pygame.font.Font(os.path.join("assets", "NotoSans-SemiBold.ttf"), 96)
+GIANT_FONT = pygame.font.Font(get_asset("NotoSans-SemiBold.ttf"), 96)
 BIG_FONT = pygame.font.SysFont("Consolas", 30)
 FONT = pygame.font.SysFont("Consolas", 24)
 SMALL_FONT = pygame.font.SysFont("Consolas", 20)
-WIN = pygame.display.set_mode((DEFAULT_WIDTH, DEFAULT_HEIGHT), pygame.RESIZABLE, vsync=1)
+
+if is_web():
+    WIN = pygame.display.set_mode((DEFAULT_WIDTH, DEFAULT_HEIGHT))
+else:
+    WIN = pygame.display.set_mode((DEFAULT_WIDTH, DEFAULT_HEIGHT), pygame.RESIZABLE, vsync=1)
 
 def get_width():
     """Get the current width of the window."""

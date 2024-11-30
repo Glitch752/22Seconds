@@ -1,5 +1,15 @@
-import platform
+# /// script
+# dependencies = [
+#  "pygame",
+#  "perlin_noise",
+# ]
+# ///
+import asyncio
 import pygame
+import perlin_noise
+
+import platform
+import sys
 
 if platform.system() == "Windows":
     import ctypes
@@ -16,7 +26,7 @@ from ui import *
 
 game = Game()
 
-def main():
+async def main():
     global game
     
     # game.start(IntroCutsceneScene(game))
@@ -33,5 +43,11 @@ def main():
             pygame.display.set_caption(f"{constants.GAME_NAME} | {(1.0 / delta):.2f}fps")
         
         game.run(delta)
+        
+        await asyncio.sleep(0)
 
     pygame.quit()
+    sys.exit()
+
+if __name__ == "__main__":
+    asyncio.run(main())

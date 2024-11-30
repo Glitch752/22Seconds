@@ -81,7 +81,7 @@ class PlayingGameScene(GameScene):
             if selected_item == None:
                 interaction = None
             else:
-                interaction = self.farm.get_interaction(self.selected_cell_x, self.selected_cell_y, selected_item, player, self.game.audio_manager, inputs.click_rising_edge)
+                interaction = self.farm.get_interaction(self.selected_cell_x, self.selected_cell_y, selected_item, player, self.game.audio_manager, self.game.dialogue_manager, inputs.click_rising_edge)
             self.selection_color = INTERACTABLE_SELECTION_COLOR if interaction else NON_INTERACTABLE_SELECTION_COLOR
 
             if interaction != None:
@@ -95,7 +95,7 @@ class PlayingGameScene(GameScene):
         
         # General updates
         update_particles(dt)
-        self.farm.update(self.game.audio_manager)
+        self.farm.update(self.game.audio_manager, self.game.dialogue_manager)
         
         camera_target = player.pos.copy()
         camera_target.x = clamp(camera_target.x, get_width() // 2, TILE_SIZE * MAP_WIDTH - get_width() // 2)
@@ -119,7 +119,6 @@ class PlayingGameScene(GameScene):
     def day_transition(self: Self):
         """Called when the day starts"""
         import game_scene.in_shop
-        self.game.update_scene(game_scene.in_shop.InShopScene(self.game))
         self.game.audio_manager.play_day_track()
 
     def night_transition(self: Self):

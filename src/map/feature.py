@@ -4,6 +4,7 @@ import os
 
 from constants import MAP_HEIGHT, MAP_WIDTH, TILE_SIZE
 from graphics import get_height, get_width
+from utils import get_asset
 
 if TYPE_CHECKING:
     from player import Player
@@ -27,7 +28,7 @@ class Feature:
         self.tile_height = tile_height
         self.interaction = interaction
         
-        image = pygame.image.load(os.path.join("assets", "features", path)).convert_alpha()
+        image = pygame.image.load(get_asset("features", path)).convert_alpha()
         image = pygame.transform.scale(image, (tile_width * TILE_SIZE, tile_height * TILE_SIZE))
         self.image = image
     

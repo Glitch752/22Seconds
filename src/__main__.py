@@ -1,4 +1,5 @@
+import asyncio
 import main
 
 if __name__ == "__main__":
-    main.main()
+    asyncio.run(main.main())

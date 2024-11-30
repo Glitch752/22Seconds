@@ -4,7 +4,8 @@ import pygame
 import graphics
 from graphics import get_width, get_height
 from constants import ITEM_SLOT_BORDER_RADIUS, ITEM_SLOT_ITEM_SIZE, ITEM_SLOT_MARGIN, ITEM_SLOT_PADDING, SLOT_BACKGROUND, SLOT_BACKGROUND_SELECTED
-import os
+
+from utils import get_asset
 
 class ItemShopData:
     buy_price: Optional[int]
@@ -51,7 +52,7 @@ class Item(Enum):
         return obj
     def __init__(self, path: str, item_name: str, interactable: bool, shop_data: Optional[ItemShopData], description: str):
         self.path = path
-        original_image = pygame.image.load(os.path.join("assets", "sprites", path)).convert_alpha()
+        original_image = pygame.image.load(get_asset("sprites", path)).convert_alpha()
         image = pygame.transform.scale(original_image, (ITEM_SLOT_ITEM_SIZE, ITEM_SLOT_ITEM_SIZE))
         self.image = image
         

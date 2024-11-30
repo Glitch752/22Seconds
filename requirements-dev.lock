@@ -12,5 +12,8 @@
 -e file:.
 perlin-noise==1.13
     # via farminggame
+pydub==0.25.1
 pygame-ce==2.5.2
+    # via farminggame
+pygbag==0.9.2
     # via farminggame

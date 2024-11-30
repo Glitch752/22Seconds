@@ -54,7 +54,7 @@ class InShopScene(GameScene):
         for i in range(sounds):
             self.game.audio_manager.play_sound(SoundType.BUY_ITEM, i * 100)
 
-    def draw(self: Self, win: pygame.Surface):
+    def draw(self: Self, win: pygame.Surface, inputs: Inputs):
         win.fill('#bbff70')
         
         t = pygame.time.get_ticks() // 50

@@ -57,7 +57,7 @@ class Game:
         self.current_scene.update(self.inputs, delta)
         self.audio_manager.update()
         
-        self.current_scene.draw(WIN)
+        self.current_scene.draw(WIN, self.inputs)
         self.dialogue_manager.draw(WIN)
         
         draw_all_deferred()

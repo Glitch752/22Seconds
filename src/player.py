@@ -51,16 +51,14 @@ class Player:
         self.image_down = pygame.transform.scale(img := pygame.image.load(os.path.join("assets", "sprites", "player_walk_down.png")).convert_alpha(), (img.get_width() * 4, img.get_height() * 4))
         self.image_up = pygame.transform.scale(img := pygame.image.load(os.path.join("assets", "sprites", "player_walk_up.png")).convert_alpha(), (img.get_width() * 4, img.get_height() * 4))
         self.dir_image = self.image_horizontal
-        
+
         for item in Item:
             self.items[item] = 0
-        
-        self.items[Item.WALL] = 100
-        self.items[Item.AXE] = 1
-        self.items[Item.WATERING_CAN_FULL] = 100
-        self.items[Item.HOE] = 1
-        self.items[Item.CARROT_SEEDS] = 100
+
         self.items[Item.SHOVEL] = 1
+        self.items[Item.HOE] = 1
+        self.items[Item.WATERING_CAN_EMPTY] = 1
+        self.items[Item.CARROT_SEEDS] = 25
     
     def sell_items(self):
         self.sold_items = {}

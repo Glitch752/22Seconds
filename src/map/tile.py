@@ -77,6 +77,9 @@ class SoilStructure(Structure):
             if not self.wet:
                 if random.random() <= 0.5:
                     return
+            else:
+                if random.random() <= 0.1:
+                    self.wet = False
             self.growth_stage += 1
             # audio_manager.play_sound(SoundType.PLANT) # TODO: Better growth sound
     

@@ -29,6 +29,9 @@ class WorldEvent(StrEnum):
     DrWhomShopkeeper = "dr_whom_shopkeeper"
     AfterFirstShopInteraction = "after_first_shop_interaction"
     StartFarming = "start_farming"
+    FirstNightStart = "first_night_start"
+    FirstNightEnd = "first_night_end"
+    SellFirstProducePrompt = "sell_first_produce_prompt"
     
     # Tutorial-related events
     ShovelHintDone = "shovel_hint_done"
@@ -446,6 +449,7 @@ class DialogueManager:
         DialogueTrigger(AndCondition(
             AfterEventCondition(WorldEvent.DrWhomShopkeeper),
             BeforeEventCondition(WorldEvent.AfterFirstShopInteraction),
+            BeforeEventCondition(WorldEvent.FirstNightStart),
             
             AfterEventCondition(WorldEvent.DialogueDrWhom)
         ), SequenceAction(
@@ -466,7 +470,7 @@ class DialogueManager:
         )),
         DialogueTrigger(AndCondition(
             AfterEventCondition(WorldEvent.AfterFirstShopInteraction),
-            # BeforeEventCondition(...) todo when adding more dialogue
+            BeforeEventCondition(WorldEvent.SellFirstProducePrompt),
             
             AfterEventCondition(WorldEvent.DialogueMrShopkeeper)
         ), SequenceAction(
@@ -478,6 +482,7 @@ class DialogueManager:
         DialogueTrigger(AndCondition(
             AfterEventCondition(WorldEvent.AfterFirstShopInteraction),
             BeforeEventCondition(WorldEvent.StartFarming),
+            BeforeEventCondition(WorldEvent.FirstNightStart),
             
             AfterEventCondition(WorldEvent.DialogueDrWhom)
         ), SequenceAction(
@@ -495,6 +500,7 @@ class DialogueManager:
         DialogueTrigger(AndCondition(
             AfterEventCondition(WorldEvent.StartFarming),
             BeforeEventCondition(WorldEvent.HarvestHintDone),
+            BeforeEventCondition(WorldEvent.FirstNightStart),
             
             AfterEventCondition(WorldEvent.DialogueDrWhom)
         ), SequenceAction(
@@ -556,17 +562,68 @@ class DialogueManager:
         
         DialogueTrigger(AndCondition(
             AfterEventCondition(WorldEvent.HarvestHintDone),
-            # BeforeEventCondition(...), todo when adding more dialogue
+            BeforeEventCondition(WorldEvent.SellFirstProducePrompt),
+            BeforeEventCondition(WorldEvent.FirstNightStart),
             
             AfterEventCondition(WorldEvent.DialogueDrWhom)
         ), SequenceAction(
             ClearEventAction(WorldEvent.DialogueDrWhom),
+            SetEventAction(WorldEvent.SellFirstProducePrompt),
             QueueLinesAndWaitAction("Dr. Whom", "Hey, I see you've harvested your first crop!"),
             QueueLinesAndWaitAction("You", "Why are you still out here?"),
             QueueLinesAndWaitAction("Dr. Whom", "Whom cares? I'm just here to help you out!"),
             QueueLinesAndWaitAction("You", "Okay..."),
             QueueLinesAndWaitAction("Dr. Whom", "You should probably sell your produce to", "Mr. Shopkeeper over there!"),
+        ), True),
+        DialogueTrigger(AndCondition(
+            AfterEventCondition(WorldEvent.SellFirstProducePrompt),
+            BeforeEventCondition(WorldEvent.FirstNightStart),
+            
+            AfterEventCondition(WorldEvent.DialogueDrWhom)
+        ), SequenceAction(
+            ClearEventAction(WorldEvent.DialogueDrWhom),
+            QueueLinesAndWaitAction("Dr. Whom", "You should probably sell your produce to", "Mr. Shopkeeper over there!"),
         )),
+        DialogueTrigger(AndCondition(
+            AfterEventCondition(WorldEvent.SellFirstProducePrompt),
+            # BeforeEventCondition(...), todo when adding more dialogue
+            
+            AfterEventCondition(WorldEvent.DialogueMrShopkeeper)
+        ), SequenceAction(
+            ClearEventAction(WorldEvent.DialogueMrShopkeeper),
+            QueueGameActionAction("scene:shop"),
+            QueueLinesAndWaitAction("Mr. Shopkeeper", "I see you've got some carrots to sell!"),
+        )),
+        
+        DialogueTrigger(AfterEventCondition(WorldEvent.FirstNightStart, 1_500), SequenceAction(
+            QueueLinesAndWaitAction("You", "Wait, what's going on!?", "What are those... things...?"),
+            QueueLinesAndWaitAction("Dr. Whom", "Oh no...", "    Oh no no no no no.", "Not tonight!"),
+            QueueLinesAndWaitAction("You", "What do you mean, 'not tonight'?"),
+            QueueLinesAndWaitAction("Dr. Whom", "I was worried about this...", "this is your fault, you know!"),
+            QueueLinesAndWaitAction("You", "What do you mean, my fault?"),
+            QueueLinesAndWaitAction("Dr. Whom", "Just worry about your crops, okay?")
+        ), True),
+        DialogueTrigger(AndCondition(
+            AfterEventCondition(WorldEvent.FirstNightStart),
+            BeforeEventCondition(WorldEvent.FirstNightEnd),
+            
+            AfterEventCondition(WorldEvent.DialogueDrWhom)
+        ), SequenceAction(
+            ClearEventAction(WorldEvent.DialogueDrWhom),
+            QueueLinesAndWaitAction("Dr. Whom", "Worry about your crops!!"),
+        )),
+        DialogueTrigger(AfterEventCondition(WorldEvent.FirstNightEnd, 1_500), SequenceAction(
+            RaceAction(
+                # Make player walk to the front of the house but teleport if they take too long
+                ForcePlayerWalkAction(MAP_WIDTH * TILE_SIZE * 0.75, MAP_HEIGHT * TILE_SIZE // 2),
+                SequenceAction(WaitAction(3), SetPlayerPositionAction(MAP_WIDTH * TILE_SIZE * 0.75, MAP_HEIGHT * TILE_SIZE // 2))
+            ),
+            QueueLinesAndWaitAction("You", "What were those... shadow figures?!"),
+            QueueLinesAndWaitAction("Dr. Whom", "Look, I don't have time to explain right now.", "Just... keep farming, okay?"),
+            # TODO: Dr. Whom walks off screen
+            WaitAction(1),
+            QueueLinesAndWaitAction("You", "I guess it's just me and my crops now...", "And Mr. Shopkeeper, I guess."),
+        ), True),
     ]
     running_actions: list[DialogueAction] = []
 

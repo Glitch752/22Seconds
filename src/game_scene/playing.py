@@ -122,10 +122,16 @@ class PlayingGameScene(GameScene):
     def day_transition(self: Self):
         """Called when the day starts"""
         self.game.audio_manager.play_day_track()
+        condition_state = self.game.dialogue_manager.condition_state
+        if not condition_state.has_event(WorldEvent.FirstNightEnd):
+            condition_state.add_event(WorldEvent.FirstNightEnd)
 
     def night_transition(self: Self):
         """Called when the night starts"""
         self.game.audio_manager.play_night_track()
+        condition_state = self.game.dialogue_manager.condition_state
+        if not condition_state.has_event(WorldEvent.FirstNightStart):
+            condition_state.add_event(WorldEvent.FirstNightStart)
 
     def get_daylight(self: Self):
         """Returns a value from 0 to 1 representing the current daylight. Throughout the entire night, this value is 0."""

@@ -25,8 +25,9 @@ class DialogueRenderer:
         self.current_line = 0
     
     def skip_to_end(self, lines: list[str]):
+        self.done = True
         self.current_line = len(lines) - 1
-        self.current_char = len(lines[self.current_line]) - 1
+        self.current_char = len(lines[self.current_line])
     
     def draw(self, win: pygame.Surface, lines: list[str]):
         pygame.draw.rect(

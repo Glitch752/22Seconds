@@ -72,13 +72,14 @@ class DialogueManager:
     
     queue: list[list[str]] = []
     current_lines: list[str] = []
+    
+    
 
     def queue_dialogue(self, lines: list[str]):
         self.queue.append(lines)
     
     def on_confirm(self):
         if self.is_active():
-            self.done = True
             self.renderer.skip_to_end(self.current_lines)
         else:
             self.current_lines.clear()

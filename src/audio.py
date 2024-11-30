@@ -14,6 +14,7 @@ class SoundType(Enum):
     PLANT = "plant.wav"
     WATER = "water.wav"
     SPEAKING_SOUND = [f"speak_{str(idx).rjust(2, '0')}.wav" for idx in range(1, 15)]
+    CRUNCH = "crunch.wav"
     
     def __init__(self, paths: str | list[str]):
         if isinstance(paths, str):

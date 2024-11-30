@@ -1,6 +1,5 @@
 from functools import cache
 import pygame, os
-from graphics.floating_hint_text import draw_floating_hint_texts, add_floating_text_hint, FloatingHintText # Make draw_floating_hint_texts available in this module
 from constants import DEFAULT_WIDTH, DEFAULT_HEIGHT, TILE_SIZE, TOOLTIP_BACKGROUND_COLOR, TOOLTIP_BORDER_RADIUS, TOOLTIP_LINE_SPACING, TOOLTIP_PADDING, TOOLTIP_WINDOW_MARGIN
 
 GIANT_FONT = pygame.font.Font(os.path.join("assets", "NotoSans-SemiBold.ttf"), 96)

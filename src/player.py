@@ -3,7 +3,8 @@ import pygame
 from constants import TILE_SIZE
 from map import MAP_WIDTH, MAP_HEIGHT, Map
 from items import Item, render_item_slot, get_slot_bounds
-from graphics import add_floating_text_hint, FloatingHintText, get_height, get_width
+from graphics import get_height, get_width
+from graphics.floating_hint_text import add_floating_text_hint, FloatingHintText
 import os
 import math
 

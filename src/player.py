@@ -57,14 +57,14 @@ class Player:
         self.profit = 0
 
         # TODO: Wtf
-        self.profit += Item.CARROT.shop_data.sell_price * self.items[Item.CARROT]
-        self.sold_items[Item.CARROT] = self.items[Item.CARROT] if Item.CARROT in self.items else 0
+        self.profit += Item.CARROT.shop_data.sell_price * self.get_sold(Item.CARROT)
+        self.sold_items[Item.CARROT] = self.get_sold(Item.CARROT)
         self.items[Item.CARROT] = 0
-        self.profit += Item.ONION.shop_data.sell_price * self.items[Item.ONION]
-        self.sold_items[Item.ONION] = self.items[Item.ONION] if Item.ONION in self.items else 0
+        self.profit += Item.ONION.shop_data.sell_price * self.get_sold(Item.ONION)
+        self.sold_items[Item.ONION] = self.get_sold(Item.ONION)
         self.items[Item.ONION] = 0
-        self.profit += Item.WHEAT.shop_data.sell_price * self.items[Item.WHEAT]
-        self.sold_items[Item.WHEAT] = self.items[Item.WHEAT] if Item.WHEAT in self.items else 0
+        self.profit += Item.WHEAT.shop_data.sell_price * self.get_sold(Item.WHEAT)
+        self.sold_items[Item.WHEAT] = self.get_sold(Item.WHEAT)
         self.items[Item.WHEAT] = 0
 
         self.currency += self.profit

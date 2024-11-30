@@ -1,7 +1,7 @@
 from functools import cache
 import pygame, os
 from graphics.floating_hint_text import draw_floating_hint_texts, add_floating_text_hint, FloatingHintText # Make draw_floating_hint_texts available in this module
-from constants import DEFAULT_WIDTH, DEFAULT_HEIGHT, TILE_SIZE
+from constants import DEFAULT_WIDTH, DEFAULT_HEIGHT, TILE_SIZE, TOOLTIP_BACKGROUND_COLOR, TOOLTIP_BORDER_RADIUS, TOOLTIP_LINE_SPACING, TOOLTIP_PADDING, TOOLTIP_WINDOW_MARGIN
 
 GIANT_FONT = pygame.font.Font(os.path.join("assets", "NotoSans-SemiBold.ttf"), 96)
 BIG_FONT = pygame.font.SysFont("Consolas", 30)
@@ -32,12 +32,6 @@ def big_font_render(text, color='white'):
 @cache
 def giant_font_render(text, color='white'):
     return GIANT_FONT.render(text, True, color)
-
-TOOLTIP_BACKGROUND_COLOR = (0, 0, 0)
-TOOLTIP_PADDING = 5
-TOOLTIP_WINDOW_MARGIN = 20
-TOOLTIP_BORDER_RADIUS = 8
-TOOLTIP_LINE_SPACING = -2
 
 @cache
 def make_transparent_rect_surface(color: tuple[int, int, int], rect: tuple[int, int, int, int], alpha: int, border_radius: int = 0):
@@ -72,8 +66,9 @@ def draw_tooltip(win: pygame.Surface, pos: tuple[int, int], text: list[TextLine]
     
     width = max_width + TOOLTIP_PADDING * 2
     height = text_height + TOOLTIP_PADDING * 2
-    # pygame.draw.rect(win, TOOLTIP_BACKGROUND_COLOR, (tooltip_x, tooltip_y, width, height), border_radius=TOOLTIP_BORDER_RADIUS)
+    
     transparent_rect(win, TOOLTIP_BACKGROUND_COLOR, (tooltip_x, tooltip_y, width, height), 200, TOOLTIP_BORDER_RADIUS)
+    
     y = tooltip_y + TOOLTIP_PADDING
     for font in font_lines:
         win.blit(font, (tooltip_x + TOOLTIP_PADDING + 3, y + 3))

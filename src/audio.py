@@ -29,8 +29,10 @@ class SoundType(Enum):
 
 class AudioManager:
     day_track: str = get_asset("audio", "main_track.wav")
-    night_track: str = get_asset("audio", "track2.wav")
+    night_track: str = get_asset("audio", "night_track.wav") # TODO: Night track
+    scary_night_track: str = get_asset("audio", "track2.wav")
     shop_track: str = get_asset("audio", "shop_track.wav")
+    
     current_track: str = ""
     
     queued_sounds: list[tuple[int, pygame.mixer.Sound]] = []
@@ -40,6 +42,13 @@ class AudioManager:
             return
         self.current_track = self.day_track
         pygame.mixer.music.load(self.day_track)
+        pygame.mixer.music.play(-1)
+    
+    def play_scary_night_track(self: Self):
+        if self.current_track == self.scary_night_track:
+            return
+        self.current_track = self.scary_night_track
+        pygame.mixer.music.load(self.scary_night_track)
         pygame.mixer.music.play(-1)
     
     def play_night_track(self: Self):

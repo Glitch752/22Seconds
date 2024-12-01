@@ -15,8 +15,10 @@ else:
 
 TILE_SIZE = 80
 
-DAY_LENGTH = 90 # Seconds
-DUSK_DAWN_LENGTH = 10 # Seconds
+# DAY_LENGTH = 120 # Seconds
+# DUSK_DAWN_LENGTH = 10 # Seconds
+DAY_LENGTH = 5 # Seconds
+DUSK_DAWN_LENGTH = 2 # Seconds
 NIGHT_LENGTH = 22 # Seconds
 
 TARGET_RADIUS = TILE_SIZE * 2 # Pixels

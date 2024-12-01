@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, Callable
 from dialogue import DialogueManager
 from graphics import get_height, get_width
 from items import Item
-from map.feature import Feature
+from map.entity import Entity
 from map.tile import Tile, TileType
 from utils import get_asset
 
@@ -19,7 +19,7 @@ if TYPE_CHECKING:
 class Map:
     last_map_update: float = 0
     tiles: list[Tile]
-    features: list[Feature]
+    entities: list[Entity]
     
     selection_images: dict[str, pygame.Surface] = {}
     
@@ -48,11 +48,10 @@ class Map:
             for y in range(WATER_POOL_START[1], WATER_POOL_END[1]):
                 self.tiles[x * MAP_HEIGHT + y] = Tile(TileType.WATER)
         
-        self.features = []
+        self.entities = []
     
-    def add_feature(self, feature: Feature):
-        self.features.append(feature)
-        feature.add_collision_to_world(self)
+    def add_entity(self, entity: Entity):
+        self.entities.append(entity)
     
     def update(self, audio_manager: AudioManager, dialogue_manager: DialogueManager):
         current_time = pygame.time.get_ticks()
@@ -81,8 +80,8 @@ class Map:
             return
         
         if rising_edge:
-            for feature in self.features:
-                interaction = feature.get_interaction(tile_x, tile_y)
+            for entity in self.entities:
+                interaction = entity.get_interaction(tile_x, tile_y)
                 if interaction:
                     return interaction
 
@@ -90,8 +89,8 @@ class Map:
         return self.tiles[tile_index].get_interaction(item, player, audio_manager, dialogue_manager, tile_center_pos, rising_edge)
 
     def check_proximity_interaction(self, player: "Player") -> Callable[[], None]:
-        for feature in self.features:
-            interaction = feature.check_proximity_interaction(player)
+        for entity in self.entities:
+            interaction = entity.check_proximity_interaction(player)
             if interaction:
                 return interaction
         return None
@@ -165,9 +164,9 @@ class Map:
                 tile_center_pos = (tile_x * TILE_SIZE + TILE_SIZE // 2, tile_y * TILE_SIZE + TILE_SIZE // 2)
                 self.tiles[idx].draw(win, x, y, tile_center_pos, delta)
         
-        # Draw features
-        for feature in self.features:
-            feature.draw(win, camera_position, player, self.selection_images["green_1"] if interacting else self.selection_images["green_0"])
+        # Draw entities
+        for entity in self.entities:
+            entity.draw(win, camera_position, player, self.selection_images["green_1"] if interacting else self.selection_images["green_0"])
         
         # Draw selection
         x = selected_cell_x * TILE_SIZE - camera_position.x + get_width() // 2

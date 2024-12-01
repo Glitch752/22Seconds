@@ -150,12 +150,12 @@ class Player:
         
         old_pos = self.pos.copy()
         self.pos[0] += move[0]
-        if not originally_colliding and (pos := self.is_colliding(farm)):
+        if not originally_colliding and (self.is_colliding(farm)):
             self.pos = old_pos
         
         old_pos = self.pos.copy()
         self.pos[1] += move[1]
-        if not originally_colliding and (pos := self.is_colliding(farm)):
+        if not originally_colliding and (self.is_colliding(farm)):
             self.pos = old_pos
 
         # Clamp player to map
@@ -175,9 +175,10 @@ class Player:
             self.selected_slot = interactable_items - 1
 
     def get_collision_rect(self) -> tuple[int, int, int, int]:
+        """Returns the rectangle that the player occupies, in the form (min_x, min_y, max_x, max_y)."""
         return (self.pos.x - self.radius, self.pos.y - self.radius * 0.6, self.pos.x + self.radius, self.pos.y + self.radius * 1.25)
 
-    def is_colliding(self, map):
+    def is_colliding(self, map: Map) -> bool:
         min_x, min_y, max_x, max_y = self.get_collision_rect()
         min_tile_x = int(min_x // TILE_SIZE)
         min_tile_y = int(min_y // TILE_SIZE)
@@ -186,8 +187,14 @@ class Player:
         for x in range(min_tile_x, max_tile_x+1):
             for y in range(min_tile_y, max_tile_y+1):
                 if map.is_collision(x, y):
-                    return x, y
-        return None
+                    return True
+        for entity in map.entities:
+            rect = entity.get_collision_rect()
+            if rect == None:
+                continue
+            if rect.colliderect(min_x, min_y, max_x - min_x, max_y - min_y):
+                return True
+        return False
 
     def over_ui(self, x, y):
         """Returns if the mouse is over the inventory UI"""

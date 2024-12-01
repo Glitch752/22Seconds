@@ -17,7 +17,7 @@ from graphics.floating_hint_text import draw_floating_hint_texts
 from graphics.particles import draw_particles, update_particles
 from inputs import InputType, Inputs
 from map import Map
-from map.feature import Feature
+from map.entity import Entity, ShadowMachine
 from player import Player
 from utils import clamp, ease
 
@@ -46,22 +46,22 @@ class PlayingGameScene(GameScene):
     was_day: bool = True
     day_fade_surface = pygame.Surface((get_width(), get_height()), pygame.SRCALPHA)
     
+    scary_night_occurances_started: bool = False
+    
     def __init__(self: Self, game: Game):
         super().__init__(game, "playing")
         self.camera_position = game.player.pos.copy()
         
         self.day_fade_surface.fill((0, 0, 15))
         
-        self.farm.add_feature(Feature(MAP_WIDTH - 20, MAP_HEIGHT // 2 - 10, 8, 8, "house.png", None))
-        self.farm.add_feature(Feature(MAP_WIDTH - 18, MAP_HEIGHT // 2 - 3, 1, 2, "drWhom.png", lambda: self.game.dialogue_manager.condition_state.add_event(WorldEvent.DialogueDrWhom)))
-        self.farm.add_feature(Feature(MAP_WIDTH - 15, MAP_HEIGHT // 2 - 3, 1, 2, "shopkeeper.png", lambda: self.game.dialogue_manager.condition_state.add_event(WorldEvent.DialogueMrShopkeeper)))
+        self.farm.add_entity(Entity((MAP_WIDTH - 20) * TILE_SIZE, (MAP_HEIGHT // 2 - 10) * TILE_SIZE, 8 * TILE_SIZE, 8 * TILE_SIZE, "house.png",      None, collision_height=3*TILE_SIZE))
+        self.farm.add_entity(Entity((MAP_WIDTH - 18) * TILE_SIZE, (MAP_HEIGHT // 2 - 3) * TILE_SIZE,  1 * TILE_SIZE, 2 * TILE_SIZE, "drWhom.png",     lambda: self.game.dialogue_manager.condition_state.add_event(WorldEvent.DialogueDrWhom)))
+        self.farm.add_entity(Entity((MAP_WIDTH - 15) * TILE_SIZE, (MAP_HEIGHT // 2 - 3) * TILE_SIZE,  1 * TILE_SIZE, 2 * TILE_SIZE, "shopkeeper.png", lambda: self.game.dialogue_manager.condition_state.add_event(WorldEvent.DialogueMrShopkeeper)))
     
     def enter(self: Self):
-        if self.was_day:
-            self.game.audio_manager.play_day_track()
-        else:
-            self.game.audio_manager.play_night_track()
+        self.update_playing_track()
         self.game.dialogue_manager.condition_state.add_event(WorldEvent.GameStart)
+        self.camera_position = self.game.player.pos.copy()
     
     def get_target_reference(self: Self):
         return self.game.player.pos - self.camera_position + pygame.Vector2(get_width() // 2, get_height() // 2)
@@ -81,10 +81,7 @@ class PlayingGameScene(GameScene):
             self.selected_cell_y = math.floor((inputs.target_y + player.pos.y) // TILE_SIZE)
             self.target_x = inputs.target_x
             self.target_y = inputs.target_y
-            if selected_item == None:
-                interaction = None
-            else:
-                interaction = self.farm.get_interaction(self.selected_cell_x, self.selected_cell_y, selected_item, player, self.game.audio_manager, self.game.dialogue_manager, inputs.click_rising_edge)
+            interaction = self.farm.get_interaction(self.selected_cell_x, self.selected_cell_y, selected_item, player, self.game.audio_manager, self.game.dialogue_manager, inputs.click_rising_edge)
             self.selection_color = INTERACTABLE_SELECTION_COLOR if interaction else NON_INTERACTABLE_SELECTION_COLOR
 
             if interaction != None:
@@ -104,7 +101,7 @@ class PlayingGameScene(GameScene):
         camera_target.x = clamp(camera_target.x, get_width() // 2, TILE_SIZE * MAP_WIDTH - get_width() // 2)
         camera_target.y = clamp(camera_target.y, get_height() // 2, TILE_SIZE * MAP_HEIGHT - get_height() // 2)
         
-        self.camera_position = self.camera_position.lerp(camera_target, 0.0000000005 ** dt)
+        self.camera_position = self.camera_position.lerp(camera_target, min(1, 5 * dt)) # This isn't proper delta time scaling but it's fine
 
         # Update day cycle
         cycle_length = DAY_LENGTH + NIGHT_LENGTH
@@ -118,20 +115,39 @@ class PlayingGameScene(GameScene):
                 self.day_transition()
             else:
                 self.night_transition()
+        
+        for entity in self.farm.entities:
+            entity.update(dt, self.farm)
+
+    def update_playing_track(self: Self):
+        if self.was_day:
+            self.game.audio_manager.play_day_track()
+        else:
+            if self.scary_night_occurances_started:
+                self.game.audio_manager.play_scary_night_track()
+            else:
+                self.game.audio_manager.play_night_track()
 
     def day_transition(self: Self):
         """Called when the day starts"""
-        self.game.audio_manager.play_day_track()
+        self.update_playing_track()
         condition_state = self.game.dialogue_manager.condition_state
-        if not condition_state.has_event(WorldEvent.FirstNightEnd):
-            condition_state.add_event(WorldEvent.FirstNightEnd)
+        if not condition_state.has_event(WorldEvent.FirstScaryNightEnd):
+            condition_state.add_event(WorldEvent.FirstScaryNightEnd)
+        
+        # Temporary, unoptimized; whatever for now
+        self.farm.entities = [entity for entity in self.farm.entities if not isinstance(entity, ShadowMachine)]
 
     def night_transition(self: Self):
         """Called when the night starts"""
-        self.game.audio_manager.play_night_track()
+        self.update_playing_track()
         condition_state = self.game.dialogue_manager.condition_state
-        if not condition_state.has_event(WorldEvent.FirstNightStart):
-            condition_state.add_event(WorldEvent.FirstNightStart)
+        if not condition_state.has_event(WorldEvent.FirstScaryNightStart):
+            condition_state.add_event(WorldEvent.FirstScaryNightStart)
+        
+        # TEMPORARY
+        for i in range(20):
+            self.farm.add_entity(ShadowMachine())
 
     def get_daylight(self: Self):
         """Returns a value from 0 to 1 representing the current daylight. Throughout the entire night, this value is 0."""
@@ -181,7 +197,7 @@ class PlayingGameScene(GameScene):
         
         self.game.player.draw_ui(win)
         
-        if self.get_daylight() == 0:
+        if self.get_daylight() == 0 and self.scary_night_occurances_started:
             # It's night... spooky
             time_remaining = NIGHT_LENGTH - (self.day_cycle_time - DAY_LENGTH)
             shake_amount = int(2 / max(0.5, time_remaining / NIGHT_LENGTH) + 0.5)

@@ -29,8 +29,8 @@ class WorldEvent(StrEnum):
     DrWhomShopkeeper = "dr_whom_shopkeeper"
     AfterFirstShopInteraction = "after_first_shop_interaction"
     StartFarming = "start_farming"
-    FirstNightStart = "first_night_start"
-    FirstNightEnd = "first_night_end"
+    FirstScaryNightStart = "first_night_start"
+    FirstScaryNightEnd = "first_night_end"
     SellFirstProducePrompt = "sell_first_produce_prompt"
     
     # Tutorial-related events
@@ -449,7 +449,7 @@ class DialogueManager:
         DialogueTrigger(AndCondition(
             AfterEventCondition(WorldEvent.DrWhomShopkeeper),
             BeforeEventCondition(WorldEvent.AfterFirstShopInteraction),
-            BeforeEventCondition(WorldEvent.FirstNightStart),
+            BeforeEventCondition(WorldEvent.FirstScaryNightStart),
             
             AfterEventCondition(WorldEvent.DialogueDrWhom)
         ), SequenceAction(
@@ -482,7 +482,7 @@ class DialogueManager:
         DialogueTrigger(AndCondition(
             AfterEventCondition(WorldEvent.AfterFirstShopInteraction),
             BeforeEventCondition(WorldEvent.StartFarming),
-            BeforeEventCondition(WorldEvent.FirstNightStart),
+            BeforeEventCondition(WorldEvent.FirstScaryNightStart),
             
             AfterEventCondition(WorldEvent.DialogueDrWhom)
         ), SequenceAction(
@@ -500,7 +500,7 @@ class DialogueManager:
         DialogueTrigger(AndCondition(
             AfterEventCondition(WorldEvent.StartFarming),
             BeforeEventCondition(WorldEvent.HarvestHintDone),
-            BeforeEventCondition(WorldEvent.FirstNightStart),
+            BeforeEventCondition(WorldEvent.FirstScaryNightStart),
             
             AfterEventCondition(WorldEvent.DialogueDrWhom)
         ), SequenceAction(
@@ -563,7 +563,7 @@ class DialogueManager:
         DialogueTrigger(AndCondition(
             AfterEventCondition(WorldEvent.HarvestHintDone),
             BeforeEventCondition(WorldEvent.SellFirstProducePrompt),
-            BeforeEventCondition(WorldEvent.FirstNightStart),
+            BeforeEventCondition(WorldEvent.FirstScaryNightStart),
             
             AfterEventCondition(WorldEvent.DialogueDrWhom)
         ), SequenceAction(
@@ -577,7 +577,7 @@ class DialogueManager:
         ), True),
         DialogueTrigger(AndCondition(
             AfterEventCondition(WorldEvent.SellFirstProducePrompt),
-            BeforeEventCondition(WorldEvent.FirstNightStart),
+            BeforeEventCondition(WorldEvent.FirstScaryNightStart),
             
             AfterEventCondition(WorldEvent.DialogueDrWhom)
         ), SequenceAction(
@@ -595,7 +595,7 @@ class DialogueManager:
             QueueLinesAndWaitAction("Mr. Shopkeeper", "I see you've got some carrots to sell!"),
         )),
         
-        DialogueTrigger(AfterEventCondition(WorldEvent.FirstNightStart, 1_500), SequenceAction(
+        DialogueTrigger(AfterEventCondition(WorldEvent.FirstScaryNightStart, 1_500), SequenceAction(
             QueueLinesAndWaitAction("You", "Wait, what's going on!?", "What are those... things...?"),
             QueueLinesAndWaitAction("Dr. Whom", "Oh no...", "    Oh no no no no no.", "Not tonight!"),
             QueueLinesAndWaitAction("You", "What do you mean, 'not tonight'?"),
@@ -604,19 +604,19 @@ class DialogueManager:
             QueueLinesAndWaitAction("Dr. Whom", "Just worry about your crops, okay?")
         ), True),
         DialogueTrigger(AndCondition(
-            AfterEventCondition(WorldEvent.FirstNightStart),
-            BeforeEventCondition(WorldEvent.FirstNightEnd),
+            AfterEventCondition(WorldEvent.FirstScaryNightStart),
+            BeforeEventCondition(WorldEvent.FirstScaryNightEnd),
             
             AfterEventCondition(WorldEvent.DialogueDrWhom)
         ), SequenceAction(
             ClearEventAction(WorldEvent.DialogueDrWhom),
             QueueLinesAndWaitAction("Dr. Whom", "Worry about your crops!!"),
         )),
-        DialogueTrigger(AfterEventCondition(WorldEvent.FirstNightEnd, 1_500), SequenceAction(
+        DialogueTrigger(AfterEventCondition(WorldEvent.FirstScaryNightEnd, 1_500), SequenceAction(
             RaceAction(
                 # Make player walk to the front of the house but teleport if they take too long
                 ForcePlayerWalkAction(MAP_WIDTH * TILE_SIZE * 0.75, MAP_HEIGHT * TILE_SIZE // 2),
-                SequenceAction(WaitAction(3), SetPlayerPositionAction(MAP_WIDTH * TILE_SIZE * 0.75, MAP_HEIGHT * TILE_SIZE // 2))
+                SequenceAction(WaitAction(10), SetPlayerPositionAction(MAP_WIDTH * TILE_SIZE * 0.75, MAP_HEIGHT * TILE_SIZE // 2))
             ),
             QueueLinesAndWaitAction("You", "What were those... shadow figures?!"),
             QueueLinesAndWaitAction("Dr. Whom", "Look, I don't have time to explain right now.", "Just... keep farming, okay?"),

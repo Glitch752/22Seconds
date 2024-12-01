@@ -7,7 +7,7 @@ from inputs import Inputs
 
 class OutroCutsceneScene(GameScene):
     def __init__(self: Self, game: Game):
-        super().__init__(game)
+        super().__init__(game, "outro_cutscene")
         self.cutscene_text = [
             [
                 "Well, this is it..."

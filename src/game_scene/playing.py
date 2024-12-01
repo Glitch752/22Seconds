@@ -17,6 +17,7 @@ from graphics.floating_hint_text import draw_floating_hint_texts
 from graphics.particles import draw_particles, update_particles
 from inputs import InputType, Inputs
 from map import Map
+from map.feature import Feature
 from player import Player
 from utils import clamp, ease
 
@@ -46,13 +47,20 @@ class PlayingGameScene(GameScene):
     day_fade_surface = pygame.Surface((get_width(), get_height()), pygame.SRCALPHA)
     
     def __init__(self: Self, game: Game):
-        super().__init__(game)
+        super().__init__(game, "playing")
         self.camera_position = game.player.pos.copy()
         
         self.day_fade_surface.fill((0, 0, 15))
+        
+        self.farm.add_feature(Feature(MAP_WIDTH - 20, MAP_HEIGHT // 2 - 10, 8, 8, "house.png", None))
+        self.farm.add_feature(Feature(MAP_WIDTH - 18, MAP_HEIGHT // 2 - 3, 1, 2, "drWhom.png", lambda: self.game.dialogue_manager.condition_state.add_event(WorldEvent.DialogueDrWhom)))
+        self.farm.add_feature(Feature(MAP_WIDTH - 15, MAP_HEIGHT // 2 - 3, 1, 2, "shopkeeper.png", lambda: self.game.dialogue_manager.condition_state.add_event(WorldEvent.DialogueMrShopkeeper)))
     
     def enter(self: Self):
-        self.game.audio_manager.play_day_track()
+        if self.was_day:
+            self.game.audio_manager.play_day_track()
+        else:
+            self.game.audio_manager.play_night_track()
         self.game.dialogue_manager.condition_state.add_event(WorldEvent.GameStart)
     
     def get_target_reference(self: Self):
@@ -76,11 +84,11 @@ class PlayingGameScene(GameScene):
             if selected_item == None:
                 interaction = None
             else:
-                interaction = self.farm.get_interaction(self.selected_cell_x, self.selected_cell_y, selected_item, player, self.game.audio_manager, inputs.interaction_rising_edge)
+                interaction = self.farm.get_interaction(self.selected_cell_x, self.selected_cell_y, selected_item, player, self.game.audio_manager, self.game.dialogue_manager, inputs.click_rising_edge)
             self.selection_color = INTERACTABLE_SELECTION_COLOR if interaction else NON_INTERACTABLE_SELECTION_COLOR
 
             if interaction != None:
-                if inputs.interaction:
+                if inputs.clicking:
                     if not player.wait_for_mouseup:
                         result = interaction()
                         if result == -1:
@@ -90,13 +98,13 @@ class PlayingGameScene(GameScene):
         
         # General updates
         update_particles(dt)
-        self.farm.update(self.game.audio_manager)
+        self.farm.update(self.game.audio_manager, self.game.dialogue_manager)
         
         camera_target = player.pos.copy()
         camera_target.x = clamp(camera_target.x, get_width() // 2, TILE_SIZE * MAP_WIDTH - get_width() // 2)
         camera_target.y = clamp(camera_target.y, get_height() // 2, TILE_SIZE * MAP_HEIGHT - get_height() // 2)
         
-        self.camera_position = self.camera_position.lerp(camera_target, 0.05)
+        self.camera_position = self.camera_position.lerp(camera_target, 0.0000000005 ** dt)
 
         # Update day cycle
         cycle_length = DAY_LENGTH + NIGHT_LENGTH
@@ -113,14 +121,17 @@ class PlayingGameScene(GameScene):
 
     def day_transition(self: Self):
         """Called when the day starts"""
-        import game_scene.in_shop
-        self.game.update_scene(game_scene.in_shop.InShopScene(self.game))
         self.game.audio_manager.play_day_track()
+        condition_state = self.game.dialogue_manager.condition_state
+        if not condition_state.has_event(WorldEvent.FirstNightEnd):
+            condition_state.add_event(WorldEvent.FirstNightEnd)
 
     def night_transition(self: Self):
         """Called when the night starts"""
-        # TODO: Sound effects
         self.game.audio_manager.play_night_track()
+        condition_state = self.game.dialogue_manager.condition_state
+        if not condition_state.has_event(WorldEvent.FirstNightStart):
+            condition_state.add_event(WorldEvent.FirstNightStart)
 
     def get_daylight(self: Self):
         """Returns a value from 0 to 1 representing the current daylight. Throughout the entire night, this value is 0."""
@@ -136,7 +147,7 @@ class PlayingGameScene(GameScene):
     def draw(self: Self, win: pygame.Surface, inputs: Inputs):
         win.fill("#000000")
         
-        self.farm.draw(win, self.camera_position, self.selected_cell_x, self.selected_cell_y, self.selection_color, inputs.interaction)
+        self.farm.draw(win, self.camera_position, self.game.player, self.selected_cell_x, self.selected_cell_y, self.selection_color, inputs.clicking, inputs.interacting)
         
         # Draw target crosshair
         if not CROSSHAIR_ONLY_WITH_JOYSTICK or not self.game.inputs.using_keyboard_input:
@@ -190,10 +201,11 @@ class PlayingGameScene(GameScene):
             slot = type.get_slot_index(player_slots - player.selected_slot, player_slots)
             player.select_slot(player_slots - slot)
             return
-        elif type.from_mouse_input(pygame.BUTTON_LEFT, True) and self.game.player.over_ui(*pygame.mouse.get_pos()):
-            player = self.game.player
-            player_slots = len(player.get_interactable_items())
-            for i in range(player_slots):
-                if pygame.Rect(get_slot_bounds(i, 0, True, True)).collidepoint(pygame.mouse.get_pos()):
-                    player.select_slot(i)
-                    return
+        
+        if type == InputType.CLICK_DOWN:
+            self.game.player.mouse_down()
+        
+        if type == InputType.INTERACT_DOWN:
+            interaction = self.farm.check_proximity_interaction(self.game.player)
+            if interaction:
+                interaction()

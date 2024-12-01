@@ -1,9 +1,10 @@
 from enum import Enum
-import os
 import random
 from typing import Self
 
 import pygame
+
+from utils import get_asset
 
 class SoundType(Enum):
     """Enum for all the sound types in the game. If a sound's value is a list of strings, the sound will randomly play one of the sounds in the list."""
@@ -21,15 +22,15 @@ class SoundType(Enum):
             paths = [paths]
         
         self.paths = paths
-        self.sounds = [pygame.mixer.Sound(os.path.join("assets", "audio", path)) for path in paths]
+        self.sounds = [pygame.mixer.Sound(get_asset("audio", path)) for path in paths]
     
     def get_sound(self: Self):
         return self.sounds[random.randint(0, len(self.sounds) - 1)]
 
 class AudioManager:
-    day_track: str = os.path.join("assets", "audio", "main_track.wav")
-    night_track: str = os.path.join("assets", "audio", "track2.wav")
-    shop_track: str = os.path.join("assets", "audio", "shop_track.wav")
+    day_track: str = get_asset("audio", "main_track.wav")
+    night_track: str = get_asset("audio", "track2.wav")
+    shop_track: str = get_asset("audio", "shop_track.wav")
     current_track: str = ""
     
     queued_sounds: list[tuple[int, pygame.mixer.Sound]] = []

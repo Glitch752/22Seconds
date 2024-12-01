@@ -7,9 +7,11 @@ import pygame
 
 from audio import AudioManager, SoundType
 from constants import PARTICLES_PER_TILE_SECOND, TILE_SIZE
+from dialogue import DialogueManager, WorldEvent
 from graphics.floating_hint_text import FloatingHintText, add_floating_text_hint
 from graphics.particles import spawn_particles_in_square
 from items import Item, ItemHarvestData
+from utils import get_asset
 
 if TYPE_CHECKING:
     from player import Player
@@ -23,10 +25,10 @@ class Structure(ABC):
     def destroy(self):
         self.should_destroy = True
     
-    def random_tick(self, audio_manager: AudioManager):
+    def random_tick(self, audio_manager: AudioManager, dialogue_manager: DialogueManager):
         pass
     
-    def get_interaction(self, item: Item, player: "Player", audio_manager: AudioManager, tile_center_pos: tuple[int, int], rising_edge: bool):
+    def get_interaction(self, item: Item, player: "Player", audio_manager: AudioManager, dialogue_manager: DialogueManager, tile_center_pos: tuple[int, int], rising_edge: bool):
         """
         Returns a lambda that will execute the proper interaction based on the selected tile and item,
         or None if no interaction should occur.
@@ -53,21 +55,21 @@ for plant_type in plant_images:
         Item.ONION_SEEDS: "onion"
     }
     for i in range(MAX_PLANT_GROWTH_STAGE + 1):
-        image = pygame.image.load(f"assets/tiles/planted_{plant_names[plant_type]}_{i}.png").convert_alpha()
+        image = pygame.image.load(get_asset("tiles", f"planted_{plant_names[plant_type]}_{i}.png")).convert_alpha()
         image = pygame.transform.scale(image, (TILE_SIZE, TILE_SIZE))
         plant_images[plant_type].append(image)
 
 dry_soil_image = pygame.transform.scale(
-    pygame.image.load("assets/tiles/farmland.png").convert_alpha(),
+    pygame.image.load(get_asset("tiles", "farmland.png")).convert_alpha(),
     (TILE_SIZE, TILE_SIZE)
 )
 wet_soil_image = pygame.transform.scale(
-    pygame.image.load("assets/tiles/wet_farmland.png").convert_alpha(),
+    pygame.image.load(get_asset("tiles", "wet_farmland.png")).convert_alpha(),
     (TILE_SIZE, TILE_SIZE)
 )
 
 wall_images = [pygame.transform.scale(
-    pygame.image.load(f"assets/tiles/wall{idx}.png").convert_alpha(),
+    pygame.image.load(get_asset("tiles", f"wall{idx}.png")).convert_alpha(),
     (TILE_SIZE, TILE_SIZE)
 ) for idx in range(3)]
 
@@ -82,7 +84,7 @@ class SoilStructure(Structure):
     def __init__(self, item: Optional[Item]):
         self.item = item
     
-    def random_tick(self, audio_manager: AudioManager):
+    def random_tick(self, audio_manager: AudioManager, dialogue_manager: DialogueManager):
         if self.item != None and self.growth_stage < MAX_PLANT_GROWTH_STAGE:
             if not self.wet:
                 if random.random() <= 0.5:
@@ -91,9 +93,12 @@ class SoilStructure(Structure):
                 if random.random() <= 0.1:
                     self.wet = False
             self.growth_stage += 1
+            
+            if self.growth_stage == MAX_PLANT_GROWTH_STAGE and not dialogue_manager.condition_state.has_event(WorldEvent.FullyGrownPlant):
+                dialogue_manager.condition_state.add_event(WorldEvent.FullyGrownPlant)
             # audio_manager.play_sound(SoundType.PLANT) # TODO: Better growth sound
     
-    def put_seed(self, item: Item, player: "Player", audio_manager: AudioManager, tile_center_pos: tuple[int, int]):
+    def put_seed(self, item: Item, player: "Player", audio_manager: AudioManager, dialogue_manager: DialogueManager, tile_center_pos: tuple[int, int]):
         player.decrement_selected_item_quantity()
         self.item = item
         self.growth_stage = 0
@@ -101,8 +106,10 @@ class SoilStructure(Structure):
         
         tile_center_pos = (tile_center_pos[0], tile_center_pos[1] - TILE_SIZE)
         add_floating_text_hint(FloatingHintText(f"-1 {item.harvest_data.name}", tile_center_pos, "orange"))
+        
+        dialogue_manager.condition_state.add_event(WorldEvent.SeedsHintDone)
     
-    def harvest(self, player: "Player", audio_manager: AudioManager, tile_center_pos: tuple[int, int]):
+    def harvest(self, player: "Player", audio_manager: AudioManager, dialogue_manager: DialogueManager, tile_center_pos: tuple[int, int]):
         audio_manager.play_sound(SoundType.HARVEST_PLANT)
 
         v = random.random()
@@ -123,6 +130,8 @@ class SoilStructure(Structure):
         
         self.item = None
         self.growth_stage = 0
+        
+        dialogue_manager.condition_state.add_event(WorldEvent.HarvestHintDone)
     
     def make_wet(self, tile_center_pos, player: "Player", audio_manager: AudioManager):
         self.wet = True
@@ -132,12 +141,12 @@ class SoilStructure(Structure):
         audio_manager.play_sound(SoundType.WATER)
         add_floating_text_hint(FloatingHintText(f"Watered!", tile_center_pos, "skyblue"))
     
-    def get_interaction(self, item: Item, player: "Player", audio_manager: AudioManager, tile_center_pos: tuple[int, int], rising_edge: bool):
+    def get_interaction(self, item: Item, player: "Player", audio_manager: AudioManager, dialogue_manager: DialogueManager, tile_center_pos: tuple[int, int], rising_edge: bool):
         if item in {Item.CARROT_SEEDS, Item.WHEAT_SEEDS, Item.ONION_SEEDS} and self.item == None:
-            return lambda: self.put_seed(item, player, audio_manager, tile_center_pos)
+            return lambda: self.put_seed(item, player, audio_manager, dialogue_manager, tile_center_pos)
         
         if item == Item.HOE and self.item != None and self.growth_stage == MAX_PLANT_GROWTH_STAGE:
-            return lambda: self.harvest(player, audio_manager, tile_center_pos)
+            return lambda: self.harvest(player, audio_manager, dialogue_manager, tile_center_pos)
         
         if item == Item.WATERING_CAN_FULL and not self.wet:
             return lambda: self.make_wet(tile_center_pos, player, audio_manager)
@@ -177,7 +186,7 @@ class WallStructure(Structure):
         
         spawn_particles_in_square(tile_center_pos[0], tile_center_pos[1], "gray", TILE_SIZE//2, 20)
     
-    def get_interaction(self, item: Item, player: "Player", audio_manager: AudioManager, tile_center_pos: tuple[int, int], rising_edge: bool):
+    def get_interaction(self, item: Item, player: "Player", audio_manager: AudioManager, dialogue_manager: DialogueManager, tile_center_pos: tuple[int, int], rising_edge: bool):
         if item == Item.AXE and rising_edge:
             return lambda: self.destroy(player, audio_manager, tile_center_pos)
         return None
@@ -189,11 +198,11 @@ class TileType(Enum):
     """
     Tiles with a higher layer are drawn on top of earlier ones.
     """
-    WATER = "assets/tiles/water_tilemap.png", 0
-    OUTSIDE_FARM_DIRT = "assets/tiles/outside_farm_dirt_tilemap.png", 1
-    SOIL = "assets/tiles/dirt_tilemap.png", 2
-    GRASS = "assets/tiles/grass_tilemap.png", 3
-    TALL_GRASS = "assets/tiles/tall_grass_tilemap.png", 4
+    WATER = "water_tilemap.png", 0
+    OUTSIDE_FARM_DIRT = "outside_farm_dirt_tilemap.png", 1
+    SOIL = "dirt_tilemap.png", 2
+    GRASS = "grass_tilemap.png", 3
+    TALL_GRASS = "tall_grass_tilemap.png", 4
     
     path: str
     atlas: list[pygame.Surface]
@@ -204,8 +213,8 @@ class TileType(Enum):
         obj = object.__new__(cls)
         obj._value_ = value
         return obj
-    def __init__(self, path: str, layer: int):
-        self.path = path
+    def __init__(self, image_name: str, layer: int):
+        self.path = get_asset("tiles", image_name)
         self.layer = layer
         
         tilemap_image = pygame.image.load(self.path).convert_alpha()
@@ -276,15 +285,17 @@ class Tile:
         player.decrement_selected_item_quantity()
         add_floating_text_hint(FloatingHintText(f"Wall placed!", tile_center_pos, "white"))    
     
-    def tilled(self, tile_center_pos: tuple[int, int], audio_manager: AudioManager):
+    def tilled(self, tile_center_pos: tuple[int, int], audio_manager: AudioManager, dialogue_manager: DialogueManager):
         self.set_structure(SoilStructure(None))
         audio_manager.play_sound(SoundType.TILL_SOIL)
         add_floating_text_hint(FloatingHintText(f"Tilled soil!", tile_center_pos, "white"))
+        dialogue_manager.condition_state.add_event(WorldEvent.TillHintDone)
     
-    def shoveled(self, tile_center_pos: tuple[int, int], audio_manager: AudioManager):
+    def shoveled(self, tile_center_pos: tuple[int, int], audio_manager: AudioManager, dialogue_manager: DialogueManager):
         self.tile_type = TileType.SOIL
         audio_manager.play_sound(SoundType.TILL_SOIL) # TODO: Shovel sound
         add_floating_text_hint(FloatingHintText(f"Shoveled ground!", tile_center_pos, "white"))
+        dialogue_manager.condition_state.add_event(WorldEvent.ShovelHintDone)
     
     def fill_watering_can(self, player: "Player", tile_center_pos: tuple[int, int], audio_manager: AudioManager):
         player.items[Item.WATERING_CAN_EMPTY] = 0
@@ -292,7 +303,7 @@ class Tile:
         audio_manager.play_sound(SoundType.WATER) # TODO: water fill sound
         add_floating_text_hint(FloatingHintText(f"Filled can!", tile_center_pos, "skyblue"))
     
-    def get_interaction(self, item: Item, player: "Player", audio_manager: AudioManager, tile_center_pos: tuple[int, int], rising_edge: bool):
+    def get_interaction(self, item: Item, player: "Player", audio_manager: AudioManager, dialogue_manager: DialogueManager, tile_center_pos: tuple[int, int], rising_edge: bool):
         """
         Returns a lambda that will execute the proper interaction based on the selected tile and item,
         or None if no interaction should occur.
@@ -301,13 +312,13 @@ class Tile:
         if self.structure and self.structure.should_destroy:
             self.structure = None
         if self.structure:
-            return self.structure.get_interaction(item, player, audio_manager, tile_center_pos, rising_edge)
+            return self.structure.get_interaction(item, player, audio_manager, dialogue_manager, tile_center_pos, rising_edge)
         
         match (self.tile_type, item):
             case (TileType.SOIL, Item.HOE):
-                return (lambda: self.tilled(tile_center_pos, audio_manager))
+                return (lambda: self.tilled(tile_center_pos, audio_manager, dialogue_manager))
             case (TileType.GRASS | TileType.TALL_GRASS, Item.SHOVEL):
-                return (lambda: self.shoveled(tile_center_pos, audio_manager))
+                return (lambda: self.shoveled(tile_center_pos, audio_manager, dialogue_manager))
             case (TileType.WATER, Item.WATERING_CAN_EMPTY):
                 return (lambda: self.fill_watering_can(player, tile_center_pos, audio_manager))
             case (TileType.SOIL | TileType.GRASS | TileType.TALL_GRASS, Item.WALL):
@@ -317,6 +328,6 @@ class Tile:
         
         return None
     
-    def random_tick(self, audio_manager: AudioManager):
+    def random_tick(self, audio_manager: AudioManager, dialogue_manager: DialogueManager):
         if self.structure:
-            self.structure.random_tick(audio_manager)
+            self.structure.random_tick(audio_manager, dialogue_manager)

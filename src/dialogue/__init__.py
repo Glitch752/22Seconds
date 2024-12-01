@@ -14,6 +14,7 @@ from dialogue.renderer import DialogueRenderer
 from graphics import get_height, get_width
 from graphics.floating_hint_text import FloatingHintText, add_floating_text_hint
 from items import Item
+from utils import get_username
 
 if TYPE_CHECKING:
     from player import Player
@@ -28,6 +29,17 @@ class WorldEvent(StrEnum):
     DrWhomShopkeeper = "dr_whom_shopkeeper"
     AfterFirstShopInteraction = "after_first_shop_interaction"
     StartFarming = "start_farming"
+    FirstNightStart = "first_night_start"
+    FirstNightEnd = "first_night_end"
+    SellFirstProducePrompt = "sell_first_produce_prompt"
+    
+    # Tutorial-related events
+    ShovelHintDone = "shovel_hint_done"
+    TillHintDone = "till_hint_done"
+    SeedsHintDone = "seeds_hint_done"
+    
+    FullyGrownPlant = "fully_grown_plant"
+    HarvestHintDone = "harvest_hint_done"
     
     # Dialogue interaction events
     DialogueDrWhom = "dialogue_dr_whom"
@@ -36,14 +48,16 @@ class WorldEvent(StrEnum):
 class ConditionState:
     # Maps WorldEvent to the time it was triggered
     world_events: dict[WorldEvent, int | None]
-
     def __init__(self) -> None:
         self.world_events = {}
+        self.game_messages = set()
     
     def add_event(self, event: WorldEvent):
         self.world_events[event] = pygame.time.get_ticks()
     def clear_event(self, event: WorldEvent):
         self.world_events[event] = None
+    def has_event(self, event: WorldEvent) -> bool:
+        return event in self.world_events and self.world_events[event] != None
     
     def time_since_event(self, event: WorldEvent) -> int | None:
         if event not in self.world_events or self.world_events[event] == None:
@@ -88,9 +102,9 @@ class AfterEventCondition(DialogueCondition):
     event: WorldEvent
     elapsed_time: int
 
-    def __init__(self, event: WorldEvent, elapsed_time: int = 0) -> None:
+    def __init__(self, event: WorldEvent, elapsed_ms: int = 0) -> None:
         self.event = event
-        self.elapsed_time = elapsed_time
+        self.elapsed_time = elapsed_ms
 
     def check(self, condition_state: ConditionState) -> bool:
         return condition_state.time_since_event(self.event) != None and condition_state.time_since_event(self.event) >= self.elapsed_time
@@ -126,10 +140,17 @@ class DialogueActionContext:
     dialogue_manager: "DialogueManager"
     audio_manager: "AudioManager"
     player: "Player"
+    """
+    The list of queued game actions. These are currently just scene names to switch to.
+    This could be an enum... or we could restructure this to not need it at all... but I'm
+    lazy and don't have enough time to mess with refactors.
+    """
+    queued_game_actions: list[str]
     def __init__(self, dialogue_manager: "DialogueManager", audio_manager: "AudioManager", player: "Player"):
         self.dialogue_manager = dialogue_manager
         self.audio_manager = audio_manager
         self.player = player
+        self.queued_game_actions = []
 
 class DialogueAction(ABC):
     def start(self, action_context: DialogueActionContext) -> None:
@@ -196,6 +217,26 @@ class RaceAction(DialogueAction):
     def is_finished(self, action_context: DialogueActionContext) -> bool:
         return any(action.is_finished(action_context) for action in self.actions)
 
+class ConditionalAction(DialogueAction):
+    condition: DialogueCondition
+    action: DialogueAction
+    running: bool = False
+    def __init__(self, condition: DialogueCondition, action: DialogueAction) -> None:
+        self.condition = condition
+        self.action = action
+    def start(self, action_context: DialogueActionContext) -> None:
+        self.running = self.condition.check(action_context.dialogue_manager.condition_state)
+        if self.running:
+            self.action.start(action_context)
+    def update(self, action_context: DialogueActionContext, delta: float) -> None:
+        if self.running:
+            self.action.update(action_context, delta)
+    def end(self, action_context: DialogueActionContext) -> None:
+        if self.running:
+            self.action.end(action_context)
+    def is_finished(self, action_context: DialogueActionContext) -> bool:
+        return not self.running or self.action.is_finished(action_context)
+
 class RepeatAction(DialogueAction):
     action: DialogueAction
     times: int
@@ -217,6 +258,24 @@ class RepeatAction(DialogueAction):
         self.action.end(action_context)
     def is_finished(self, action_context: DialogueActionContext) -> bool:
         return self.current_time >= self.times
+
+class RepeatWhileAction(DialogueAction):
+    action: DialogueAction
+    condition: DialogueCondition
+    def __init__(self, action: DialogueAction, condition: DialogueCondition) -> None:
+        self.action = action
+        self.condition = condition
+    def start(self, action_context: DialogueActionContext) -> None:
+        self.action.start(action_context)
+    def update(self, action_context: DialogueActionContext, delta: float) -> None:
+        self.action.update(action_context, delta)
+        if self.condition.check(action_context.dialogue_manager.condition_state):
+            self.action.end(action_context)
+            self.action.start(action_context)
+    def end(self, action_context: DialogueActionContext) -> None:
+        self.action.end(action_context)
+    def is_finished(self, action_context: DialogueActionContext) -> bool:
+        return not self.condition.check(action_context.dialogue_manager.condition_state)
 
 class WaitAction(DialogueAction):
     time: float
@@ -266,6 +325,13 @@ class QueueLinesAndWaitAction(DialogueAction):
         action_context.dialogue_manager.queue_dialogue(self.lines)
     def is_finished(self, action_context: DialogueActionContext) -> bool:
         return not action_context.dialogue_manager.is_shown()
+
+class QueueGameActionAction(DialogueAction):
+    action: str
+    def __init__(self, scene: str) -> None:
+        self.action = scene
+    def start(self, action_context: DialogueActionContext) -> None:
+        action_context.queued_game_actions.append(self.action)
 
 class PrintConsoleAction(DialogueAction):
     text: str
@@ -367,14 +433,14 @@ class DialogueManager:
                 ),
                 ForcePlayerWalkAction(MAP_WIDTH * TILE_SIZE * 0.75, MAP_HEIGHT * TILE_SIZE // 2)
             ),
-            WaitAction(1),
+            # WaitAction(0.25),
             QueueLinesAndWaitAction("Dr. Whom", "And whom might you be?", "Wait, I remember you!", "You're...     you."),
             QueueLinesAndWaitAction("Dr. Whom", "Well, anyways…", "What are you doing in these far-out lands?", "This seems uncharacteristic of you."),
             QueueLinesAndWaitAction("You", "Oh, I just wanted to relax for a bit!", "Get away from corporate life, right?", "     Haha."),
             QueueLinesAndWaitAction("Dr. Whom", "Huh. Well, I can show you the ropes around here!"),
             QueueLinesAndWaitAction("You", "I mean… I know how to walk with WASD or", "left joystick! And farming should be", "as simple as Left click or A!"),
             QueueLinesAndWaitAction("Dr. Whom", "What the #*!$?", "What are you even talking about?"),
-            WaitAction(1),
+            # WaitAction(0.25),
             QueueLinesAndWaitAction("You", "Oh… anyway.", "What else do I need to know about farming?"),
             QueueLinesAndWaitAction("Dr. Whom", "Well, not much!", "You uproot the grass to find fertile soil,", "till it, put some seeds in, and wait!"),
             QueueLinesAndWaitAction("Dr. Whom", "I’m sure Mr. Shopkeeper over here would be", "happy to show you what he has to offer!"),
@@ -383,11 +449,12 @@ class DialogueManager:
         DialogueTrigger(AndCondition(
             AfterEventCondition(WorldEvent.DrWhomShopkeeper),
             BeforeEventCondition(WorldEvent.AfterFirstShopInteraction),
+            BeforeEventCondition(WorldEvent.FirstNightStart),
             
             AfterEventCondition(WorldEvent.DialogueDrWhom)
         ), SequenceAction(
-            QueueLinesAndWaitAction("Dr. Whom", "Go talk to the shopkeeper over there!"),
-            ClearEventAction(WorldEvent.DialogueDrWhom)
+            ClearEventAction(WorldEvent.DialogueDrWhom),
+            QueueLinesAndWaitAction("Dr. Whom", "Go talk to the shopkeeper over there!")
         )),
         
         DialogueTrigger(AndCondition(
@@ -396,52 +463,173 @@ class DialogueManager:
             
             AfterEventCondition(WorldEvent.DialogueMrShopkeeper)
         ), SequenceAction(
+            ClearEventAction(WorldEvent.DialogueMrShopkeeper),
+            QueueGameActionAction("scene:shop"),
             QueueLinesAndWaitAction("Mr. Shopkeeper", "Hey. Take a look."),
-            ClearEventAction(WorldEvent.DialogueMrShopkeeper)
+            SetEventAction(WorldEvent.AfterFirstShopInteraction)
         )),
         DialogueTrigger(AndCondition(
             AfterEventCondition(WorldEvent.AfterFirstShopInteraction),
-            # BeforeEventCondition(...) todo when adding more dialogue
+            BeforeEventCondition(WorldEvent.SellFirstProducePrompt),
             
             AfterEventCondition(WorldEvent.DialogueMrShopkeeper)
         ), SequenceAction(
+            ClearEventAction(WorldEvent.DialogueMrShopkeeper),
+            QueueGameActionAction("scene:shop"),
             QueueLinesAndWaitAction("Mr. Shopkeeper", "Hey."),
-            ClearEventAction(WorldEvent.DialogueMrShopkeeper)
         )),
 
         DialogueTrigger(AndCondition(
             AfterEventCondition(WorldEvent.AfterFirstShopInteraction),
             BeforeEventCondition(WorldEvent.StartFarming),
+            BeforeEventCondition(WorldEvent.FirstNightStart),
             
             AfterEventCondition(WorldEvent.DialogueDrWhom)
         ), SequenceAction(
+            ClearEventAction(WorldEvent.DialogueDrWhom),
             QueueLinesAndWaitAction("Dr. Whom", "So...", "I see you're not doing too well financially, huh?"),
             QueueLinesAndWaitAction("You", "No, no! I'm wealthier than your wildest dreams!"),
-            WaitAction(0.5),
+            WaitAction(0.25),
             QueueLinesAndWaitAction("Dr. Whom", "Well, I suppose you don’t need these", "seeds and tools, then?"),
             QueueLinesAndWaitAction("You", "Well, those would be quite helpful…", "Not that I couldn’t buy them myself, of course."),
-            WaitAction(0.5),
+            WaitAction(0.25),
             GiveItemsAction(((Item.CARROT_SEEDS, 10), (Item.SHOVEL, 1), (Item.HOE, 1), (Item.AXE, 1), (Item.WATERING_CAN_EMPTY, 1))),
-            WaitAction(0.5),
             SetEventAction(WorldEvent.StartFarming),
-            ClearEventAction(WorldEvent.DialogueDrWhom)
-        )),
+        ), True),
         
         DialogueTrigger(AndCondition(
             AfterEventCondition(WorldEvent.StartFarming),
-            # BeforeEventCondition(...) todo when adding more dialogue
+            BeforeEventCondition(WorldEvent.HarvestHintDone),
+            BeforeEventCondition(WorldEvent.FirstNightStart),
             
             AfterEventCondition(WorldEvent.DialogueDrWhom)
         ), SequenceAction(
+            ClearEventAction(WorldEvent.DialogueDrWhom),
             QueueLinesAndWaitAction("Dr. Whom", "Go out there and get farming!"),
-            ClearEventAction(WorldEvent.DialogueDrWhom)
         )),
+        
+        DialogueTrigger(AndCondition(
+            AfterEventCondition(WorldEvent.StartFarming, 20_000),
+            BeforeEventCondition(WorldEvent.ShovelHintDone)
+        ), QueueLinesAndWaitAction("Dr. Whom", "What are you waiting for?", "You can use that shovel over on your new", "farm plot to the West!"), True),
+        DialogueTrigger(AndCondition(
+            AfterEventCondition(WorldEvent.StartFarming, 60_000),
+            BeforeEventCondition(WorldEvent.ShovelHintDone)
+        ), QueueLinesAndWaitAction("You", "Man, I'm such a procrastinator."), True),
+        DialogueTrigger(AndCondition(
+            AfterEventCondition(WorldEvent.StartFarming, 120_000),
+            BeforeEventCondition(WorldEvent.ShovelHintDone)
+        ), QueueLinesAndWaitAction("God", f"{get_username()}... what are you doing?"), True),
+        
+        DialogueTrigger(AndCondition(
+            AfterEventCondition(WorldEvent.ShovelHintDone, 20_000),
+            BeforeEventCondition(WorldEvent.TillHintDone)
+        ), QueueLinesAndWaitAction("Dr. Whom", "You know, you can use that hoe to till the soil", "and make it ready for planting!"), True),
+        DialogueTrigger(AndCondition(
+            AfterEventCondition(WorldEvent.ShovelHintDone, 60_000),
+            BeforeEventCondition(WorldEvent.TillHintDone)
+        ), QueueLinesAndWaitAction("You", "I'm still procrastinating..."), True),
+        DialogueTrigger(AndCondition(
+            AfterEventCondition(WorldEvent.ShovelHintDone, 120_000),
+            BeforeEventCondition(WorldEvent.TillHintDone)
+        ), QueueLinesAndWaitAction("God", f"{get_username()}, this isn't funny."), True),
+        
+        DialogueTrigger(AndCondition(
+            AfterEventCondition(WorldEvent.TillHintDone, 20_000),
+            BeforeEventCondition(WorldEvent.SeedsHintDone)
+        ), QueueLinesAndWaitAction("Dr. Whom", "One of the last steps is to plant those", "carrot seeds I gave you!"), True),
+        DialogueTrigger(AndCondition(
+            AfterEventCondition(WorldEvent.TillHintDone, 60_000),
+            BeforeEventCondition(WorldEvent.SeedsHintDone)
+        ), QueueLinesAndWaitAction("You", "Man, I guess I really don't want to farm today."), True),
+        DialogueTrigger(AndCondition(
+            AfterEventCondition(WorldEvent.TillHintDone, 120_000),
+            BeforeEventCondition(WorldEvent.SeedsHintDone)
+        ), QueueLinesAndWaitAction("God", f"{get_username()}... the seeds.", "The ones in your inventory."), True),
+        
+        DialogueTrigger(AndCondition(
+            AfterEventCondition(WorldEvent.FullyGrownPlant, 20_000),
+            BeforeEventCondition(WorldEvent.HarvestHintDone)
+        ), QueueLinesAndWaitAction("Dr. Whom", "And now that you have some fully", "growen carrots, you can harvest them!", "Just use your hoe on them."), True),
+        DialogueTrigger(AndCondition(
+            AfterEventCondition(WorldEvent.FullyGrownPlant, 60_000),
+            BeforeEventCondition(WorldEvent.HarvestHintDone)
+        ), QueueLinesAndWaitAction("You", "Woah, those carrots are super sparkly! I should", "probably harvest them before they get too ripe."), True),
+        DialogueTrigger(AndCondition(
+            AfterEventCondition(WorldEvent.FullyGrownPlant, 120_000),
+            BeforeEventCondition(WorldEvent.HarvestHintDone)
+        ), QueueLinesAndWaitAction("God", "There are fully grown carrots on our main", f"character's farm, {get_username()}.", "You need to harvest them."), True),
+        
+        DialogueTrigger(AndCondition(
+            AfterEventCondition(WorldEvent.HarvestHintDone),
+            BeforeEventCondition(WorldEvent.SellFirstProducePrompt),
+            BeforeEventCondition(WorldEvent.FirstNightStart),
+            
+            AfterEventCondition(WorldEvent.DialogueDrWhom)
+        ), SequenceAction(
+            ClearEventAction(WorldEvent.DialogueDrWhom),
+            SetEventAction(WorldEvent.SellFirstProducePrompt),
+            QueueLinesAndWaitAction("Dr. Whom", "Hey, I see you've harvested your first crop!"),
+            QueueLinesAndWaitAction("You", "Why are you still out here?"),
+            QueueLinesAndWaitAction("Dr. Whom", "Whom cares? I'm just here to help you out!"),
+            QueueLinesAndWaitAction("You", "Okay..."),
+            QueueLinesAndWaitAction("Dr. Whom", "You should probably sell your produce to", "Mr. Shopkeeper over there!"),
+        ), True),
+        DialogueTrigger(AndCondition(
+            AfterEventCondition(WorldEvent.SellFirstProducePrompt),
+            BeforeEventCondition(WorldEvent.FirstNightStart),
+            
+            AfterEventCondition(WorldEvent.DialogueDrWhom)
+        ), SequenceAction(
+            ClearEventAction(WorldEvent.DialogueDrWhom),
+            QueueLinesAndWaitAction("Dr. Whom", "You should probably sell your produce to", "Mr. Shopkeeper over there!"),
+        )),
+        DialogueTrigger(AndCondition(
+            AfterEventCondition(WorldEvent.SellFirstProducePrompt),
+            # BeforeEventCondition(...), todo when adding more dialogue
+            
+            AfterEventCondition(WorldEvent.DialogueMrShopkeeper)
+        ), SequenceAction(
+            ClearEventAction(WorldEvent.DialogueMrShopkeeper),
+            QueueGameActionAction("scene:shop"),
+            QueueLinesAndWaitAction("Mr. Shopkeeper", "I see you've got some carrots to sell!"),
+        )),
+        
+        DialogueTrigger(AfterEventCondition(WorldEvent.FirstNightStart, 1_500), SequenceAction(
+            QueueLinesAndWaitAction("You", "Wait, what's going on!?", "What are those... things...?"),
+            QueueLinesAndWaitAction("Dr. Whom", "Oh no...", "    Oh no no no no no.", "Not tonight!"),
+            QueueLinesAndWaitAction("You", "What do you mean, 'not tonight'?"),
+            QueueLinesAndWaitAction("Dr. Whom", "I was worried about this...", "this is your fault, you know!"),
+            QueueLinesAndWaitAction("You", "What do you mean, my fault?"),
+            QueueLinesAndWaitAction("Dr. Whom", "Just worry about your crops, okay?")
+        ), True),
+        DialogueTrigger(AndCondition(
+            AfterEventCondition(WorldEvent.FirstNightStart),
+            BeforeEventCondition(WorldEvent.FirstNightEnd),
+            
+            AfterEventCondition(WorldEvent.DialogueDrWhom)
+        ), SequenceAction(
+            ClearEventAction(WorldEvent.DialogueDrWhom),
+            QueueLinesAndWaitAction("Dr. Whom", "Worry about your crops!!"),
+        )),
+        DialogueTrigger(AfterEventCondition(WorldEvent.FirstNightEnd, 1_500), SequenceAction(
+            RaceAction(
+                # Make player walk to the front of the house but teleport if they take too long
+                ForcePlayerWalkAction(MAP_WIDTH * TILE_SIZE * 0.75, MAP_HEIGHT * TILE_SIZE // 2),
+                SequenceAction(WaitAction(3), SetPlayerPositionAction(MAP_WIDTH * TILE_SIZE * 0.75, MAP_HEIGHT * TILE_SIZE // 2))
+            ),
+            QueueLinesAndWaitAction("You", "What were those... shadow figures?!"),
+            QueueLinesAndWaitAction("Dr. Whom", "Look, I don't have time to explain right now.", "Just... keep farming, okay?"),
+            # TODO: Dr. Whom walks off screen
+            WaitAction(1),
+            QueueLinesAndWaitAction("You", "I guess it's just me and my crops now...", "And Mr. Shopkeeper, I guess."),
+        ), True),
     ]
     running_actions: list[DialogueAction] = []
 
     def queue_dialogue(self, lines: list[str]):
-        self.queue.append(lines)
-        if not self.is_active():
+        self.queue.append(list(lines)) # Copy the list to prevent modification of the original
+        if not self.is_shown():
             self.renderer.reset()
             self.current_lines = self.queue.pop(0)
     
@@ -460,7 +648,12 @@ class DialogueManager:
     def is_active(self):
         return len(self.current_lines) != 0 and not self.renderer.done
     
-    def update(self, delta: float, audio_manager: AudioManager, player: "Player"):
+    def update(self, delta: float, audio_manager: AudioManager, player: "Player") -> list[str]:
+        """
+        Returns a list of queued game actions. These are currently just scene names to switch to.
+        This could be an enum... or we could restructure this to not need it at all... but I'm
+        lazy and don't have enough time to mess with refactors.
+        """
         action_context = DialogueActionContext(self, audio_manager, player)
         for trigger in self.dialogue_triggers:
             if trigger.check(self.condition_state):
@@ -474,6 +667,16 @@ class DialogueManager:
         
         if self.is_active():
             self.renderer.update(self.current_lines, delta, audio_manager)
+        
+        return action_context.queued_game_actions
+
+    def add_game_message(self, message: str):
+        """
+        Adds a message to the list of events that the game sends to the dialogue system. These are currently just strings.
+        This could be an enum... or we could restructure this to not need it at all... but I'm lazy and don't have enough
+        time to mess with refactors.
+        """
+        self.condition_state.game_messages.add(message)
     
     def draw(self, win: pygame.Surface):
         if len(self.current_lines):

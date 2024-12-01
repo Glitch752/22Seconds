@@ -6,12 +6,18 @@ authors = []
 dependencies = [
     "pygame-ce>=2.5.2",
     "perlin-noise>=1.13",
+    "pygbag>=0.9.2",
 ]
 readme = "README.md"
 requires-python = ">= 3.12"
 
 [tool.rye.scripts]
 "start" = { cmd="python ./src/__main__.py", desc="Run the game" }
+"web_prep" = { cmd="python ./tools/web_prep.py", desc="Prepare for web deployment" }
+"web" = { cmd="pygbag ./src", desc="Package the game using pygbag" }
 
 [tool.rye]
 managed = false
+dev-dependencies = [
+    "pydub>=0.25.1",
+]

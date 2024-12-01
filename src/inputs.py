@@ -31,6 +31,9 @@ class InputType(Enum):
     INVENTORY_SCROLL_UP = auto() # Scroll up for mouse (fired once per scroll tick), left bumper for controller
     INVENTORY_SCROLL_DOWN = auto() # Scroll down for mouse (fired once per scroll tick), right bumper for controller
     
+    INTERACT_DOWN = auto() # E/Z/space for keyboard, A for controller
+    INTERACT_UP = auto() # E/Z/space for keyboard, A for controller
+    
     CANCEL = auto() # ESC for keyboard, B for controller
     
     def get_slot_index(self, current_slot: int, slot_count: int) -> int:
@@ -79,6 +82,8 @@ class InputType(Enum):
                 return InputType.ALTERNATE_CLICK_DOWN if down else InputType.ALTERNATE_CLICK_UP
             case pygame.K_ESCAPE:
                 return InputType.CANCEL
+            case pygame.K_e | pygame.K_z | pygame.K_SPACE:
+                return InputType.INTERACT_DOWN if down else InputType.INTERACT_UP
             case _:
                 return None
     
@@ -100,11 +105,13 @@ class InputType(Enum):
             case pygame.CONTROLLER_BUTTON_X:
                 return InputType.ALTERNATE_CLICK_DOWN if down else InputType.ALTERNATE_CLICK_UP
             case pygame.CONTROLLER_BUTTON_LEFTSHOULDER:
-                return InputType.INVENTORY_SCROLL_UP
+                return InputType.INVENTORY_SCROLL_UP if down else None
             case pygame.CONTROLLER_BUTTON_RIGHTSHOULDER:
-                return InputType.INVENTORY_SCROLL_DOWN
+                return InputType.INVENTORY_SCROLL_DOWN if down else None
             case pygame.CONTROLLER_BUTTON_B:
-                return InputType.CANCEL
+                return InputType.CANCEL if down else None
+            case pygame.CONTROLLER_BUTTON_A:
+                return InputType.INTERACT_DOWN if down else InputType.INTERACT_UP
             case _:
                 return None
             
@@ -122,18 +129,23 @@ class Inputs:
     target_x: float
     target_y: float
 
-    interaction: bool = False
-    interaction_rising_edge: bool = False
+    clicking: bool = False
+    interacting: bool = False
+    click_rising_edge: bool = False
     
     def __init__(self):
         self.joystick_update()
     
     def input_event(self, input_type: InputType):
         if input_type == InputType.CLICK_DOWN:
-            self.interaction = True
+            self.clicking = True
         elif input_type == InputType.CLICK_UP:
-            self.interaction = False
-            self.interaction_rising_edge = True
+            self.clicking = False
+            self.click_rising_edge = True
+        elif input_type == InputType.INTERACT_DOWN:
+            self.interacting = True
+        elif input_type == InputType.INTERACT_UP:
+            self.interacting = False
     
     def joystick_update(self):
         self.joysticks = [pygame.joystick.Joystick(i) for i in range(pygame.joystick.get_count())]
@@ -172,5 +184,5 @@ class Inputs:
         self.movement_x = self.movement_x / movement_mag if movement_mag > 1 else self.movement_x
         self.movement_y = self.movement_y / movement_mag if movement_mag > 1 else self.movement_y
         
-        if self.interaction_rising_edge and self.interaction:
-            self.interaction_rising_edge = False
+        if self.click_rising_edge and self.clicking:
+            self.click_rising_edge = False

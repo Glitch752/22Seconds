@@ -166,9 +166,16 @@ class Map:
         
         # Draw entities
         for entity in self.entities:
-            entity.draw(win, camera_position, player, self.selection_images["green_1"] if interacting else self.selection_images["green_0"])
+            if entity.y + entity.height < player.pos.y + player.radius:
+                entity.draw(win, camera_position, player, self.selection_images["green_1"] if interacting else self.selection_images["green_0"])
         
         # Draw selection
         x = selected_cell_x * TILE_SIZE - camera_position.x + get_width() // 2
         y = selected_cell_y * TILE_SIZE - camera_position.y + get_height() // 2
         win.blit(self.selection_images[selection_color + "_" + ("1" if clicking else "0")], (x, y))
+    
+    def draw_front_of_player(self, win: pygame.Surface, camera_position: pygame.Vector2, player: "Player", interacting: bool):
+        # Draw entities
+        for entity in self.entities:
+            if entity.y + entity.height >= player.pos.y + player.radius:
+                entity.draw(win, camera_position, player, self.selection_images["green_1"] if interacting else self.selection_images["green_0"])

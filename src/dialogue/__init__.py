@@ -29,6 +29,7 @@ class WorldEvent(StrEnum):
     DrWhomShopkeeper = "dr_whom_shopkeeper"
     AfterFirstShopInteraction = "after_first_shop_interaction"
     StartFarming = "start_farming"
+    ScaryNightsStarted = "scary_nights_started"
     FirstScaryNightStart = "first_night_start"
     FirstScaryNightEnd = "first_night_end"
     SellFirstProducePrompt = "sell_first_produce_prompt"
@@ -593,6 +594,7 @@ class DialogueManager:
             ClearEventAction(WorldEvent.DialogueMrShopkeeper),
             QueueGameActionAction("scene:shop"),
             QueueLinesAndWaitAction("Mr. Shopkeeper", "I see you've got some carrots to sell!"),
+            SetEventAction(WorldEvent.ScaryNightsStarted)
         )),
         
         DialogueTrigger(AfterEventCondition(WorldEvent.FirstScaryNightStart, 1_500), SequenceAction(
@@ -616,7 +618,7 @@ class DialogueManager:
             RaceAction(
                 # Make player walk to the front of the house but teleport if they take too long
                 ForcePlayerWalkAction(MAP_WIDTH * TILE_SIZE * 0.75, MAP_HEIGHT * TILE_SIZE // 2),
-                SequenceAction(WaitAction(10), SetPlayerPositionAction(MAP_WIDTH * TILE_SIZE * 0.75, MAP_HEIGHT * TILE_SIZE // 2))
+                SequenceAction(WaitAction(15), SetPlayerPositionAction(MAP_WIDTH * TILE_SIZE * 0.75, MAP_HEIGHT * TILE_SIZE // 2))
             ),
             QueueLinesAndWaitAction("You", "What were those... shadow figures?!"),
             QueueLinesAndWaitAction("Dr. Whom", "Look, I don't have time to explain right now.", "Just... keep farming, okay?"),

@@ -54,7 +54,7 @@ class PlayingGameScene(GameScene):
         
         self.day_fade_surface.fill((0, 0, 15))
         
-        self.farm.add_entity(Entity((MAP_WIDTH - 20) * TILE_SIZE, (MAP_HEIGHT // 2 - 10) * TILE_SIZE, 8 * TILE_SIZE, 8 * TILE_SIZE, "house.png",      None, collision_height=3*TILE_SIZE))
+        self.farm.add_entity(Entity((MAP_WIDTH - 20) * TILE_SIZE, (MAP_HEIGHT // 2 - 10) * TILE_SIZE, 8 * TILE_SIZE, 8 * TILE_SIZE, "house.png",      None, collision_height=2*TILE_SIZE))
         self.farm.add_entity(Entity((MAP_WIDTH - 18) * TILE_SIZE, (MAP_HEIGHT // 2 - 3) * TILE_SIZE,  1 * TILE_SIZE, 2 * TILE_SIZE, "drWhom.png",     lambda: self.game.dialogue_manager.condition_state.add_event(WorldEvent.DialogueDrWhom)))
         self.farm.add_entity(Entity((MAP_WIDTH - 15) * TILE_SIZE, (MAP_HEIGHT // 2 - 3) * TILE_SIZE,  1 * TILE_SIZE, 2 * TILE_SIZE, "shopkeeper.png", lambda: self.game.dialogue_manager.condition_state.add_event(WorldEvent.DialogueMrShopkeeper)))
     
@@ -132,7 +132,7 @@ class PlayingGameScene(GameScene):
         """Called when the day starts"""
         self.update_playing_track()
         condition_state = self.game.dialogue_manager.condition_state
-        if not condition_state.has_event(WorldEvent.FirstScaryNightEnd):
+        if self.scary_night_occurances_started and not condition_state.has_event(WorldEvent.FirstScaryNightEnd):
             condition_state.add_event(WorldEvent.FirstScaryNightEnd)
         
         # Temporary, unoptimized; whatever for now
@@ -142,12 +142,13 @@ class PlayingGameScene(GameScene):
         """Called when the night starts"""
         self.update_playing_track()
         condition_state = self.game.dialogue_manager.condition_state
-        if not condition_state.has_event(WorldEvent.FirstScaryNightStart):
-            condition_state.add_event(WorldEvent.FirstScaryNightStart)
+        if self.scary_night_occurances_started:
+            if not condition_state.has_event(WorldEvent.FirstScaryNightStart):
+                condition_state.add_event(WorldEvent.FirstScaryNightStart)
         
-        # TEMPORARY
-        for i in range(20):
-            self.farm.add_entity(ShadowMachine())
+            # TEMPORARY
+            for i in range(20):
+                self.farm.add_entity(ShadowMachine())
 
     def get_daylight(self: Self):
         """Returns a value from 0 to 1 representing the current daylight. Throughout the entire night, this value is 0."""
@@ -183,6 +184,8 @@ class PlayingGameScene(GameScene):
         
         draw_particles(win, self.camera_position)
         self.game.player.draw_player(win, self.camera_position)
+        
+        self.farm.draw_front_of_player(win, self.camera_position, self.game.player, inputs.interacting)
         
         # Draw day fading
         if self.day_fade_surface.get_size() != (get_width(), get_height()):

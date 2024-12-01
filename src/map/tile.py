@@ -98,6 +98,13 @@ class SoilStructure(Structure):
                 dialogue_manager.condition_state.add_event(WorldEvent.FullyGrownPlant)
             # audio_manager.play_sound(SoundType.PLANT) # TODO: Better growth sound
     
+    def destroy(self):
+        if self.item:
+            self.item = None
+            self.growth_stage = 0
+            return
+        super().destroy()
+    
     def put_seed(self, item: Item, player: "Player", audio_manager: AudioManager, dialogue_manager: DialogueManager, tile_center_pos: tuple[int, int]):
         player.decrement_selected_item_quantity()
         self.item = item

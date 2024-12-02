@@ -7,6 +7,8 @@ from player import Player
 import constants
 import pygame
 
+from utils import is_web
+
 # Stores global state required throughout the game
 class Game:
     player: Player
@@ -77,6 +79,13 @@ class Game:
         self.dialogue_manager.draw(WIN)
         
         draw_all_deferred()
+        
+        if is_web():
+            from platform import window
+            if window.innerWidth != WIN.width or window.innerHeight != WIN.height:
+                WIN.width = window.innerWidth
+                WIN.height = window.innerHeight
+                WIN.surface = pygame.display.set_mode((WIN.width, WIN.height), pygame.RESIZABLE)
         
         pygame.display.flip()
     

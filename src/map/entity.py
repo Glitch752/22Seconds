@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, Callable, Optional
 import os
 
 from constants import FARMABLE_MAP_END, FARMABLE_MAP_START, MAP_HEIGHT, MAP_WIDTH, TILE_SIZE
+from .tile import SoilStructure 
 from graphics import get_height, get_width
 from utils import get_asset
 
@@ -126,7 +127,12 @@ class ShadowMachine(Entity):
                 while new_target[0] < FARMABLE_MAP_START[0] or new_target[0] >= FARMABLE_MAP_END[0] or new_target[1] < FARMABLE_MAP_START[1] or new_target[1] >= FARMABLE_MAP_END[1]:
                     new_target = (self.x // TILE_SIZE + random.randint(-MOVE_AMOUNT, MOVE_AMOUNT), self.y // TILE_SIZE + random.randint(-MOVE_AMOUNT, MOVE_AMOUNT))
                 self.target = (new_target[0] * TILE_SIZE, new_target[1] * TILE_SIZE)
-    
+        tile_x = self.x // TILE_SIZE
+        tile_y = self.y // TILE_SIZE
+        tile_index = int(tile_x * MAP_HEIGHT + tile_y)
+        print(f"tile_index: {tile_index}, map.tiles length: {len(map.tiles)}")
+        if isinstance(map.tiles[tile_index].structure, SoilStructure):
+            map.tiles[tile_index].structure.should_destroy = True
     def draw(self, win: pygame.Surface, camera_pos: pygame.Vector2, player: "Player", interaction_image: pygame.Surface):
         shake = 2
         self.image.set_alpha(random.randint(130, 170))

@@ -1,2 +1,2 @@
-# FarmingGame
-Counterspell WIP project
+# 22 Seconds
+Life has been getting to you recently, so you decide to "quit" your corporate job and move to the countryside to become a humble farmer. Unexpectedly, mysterious shadows begin attacking your crops at night, and you must continue to build your defenses whilst figuring out why they are attacking you, and what they have to do with you...

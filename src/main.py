@@ -20,8 +20,7 @@ pygame.init()
 
 import constants
 from game import Game
-from game_scene.intro_cutscene import IntroCutsceneScene
-from game_scene.playing import PlayingGameScene
+from game_scene.main_menu import MainMenuScene
 from ui import *
 
 game = Game()
@@ -29,9 +28,7 @@ game = Game()
 async def main():
     global game
     
-    # game.start(IntroCutsceneScene(game))
-    # TEMPORARY
-    game.start(PlayingGameScene(game))
+    game.start(MainMenuScene(game))
 
     clock = pygame.time.Clock()
     while not game.should_quit_game:

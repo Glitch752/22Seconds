@@ -46,7 +46,7 @@ class PlayingGameScene(GameScene):
     was_day: bool = True
     day_fade_surface = pygame.Surface((get_width(), get_height()), pygame.SRCALPHA)
     
-    scary_night_occurances_started: bool = True
+    scary_night_occurances_started: bool = False
     
     def __init__(self: Self, game: Game):
         super().__init__(game, "playing")
@@ -147,7 +147,7 @@ class PlayingGameScene(GameScene):
                 condition_state.add_event(WorldEvent.FirstScaryNightStart)
         
             # TEMPORARY
-            for i in range(20):
+            for i in range(40):
                 self.farm.add_entity(ShadowMachine())
 
     def get_daylight(self: Self):

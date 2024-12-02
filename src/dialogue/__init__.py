@@ -575,6 +575,7 @@ class DialogueManager:
             QueueLinesAndWaitAction("Dr. Whom", "Whom cares? I'm just here to help you out!"),
             QueueLinesAndWaitAction("You", "Okay..."),
             QueueLinesAndWaitAction("Dr. Whom", "You should probably sell your produce to", "Mr. Shopkeeper over there!"),
+            QueueGameActionAction("scary_night_occurances_start")
         ), True),
         DialogueTrigger(AndCondition(
             AfterEventCondition(WorldEvent.SellFirstProducePrompt),

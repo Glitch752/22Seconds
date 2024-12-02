@@ -10,16 +10,29 @@ class OutroCutsceneScene(GameScene):
         super().__init__(game, "outro_cutscene")
         self.cutscene_text = [
             [
-                "Well, this is it..."
+                "Thank you for playing."
             ],
             [
-                "You win.",
-                "It's over now."
+                "This game...",
+                "Didn't exactly turn out how we wanted it to."
             ],
             [
-                "...",
-                "And how does that make you feel?"
-                # Wow such dialogue
+                "  ",
+                "We didn't have time to develop any lore",
+                "or a story, so it ended up basically just being",
+                "a farming simulator. If you're interested,",
+                "the whole plot was _supposed_ to be centered",
+                "around how our main character was a rich",
+                "industrialist and the 'shadow machines'",
+                "represent the damage they've done. This",
+                "unfortunately didn't make it into the game."
+            ],
+            [
+                "Regardless, we hope you enjoyed playing!",
+                "We had a lot of fun making this game,",
+                "and we intend to continue working on it",
+                "in the future. If you have any feedback,",
+                "please let us know!"
             ]
         ]
     

@@ -33,7 +33,7 @@ class Player:
     slot_selection_floating_text: FloatingHintText = None
     
     profit: int = 0
-    currency: int = 5000
+    currency: int = 0
     
     # Set after running out of an item so the player doesn't
     # accidentally start using the next item available.
@@ -72,6 +72,8 @@ class Player:
 
         self.currency += self.profit
     def get_sold(self, item_type):
+        return self.items[item_type] if item_type in self.items else 0
+    def get_sold_sold_agaaghhhh(self, item_type):
         return self.sold_items[item_type] if item_type in self.sold_items else 0
 
     def update_slot_selection(self, dy):

@@ -62,6 +62,11 @@ class Game:
                 case "scene:shop":
                     from game_scene.in_shop import InShopScene
                     self.update_scene(InShopScene(self))
+                case "scary_night_occurances_start":
+                    # Wow this is so hacky but I have 15 minutes before submission
+                    from game_scene.playing import PlayingGameScene
+                    if isinstance(self.current_scene, PlayingGameScene):
+                        self.current_scene.scary_night_occurances_started = True
                 case _:
                     print(f"Unknown queued game action: {action}")
         

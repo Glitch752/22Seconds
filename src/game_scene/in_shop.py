@@ -19,7 +19,7 @@ class InShopScene(GameScene):
             Button(f"Buy Onion Seed - {Item.ONION_SEEDS.shop_data.buy_price}c", get_width() // 2, get_height() // 2 + 40, self.buy_item, (Item.ONION_SEEDS,)),
             Button(f"Buy Wheat Seed - {Item.WHEAT_SEEDS.shop_data.buy_price}c", get_width() // 2, get_height() // 2 + 80, self.buy_item, (Item.WHEAT_SEEDS,)),
             Button(f"Buy 5 Walls - {Item.WALL.shop_data.buy_price}c", get_width() // 2, get_height() // 2 + 120, self.buy_item, (Item.WALL,)),
-            Button(f"Buy a Bigger Farm - 1,000c", get_width() // 2, get_height() // 2 + 160, self.try_to_win_lmao, ()),
+            Button(f"Buy a Bigger Farm - 1,500c", get_width() // 2, get_height() // 2 + 160, self.try_to_win_lmao, ()),
             Button(f"Exit Shop", get_width() // 2, get_height() // 2 + 240, self.exit_shop, ()),
         ]
     
@@ -36,7 +36,7 @@ class InShopScene(GameScene):
     def try_to_win_lmao(self):
         from game_scene.outro_cutscene import OutroCutsceneScene
         player = self.game.player
-        if player.currency >= 1000:
+        if player.currency >= 1500:
             self.game.audio_manager.play_sound(SoundType.BUY_ITEM)
             self.game.update_scene(OutroCutsceneScene(self.game))
         else:
@@ -67,11 +67,11 @@ class InShopScene(GameScene):
         player = self.game.player
         win.blit(t := big_font_render("Shop", 'black'), (get_width() // 2 - t.get_width() // 2, 25))
         y = 85
-        win.blit(t := normal_font_render(f"Carrots Sold ({Item.CARROT.shop_data.sell_price}c per): {player.get_sold(Item.CARROT)}", 'black'), (get_width() // 2 - t.get_width() // 2, y))
+        win.blit(t := normal_font_render(f"Carrots Sold ({Item.CARROT.shop_data.sell_price}c per): {player.get_sold_sold_agaaghhhh(Item.CARROT)}", 'black'), (get_width() // 2 - t.get_width() // 2, y))
         y += t.get_height()
-        win.blit(t := normal_font_render(f"Onions Sold ({Item.ONION.shop_data.sell_price}c per): {player.get_sold(Item.ONION)}", 'black'), (get_width() // 2 - t.get_width() // 2, y))
+        win.blit(t := normal_font_render(f"Onions Sold ({Item.ONION.shop_data.sell_price}c per): {player.get_sold_sold_agaaghhhh(Item.ONION)}", 'black'), (get_width() // 2 - t.get_width() // 2, y))
         y += t.get_height()
-        win.blit(t := normal_font_render(f"Wheat Sold ({Item.WHEAT.shop_data.sell_price}c per): {player.get_sold(Item.WHEAT)}", 'black'), (get_width() // 2 - t.get_width() // 2, y))
+        win.blit(t := normal_font_render(f"Wheat Sold ({Item.WHEAT.shop_data.sell_price}c per): {player.get_sold_sold_agaaghhhh(Item.WHEAT)}", 'black'), (get_width() // 2 - t.get_width() // 2, y))
         y += t.get_height()
         win.blit(t := normal_font_render(f"Profit: {player.profit}", 'black'), (get_width() // 2 - t.get_width() // 2, y))
         

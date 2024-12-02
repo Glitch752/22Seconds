@@ -11,24 +11,7 @@ class IntroCutsceneScene(GameScene):
         self.cutscene_text = [
             [
                 "You",
-                "This is a test message that doesn't mean anything.",
-            ],
-            [
-                "Doctor",
-                "I see. And how does that make you feel?",
-            ],
-            [
-                "You",
-                "I don't exist. I'm a figment of your imagination.",
-            ],
-            [
-                "Doctor",
-                "Does that...",
-                "Mean I don't exist either?",
-            ],
-            [
-                "Wow",
-                "So deep."
+                "Well, this is it.",
             ]
         ]
     

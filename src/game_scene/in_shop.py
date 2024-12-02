@@ -19,7 +19,7 @@ class InShopScene(GameScene):
             Button(f"Buy Onion Seed - {Item.ONION_SEEDS.shop_data.buy_price}c", get_width() // 2, get_height() // 2 + 40, self.buy_item, (Item.ONION_SEEDS,)),
             Button(f"Buy Wheat Seed - {Item.WHEAT_SEEDS.shop_data.buy_price}c", get_width() // 2, get_height() // 2 + 80, self.buy_item, (Item.WHEAT_SEEDS,)),
             Button(f"Buy 5 Walls - {Item.WALL.shop_data.buy_price}c", get_width() // 2, get_height() // 2 + 120, self.buy_item, (Item.WALL,)),
-            Button(f"Idk move our or something - 1,000c", get_width() // 2, get_height() // 2 + 160, self.try_to_win_lmao, ()),
+            Button(f"Buy a Bigger Farm - 1,000c", get_width() // 2, get_height() // 2 + 160, self.try_to_win_lmao, ()),
             Button(f"Exit Shop", get_width() // 2, get_height() // 2 + 240, self.exit_shop, ()),
         ]
     

@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Callable, Optional
 import os
 
 from constants import FARMABLE_MAP_END, FARMABLE_MAP_START, MAP_HEIGHT, MAP_WIDTH, TILE_SIZE
-from .tile import SoilStructure 
+from .tile import WallStructure 
 from graphics import get_height, get_width
 from utils import get_asset
 
@@ -130,8 +130,12 @@ class ShadowMachine(Entity):
         tile_x = self.x // TILE_SIZE
         tile_y = self.y // TILE_SIZE
         tile_index = int(tile_x * MAP_HEIGHT + tile_y)
-        print(f"tile_index: {tile_index}, map.tiles length: {len(map.tiles)}")
-        if isinstance(map.tiles[tile_index].structure, SoilStructure):
+        # print(f"tile_index: {tile_index}, map.tiles length: {len(map.tiles)}")
+        if map.tiles[tile_index].structure is not None:
+            if isinstance(map.tiles[tile_index].structure, WallStructure):
+                dX = self.target[0] - self.x
+                dY = self.target[1] - self.y
+                self.target = (int((self.x - dX)*1.5), int((self.y - dY)*1.5))
             map.tiles[tile_index].structure.should_destroy = True
     def draw(self, win: pygame.Surface, camera_pos: pygame.Vector2, player: "Player", interaction_image: pygame.Surface):
         shake = 2

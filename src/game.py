@@ -53,6 +53,8 @@ class Game:
         self.current_scene.enter()
     
     def run(self, delta: float):
+        global WIN
+        
         self.inputs.update(self.current_scene.get_target_reference())
         
         for event in pygame.event.get():
@@ -82,10 +84,8 @@ class Game:
         
         if is_web():
             from platform import window
-            if window.innerWidth != WIN.width or window.innerHeight != WIN.height:
-                WIN.width = window.innerWidth
-                WIN.height = window.innerHeight
-                WIN.surface = pygame.display.set_mode((WIN.width, WIN.height), pygame.RESIZABLE)
+            if int(window.innerWidth) != WIN.get_width() or int(window.innerHeight) != WIN.get_height():
+                WIN = pygame.display.set_mode((window.innerWidth, window.innerHeight))
         
         pygame.display.flip()
     

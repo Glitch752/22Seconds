@@ -46,7 +46,7 @@ class PlayingGameScene(GameScene):
     was_day: bool = True
     day_fade_surface = pygame.Surface((get_width(), get_height()), pygame.SRCALPHA)
     
-    scary_night_occurances_started: bool = False
+    scary_night_occurances_started: bool = True
     
     def __init__(self: Self, game: Game):
         super().__init__(game, "playing")
